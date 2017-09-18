@@ -1,0 +1,5 @@
+extern "C" printf
+printf "Hello World\n"
+printf ("Hello \"%s\"\n", "\\W\\or\\ld")
+printf "Hello \\\"World\\"
+printf "\n"

@@ -1,0 +1,7 @@
+extern "C" printf
+
+func print(i: Int32):
+     printf("%d\n", i)
+
+func print(s: CString):
+     printf("%s\n", s)
