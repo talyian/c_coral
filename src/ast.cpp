@@ -2,10 +2,14 @@
 #include <regex>
 
 void Expr::accept(Visitor * v) { v->visit(this); }
+void BinOp::accept(Visitor * v) { v->visit(this); }
 void Call::accept(Visitor * v) { v->visit(this); }
 void Extern::accept(Visitor * v) { v->visit(this); }
 void String::accept(Visitor * v) { v->visit(this); }
+void Long::accept(Visitor * v) { v->visit(this); }
+void Double::accept(Visitor * v) { v->visit(this); }
 void Module::accept(Visitor * v) { v->visit(this); }
+void FuncDef::accept(Visitor * v) { v->visit(this); }
 
 std::string Escape(std::string s) {
   if (s == "\\\\") return "\\";
@@ -33,4 +37,11 @@ std::string Translate(std::string s) {
   
 std::string String::toString() {
   return Translate(value);
+}
+
+std::string Long::toString() {
+  return "long";
+}
+std::string Double::toString() {
+  return "double";
 }

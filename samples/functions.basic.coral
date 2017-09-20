@@ -1,0 +1,14 @@
+extern "C" printf
+
+func foo ( ):
+     printf "foo\n"
+
+func bar ( ):
+     printf "bar\n"
+
+func main ( ):
+     foo()
+     bar()
+     bar()     
+     printf "main\n"
+     

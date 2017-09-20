@@ -1,0 +1,16 @@
+extern "C" printf
+
+# Basic example of multifuncs
+func[Int64] print(x): printf ("%ld", x)
+func[Int64] println(x): printf ("%ld\n", x)
+
+func[Float64] print(x): printf ("%lf", x)
+func[Float64] println(x): printf ("%lf\n", x)
+
+func[ZString] print(x): printf ("%s", x)
+func[ZString] println(x): printf ("%s\n", x)
+
+println "Hello World!"
+println "\"Hello,\" said the duck"
+println 1024
+println 3.33333333
