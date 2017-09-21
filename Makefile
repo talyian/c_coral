@@ -1,58 +1,51 @@
+CXX=clang++-5.0 -std=c++11
 CLANG=clang++-5.0 -std=c++11
 WCLANG=clang++.exe
 WCONFIG=llvm-config.exe
 CONFIG ?= llvm-config-5.0
+CXXCONFIG=$(shell ${CONFIG} --cxxflags | sed 's/-Wl,-fuse-ld=gold//; s/-Wno-maybe-uninitialized//;')
 TESTFILE ?= samples/hello_world.coral
+COMPILE=${CLANG} -c -o $@ $<
 
 default: bin/coral
 	@true
 
-ir: bin/coral
-	@bin/coral ir < ${TESTFILE}
+watch:
+	/bin/bash watch.sh
 
-run: bin/coral
-	@bin/coral ir < ${TESTFILE} | lli-5.0
+clean:
+	git clean -xf bin obj
 
 docker:
 	docker build -t coral -f dockerenv/Dockerfile .
 	docker run -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
 
-bin/coral: obj/compiler.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o
-	${CLANG} -o bin/coral \
-	obj/parser.o obj/lexer.o obj/compiler.o obj/ast.o obj/main.o \
-	$(shell ${CONFIG} --libs)
+bin/coral: obj/compiler.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o
+	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs)
 
-bin/lexer: obj/lexer.o src/lexer_main.cpp
-	${CLANG} -c -o obj/lexer_main.o src/lexer_main.cpp
-	${CLANG} -o bin/lexer obj/lexer.o obj/lexer_main.o
+obj/ast.o: obj/ast.cc obj/ast.hh obj/type.hh
+	${COMPILE}
 
-obj/parser.cc: src/parser.yy src/ast.h
-	bison -d -o obj/parser.cc src/parser.yy
-obj/parser.o: obj/parser.cc
-	${CLANG} -c -o obj/parser.o obj/parser.cc
+obj/compiler.o: obj/compiler.cc obj/parser.cc obj/ast.hh obj/type.hh obj/compiler.hh
+	${COMPILE} ${CXXCONFIG}
 
-obj/lexer.cc: src/lexer.l src/ast.h
-	flex -o obj/lexer.cc src/lexer.l 
-obj/lexer.o: obj/lexer.cc
-	${CLANG} -c -o obj/lexer.o obj/lexer.cc
+obj/lexer.o: obj/lexer.cc obj/ast.hh obj/type.hh obj/parser.hh
+	${COMPILE}
 
-obj/compiler.o: src/compiler.cpp obj/parser.o src/ast.h
-	${CLANG} -c -o obj/compiler.o $(shell \
-	    ${CONFIG} --cxxflags | \
-	    sed s/-Wl,-fuse-ld=gold// | \
-	    sed s/-Wno-maybe-uninitialized//) src/compiler.cpp
+obj/main.o: obj/main.cc obj/ast.hh obj/type.hh obj/parser.hh
+	${COMPILE}
 
-obj/main.o: src/main.cpp
-	${CLANG} -c -o obj/main.o src/main.cpp
+obj/parser.o: obj/parser.cc obj/ast.hh obj/type.hh obj/parser.hh
+	${COMPILE}
 
-obj/ast.o: src/ast.cpp src/ast.h
-	${CLANG} -c -o obj/ast.o src/ast.cpp
+obj/%.hh : src/%.hh
+	ln -sf ../$< $@
 
-bin/coral.exe: obj/lexer.cc obj/parser.cc src/ast.h src/ast.cpp src/compiler.cpp
-	${WCLANG} -c src/compiler.cpp
-	${WCLANG} -c obj/lexer.cc
-	${WCLANG} -c obj/parser.cc
-	${WCLANG} -c src/ast.cpp
+obj/lexer.cc : src/lexer.l
+	flex -o $@ $<
 
+obj/parser.hh obj/parser.cc: src/parser.yy obj/ast.hh
+	bison -d -o $@ $<
 
-
+obj/%.cc : src/%.cc
+	ln -sf ../$< $@

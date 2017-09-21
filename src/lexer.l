@@ -5,8 +5,8 @@
 #include <string>
 #include <queue>
 #include <stack>
-#include "../src/ast.h"  
-#include "../obj/parser.hh"
+#include "ast.hh"  
+#include "parser.hh"
 
 #define YY_NO_UNISTD_H
 #define YYSTYPE yy::parser::semantic_type
@@ -36,12 +36,12 @@ std::stack<int> indents({ 0 });
 int [0-9]+
 num [0-9]+[.][0-9]+
 str \"([^\\\"]|\\\\|\\\"|\\n)*\"
-id  [a-zA-Z][a-zA-Z0-9]+
+id  [a-zA-Z][a-zA-Z0-9]*
 br  \n[ ]*
 
 %%
 
-%{
+%{ // our little hack to return multiple tokens from a rule match
   if (!tokenq.empty()) { 
     auto val = tokenq.front();
     tokenq.pop();
@@ -49,12 +49,31 @@ br  \n[ ]*
   }
 %}
 
+<<EOF>> { // on eof, close all outstanding indent blocks
+    if (indents.size() <= 1) return 0;
+    while(indents.size() > 2) {
+       indents.pop();
+       tokenq.push(yy::parser::token::DEDENT);
+    }
+    indents.pop();
+    return yy::parser::token::DEDENT;
+}
+return { tok(RETURN); }
 extern { tok(EXTERN); }
 func   { tok(FUNC); }
+if     { tok(IF); }
+else   { tok(ELSE); }		
 {int}  { yylval->build(std::stoll(yytext)); tok(INTEGER); }
 {num}  { yylval->build(std::stod(yytext)); tok(FLOAT); }
 {str}  { yylval->build(std::string(yytext, yyleng)); tok(STRING); }
-{id}   { yylval->build(std::string(yytext, yyleng)); tok(IDENTIFIER); }
+{id}   {
+    std::string s(yytext, yyleng);
+    if (s == "else") tok(ELSE);
+    else { 
+	yylval->build(s);
+	tok(IDENTIFIER);
+    }
+}
 {br}   {
   lineno++; colno = yyleng - 1;
   

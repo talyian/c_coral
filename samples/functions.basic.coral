@@ -1,14 +1,29 @@
-extern "C" printf
+extern "C" printf : Fn[..., Void]
 
-func foo ( ):
-     printf "foo\n"
+func collatz : Int64 (n: Int64, m: Int64):
+     if n = 1:
+        return m
+     else:
+       if 0 = n % 2:
+          return collatz(n / 2, m + 1)
+       else:
+          return collatz(1 + n * 3, m + 1)
 
-func bar ( ):
-     printf "bar\n"
+func factorial : Int64 (n: Int64):
+    if n < 2:
+        return n
+    else:
+        return n * factorial(n - 1)
 
-func main ( ):
-     foo()
-     bar()
-     bar()     
-     printf "main\n"
-     
+func main : Int32 ( ):
+    printf("%ld => %ld steps\n", 7, collatz(7, 0))
+    printf("%ld => %ld steps\n", 9, collatz(9, 0))
+    printf("%ld => %ld steps\n", 11, collatz(11, 0))    
+    printf("%ld => %ld steps\n", 13, collatz(13, 0))
+    printf("%ld => %ld steps\n", 15, collatz(15, 0))
+    printf("%ld => %ld steps\n", 17, collatz(17, 0))
+    printf("%ld => %ld steps\n", 19, collatz(19, 0))
+    printf("%ld => %ld steps\n", 21, collatz(21, 0))
+    printf("%ld => %ld steps\n", 27, collatz(27, 0))            
+    return 0
+    

@@ -1,6 +1,6 @@
 # Coral Language
 
-A toy LLVM-based language.
+A toy LLVM-based language. A bigger Kaleidoscope. Created with <strike>love</strike> by [Jimmy](https://www.heyjimbo.com).
 
 ## Getting Started
 

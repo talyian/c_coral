@@ -10,5 +10,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libllvm-5.0 clang-5.0
 
 RUN apt-get install -y make bison flex
+RUN apt-get install -y gdb
 RUN echo "PS1='[coral]\\w \\$ '" >> /etc/bash.bashrc
 WORKDIR /work

@@ -1,4 +1,4 @@
-#include "ast.h"
+#include "ast.hh"
 #include <regex>
 
 void Expr::accept(Visitor * v) { v->visit(this); }
@@ -10,6 +10,10 @@ void Long::accept(Visitor * v) { v->visit(this); }
 void Double::accept(Visitor * v) { v->visit(this); }
 void Module::accept(Visitor * v) { v->visit(this); }
 void FuncDef::accept(Visitor * v) { v->visit(this); }
+void BlockExpr::accept(Visitor * v) { v->visit(this); }
+void Var::accept(Visitor * v) { v->visit(this); }
+void If::accept(Visitor * v) { v->visit(this); }
+void Return::accept(Visitor * v) { v->visit(this); }
 
 std::string Escape(std::string s) {
   if (s == "\\\\") return "\\";
@@ -40,8 +44,20 @@ std::string String::toString() {
 }
 
 std::string Long::toString() {
-  return "long";
+  return std::to_string(value);
 }
 std::string Double::toString() {
-  return "double";
+  return std::to_string(value);
+}
+std::string Var::toString() {
+  return value;
+}
+std::string If::toString() {
+  return "(" + cond->toString() + "?" + ifbody->toString() + ":" + elsebody->toString() + ")";
+}
+std::string FuncDef::toString() {
+  return name + "(" + ")" + "\n" + body->toString();
+}
+std::string Return::toString() {
+  return "return " + value->toString();
 }

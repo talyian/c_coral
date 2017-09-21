@@ -1,11 +1,15 @@
-extern "C" printf
-printf "Hello World\n"
-printf ("Hello \"%s\"\n", "\\W\\or\\ld")
-printf ("Hello \\\"World\\")
-printf "\n"
-printf ("%ld bottles of beer on the wall\n", 9 * 11)
-printf ("%ld boxes of bees on the wall\n", 99 - 1)
-printf ("%ld decks of cards on the wall\n", 195 / 2)
-printf ("%ld bottles of walls on the beer\n", 24 + 24 + 24 + 24)
-printf ("%2.2lf gallons of beer\n", 3.14159 + 3.14159)
-printf ("%2.2lf gallons of beer\n", 3.14159 * 100.0)
+extern "C" printf : Fn[Ptr[Int8], ..., Void]
+extern "C" sprintf : Fn[..., Int32]
+
+func main : Int32 ():
+    printf "Hello World\n"
+    printf ("Hello \"%s\"\n", "\\W\\or\\ld")
+    printf ("Hello \\\"World\\")
+    printf "\n"
+    printf ("%ld bottles of beer on the wall\n", 9 * 11)
+    printf ("%ld boxes of bees on the wall\n", 99 - 1)
+    printf ("%ld decks of cards on the wall\n", 195 / 2)
+    printf ("%ld bottles of walls on the beer\n", 24 + 24 + 24 + 24)
+    printf ("%2.2lf gallons of beer\n", 3.14159 + 3.14159)
+    printf ("%2.2lf gallons of beer\n", 3.14159 * 100.0)
+    return 0
