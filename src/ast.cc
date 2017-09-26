@@ -14,6 +14,9 @@ void BlockExpr::accept(Visitor * v) { v->visit(this); }
 void Var::accept(Visitor * v) { v->visit(this); }
 void If::accept(Visitor * v) { v->visit(this); }
 void Return::accept(Visitor * v) { v->visit(this); }
+void Cast::accept(Visitor * v) { v->visit(this); }
+void Let::accept(Visitor * v) { v->visit(this); }
+void AddrOf::accept(Visitor * v) { v->visit(this); }
 
 std::string Escape(std::string s) {
   if (s == "\\\\") return "\\";
@@ -61,3 +64,13 @@ std::string FuncDef::toString() {
 std::string Return::toString() {
   return "return " + value->toString();
 }
+std::string Cast::toString() {
+  return expr->toString() + " as " + to_type->toString();
+}
+std::string Let::toString() {
+  return var->name + ":=" + value->toString();
+}
+std::string AddrOf::toString() {
+  return "&" + var;
+}
+

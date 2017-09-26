@@ -7,10 +7,12 @@ void IntType::accept(TypeVisitor * t) { t->visit(this); }
 void PtrType::accept(TypeVisitor * t) { t->visit(this); }
 void ArrType::accept(TypeVisitor * t) { t->visit(this); }
 void VoidType::accept(TypeVisitor * t) { t->visit(this); }
+void FloatType::accept(TypeVisitor * t) { t->visit(this); }
 
 std::string PtrType::toString() { return "Ptr[" + inner->toString() + "]"; }
 std::string VoidType::toString()  { return "void"; }
 std::string IntType::toString() { return "int" + std::to_string(bits); }
+std::string FloatType::toString() { return "float" + std::to_string(bits); }
 std::string FuncType::toString()  {
   auto s = std::string("Fn[");
   for(auto a = args.begin(); a != args.end(); a++)

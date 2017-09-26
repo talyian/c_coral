@@ -121,8 +121,21 @@ class FuncDef : public Expr {
   Type * rettype;
   std::vector<Def *> args;
   Expr * body;
-  FuncDef(std::string name, Type * rettype, std::vector<Def *> args, Expr * body) :
-    name(name), rettype(rettype), args(args), body(body) { }
+  bool multi;
+  FuncDef(std::string name, Type * rettype,
+	  std::vector<Def *> args,
+	  Expr * body,
+	  bool multi) :
+	      name(name), rettype(rettype), args(args), body(body), multi(multi) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString();
+};
+
+class Cast : public Expr {
+public:
+  Expr * expr;
+  Type * to_type;
+  Cast(Expr * expr, Type * to_type) : expr(expr), to_type(to_type) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString();
 };
@@ -135,6 +148,23 @@ public:
   virtual std::string toString();
 };
 
+class Let : public Expr {
+public:
+  Def * var;
+  Expr * value;
+  Let(Def * var, Expr * value) : var(var), value(value) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString();
+};
+  
+class AddrOf : public Expr {
+public:
+  std::string var;
+  AddrOf(std::string var) : var(var) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString();
+};
+  
 class Return : public Expr {
 public:
   Expr * value;
@@ -161,5 +191,8 @@ class Visitor {
 
   virtual void visit(If * c) { std::cerr << c->toString() << std::endl; }        
   virtual void visit(Return * c) { std::cerr << c->toString() << std::endl; }
+  virtual void visit(Cast * c) { std::cerr << c->toString() << std::endl; }
+  virtual void visit(Let * c) { std::cerr << c->toString() << std::endl; }
+  virtual void visit(AddrOf * c) { std::cerr << c->toString() << std::endl; }      
 };
 

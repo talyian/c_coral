@@ -2,9 +2,6 @@
 %require "3.0"
 %error-verbose
 
-%define api.value.type variant
-%locations
-
 %{
 #define YYDEBUG 1
 #include <cstdio>
@@ -15,6 +12,14 @@
 #include "ast.hh"
 %}
 
+%token-table
+%parse-param { Module *&module }
+%define api.value.type variant
+%locations
+
+%token ADDR_OF
+%token LET
+%token AS
 %token EXTERN
 %token FUNC
 %token IDENTIFIER
@@ -28,11 +33,11 @@
 %token IF
 %token ELSE
 %token RETURN
-					
+
 %type <int64_t> INTEGER
 %type <double> FLOAT
 %type <std::string> STRING IDENTIFIER 
-%type <Expr*> expr line Argument Return;
+%type <Expr*> expr line Argument BlockOrExpr;
 %type <Def *> Parameter;
 %type <std::vector<Def *>> ParameterList_inner ParameterList;
 %type <std::vector<Expr*>> lines;
@@ -51,7 +56,7 @@ void handle_module(Module & m);
 
 %%
 
-program : lines { __module = new Module($1); return 0; }
+program : lines { module = new Module($1); }
 
 lines
 :       NEWLINE { }
@@ -62,15 +67,16 @@ lines
 line
 : EXTERN STRING IDENTIFIER { $$ = new Extern($2, $3, 0); }
 | EXTERN STRING IDENTIFIER ':' typedef { $$ = new Extern($2, $3, $5); }
-// | FUNC IDENTIFIER ParameterList block { $$ = new FuncDef($2, new Type(), $3, $4); }
-| FUNC IDENTIFIER ':' typedef ParameterList block { $$ = new FuncDef($2, $4, $5, $6); }
-| Return { $$ = $1; }
+| FUNC IDENTIFIER ':' typedef ParameterList block { $$ = new FuncDef($2, $4, $5, $6, false); }
+| FUNC '[' ']' IDENTIFIER ':' typedef ParameterList block { $$ = new FuncDef($4, $6, $7, $8, true); }
+| LET Parameter '=' expr { $$ = new Let($2, $4); }
+| RETURN expr { $$ = new Return($2); }
 | expr { $$ = $1; }
 
 block : ':' NEWLINE INDENT lines DEDENT { $$ = new BlockExpr($4); }
 
 Parameter
-: IDENTIFIER { $$ = new Def($1, new PtrType(new IntType(8))); }
+: IDENTIFIER { $$ = new Def($1, new Type()); }
 | IDENTIFIER ':' typedef { $$ = new Def($1, $3); }
 
 ParameterList_inner
@@ -108,19 +114,31 @@ expr
 | expr '!' '=' expr { $$ = new BinOp(std::string("!="), $1, $4); }
 
 | IDENTIFIER ArgumentList { $$ = new Call($1, $2); }
-| IF expr block ELSE block { $$ = new If($2, $3, $5); }
+| IF expr BlockOrExpr ELSE BlockOrExpr { $$ = new If($2, $3, $5); }
+| expr AS typedef { $$ = new Cast($1, $3); }
+| ADDR_OF IDENTIFIER { $$ = new AddrOf($2); }
 
-Return : RETURN expr { $$ = new Return($2); }
+BlockOrExpr
+: block { $$ = $1; }
+| expr { $$ = $1; }
 
 typedef
 : IDENTIFIER {
    $$ = (
        $1 == "Void" ? (Type *)new VoidType() :
-       $1 == "Bool" ? (Type *)new IntType(1) :
+       $1 == "Bool" ? (Type *)new IntType(1) :       
+       $1 == "Int1" ? (Type *)new IntType(1) :
        $1 == "Int8" ? (Type *)new IntType(8) :
        $1 == "Int16" ? (Type *)new IntType(16) :
        $1 == "Int32" ? (Type *)new IntType(32) :
-       $1 == "Int64" ? (Type *)new IntType(64) : 0);
+       $1 == "Int64" ? (Type *)new IntType(64) :
+       $1 == "Int" ? (Type *)new IntGeneric() :
+       $1 == "Float64" ? (Type *)new FloatType('b', 64) :
+       $1 == "Float32" ? (Type *)new FloatType('b', 32) :       
+   0);
+   if (!$$) {
+     std::cerr << "unknown type: " << $1 << std::endl;
+   }
 }
 | '.' '.' '.' { $$ = 0; }
 | IDENTIFIER '[' TypeList ']' {

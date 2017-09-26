@@ -36,9 +36,10 @@ std::stack<int> indents({ 0 });
 int [0-9]+
 num [0-9]+[.][0-9]+
 str \"([^\\\"]|\\\\|\\\"|\\n)*\"
-id  [a-zA-Z][a-zA-Z0-9]*
+id  [_a-zA-Z][_a-zA-Z0-9]*
 br  \n[ ]*
-
+comment [#].*$
+			
 %%
 
 %{ // our little hack to return multiple tokens from a rule match
@@ -58,22 +59,23 @@ br  \n[ ]*
     indents.pop();
     return yy::parser::token::DEDENT;
 }
+let    { tok(LET); }
+as     { tok(AS); }
 return { tok(RETURN); }
 extern { tok(EXTERN); }
 func   { tok(FUNC); }
 if     { tok(IF); }
 else   { tok(ELSE); }		
+{comment} { }
 {int}  { yylval->build(std::stoll(yytext)); tok(INTEGER); }
 {num}  { yylval->build(std::stod(yytext)); tok(FLOAT); }
 {str}  { yylval->build(std::string(yytext, yyleng)); tok(STRING); }
 {id}   {
     std::string s(yytext, yyleng);
     if (s == "else") tok(ELSE);
-    else { 
-	yylval->build(s);
-	tok(IDENTIFIER);
-    }
+    else { yylval->build(s); tok(IDENTIFIER); }
 }
+[&]    { tok(ADDR_OF); }
 {br}   {
   lineno++; colno = yyleng - 1;
   

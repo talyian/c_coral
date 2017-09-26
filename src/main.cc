@@ -8,8 +8,14 @@
 int yylex(yy::parser::semantic_type * a, yy::location * loc);
 
 extern std::stack<int> indents;
-extern Module * __module;
-extern void handle_module(Module & m);
+
+extern void handle_module(Module &m);
+
+class ModuleBuilder : public Visitor {
+public:
+  ModuleBuilder(Module * m);
+  char * finalize();
+};
 
 int main(int argc, char ** argv) {
   if (argc == 1) {
@@ -25,14 +31,18 @@ int main(int argc, char ** argv) {
 
   if (inputstream) dup2(inputstream, 0);
 
+  Module * module = 0;
   if (command == "ir") {
-    yy::parser P; P.parse();
-    handle_module(*__module);
+    std::cerr << "ir" << std::endl;
+    yy::parser P(module);
+    P.parse();
+    ModuleBuilder builder(module);
+    printf("%s", builder.finalize());
   }
   else if (command == "parse") {
-    yy::parser P;
+    yy::parser P(module);
     P.parse();
-    std::cout << __module->toString() << std::endl;
+    std::cout << module->toString() << std::endl;
   }
   else if (command == "lex") {
     int t;
@@ -47,7 +57,7 @@ int main(int argc, char ** argv) {
 	case yy::parser::token::NEWLINE: printf("---\n"); break;
 	case yy::parser::token::STRING: printf("string %s\n", tok.as<std::string>().c_str()); break;
 	case yy::parser::token::IDENTIFIER: printf("id %s\n", tok.as<std::string>().c_str()); break;
-	case yy::parser::token::INTEGER: printf("num %ld\n", tok.as<int64_t>()); break;		  
+	case yy::parser::token::INTEGER: printf("num %ld\n", tok.as<int64_t>()); break;
 	default:
 	  printf("[%d]\n", t);
       }

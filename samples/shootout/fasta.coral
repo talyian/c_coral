@@ -1,0 +1,65 @@
+# @t _:GenericString
+let alu =
+   "GGCCGGGCGCGGTGGCTCACGCCTGTAATCCCAGCACTTTGG" +
+   "GAGGCCGAGGCGGGCGGATCACCTGAGGTCAGGAGTTCGAGA" +
+   "CCAGCCTGGCCAACATGGTGAAACCCCGTCTCTACTAAAAAT" +
+   "ACAAAAATTAGCCGGGCGTGGTGGCGCGCGCCTGTAATCCCA" +
+   "GCTACTCGGGAGGCTGAGGCAGGAGAATCGCTTGAACCCGGG" +
+   "AGGCGGAGGTTGCAGTGAGCCGAGATCGCGCCACTGCACTCC" +
+   "AGCCTGGGCGACAGAGCGAGACTCCGTCTCAAAAA"
+
+# @t OrderedDict[_:GenericChar, _:GenericFloat]
+let iub = {
+    "a": 0.27, "c": 0.12, "g": 0.12, "t": 0.27, "B": 0.02,
+    "D": 0.02, "H": 0.02, "K": 0.02, "M": 0.02, "N": 0.02,
+    "R": 0.02, "S": 0.02, "V": 0.02, "W": 0.02, "Y": 0.02,
+}
+
+# @t OrderedDict[_:GenericChar, _:GenericFloat]
+let sapiens = ordereddict {
+    'a': 0.3029549426680,
+    'c': 0.1979883004921,
+    'g': 0.1975473066391,
+    't': 0.3015094502008,
+}
+
+# @t [GenericInt]
+let col = 0
+
+let last = 42i, A = 3877i, C = 20573, M = 139968
+
+# @r [mut last, A, C, M]
+# @t [double -> double]
+func rand(max : double):
+    set last = (last * A + C) % M
+    max * last / M;
+
+# @r [printf, col]
+# @t Byte -> ConsoleIO[Void]
+func putc(c):
+    printf('%c', c)
+
+# <S>:Seq[<I>:GenericInt] -> <S>[<I>]
+let accumulate = reduce @ ((s, (a, c)) => ((a, s + c), s + c), 0)
+
+func getChar(table, r):
+   table | find (
+   for c, p in table { if r < p { return c } }
+
+func repeatFasta(header, n, seq)
+    print header
+    for i in 0..n:
+        putc . getChar@table . seq[i % len seq]
+        
+# @r [accumulate, rand, putc [printf, i]]
+# @t [int32, Dict[:GenericChar -> :GenericFloat] -> ConsoleIO[Void]
+func randomFasta(header, n, probs):
+    let table = accumulate(probs)
+    print header
+    for i in 0..n:
+        putc . getChar@table . rand 1
+        
+let n = int32 sys.argv[2]
+repeatFasta(">ONE Homo sapiens alu", 2 * n, alu)
+randomFasta(">TWO IUB ambiguity codes", 3 * n, iub)
+randomFasta(">THREE Homo sapiens frequency", 5 * n, sapiens)

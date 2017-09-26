@@ -1,0 +1,52 @@
+extern "C" printf
+extern "C" strlen : Fn[..., Int32]
+type int = Int32
+type int = Int8
+type bool = Int1
+
+type Bytes = {
+    len : int
+    buf : Ptr[byte]
+}
+
+func Bytes.new(this, StringConstant c):
+   set this.len = strlen(c)
+   set this.buf = c as Ptr[byte]
+
+func Bytes.length(this):
+   return this.len
+
+# Sequences
+interface Seq:
+   iter : Fn[Iter[<T>]]
+
+interface Iter:
+   next : Iter[<T>]
+   value : Option[<T>]
+
+# Lists
+interface Buf:
+   length : Fn[this, Int32]
+   getItem : Fn[this, Int32, <T>]
+
+interface MutBuf:
+   inherit Buf[<T>]
+   setItem : Fn[this, Int32, <T>]
+
+interface MutList:
+   inherit MutBuf:
+   addItem : Fn[this, <T>]
+   delItemAt : Fn[this, Int32]
+
+# Collections
+interface Collection:
+   has : Fn[<T>, bool]
+
+interface MutCollection:
+   inherit Collection
+   add : Fn[<T>]
+   remove : Fn[<T>]
+   checkAdd : Fn[<T>, bool]
+   checkRemove : Fn[<T>, bool]
+   
+interface 

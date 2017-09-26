@@ -1,0 +1,11 @@
+* Rcoral Features [2/6]
+** DONE elseif syntax 
+** DONE let syntax 
+** TODO while loops
+** TODO multiple modules
+** TODO basic prelude
+** TODO declare library references
+* Coral Features [0/2]
+** TODO start working on type inference
+** TODO struct
+** TODO classes
