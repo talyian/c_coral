@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -7,6 +9,7 @@ class Expr {
  public:
   virtual std::string toString() { return "[expr]"; }
   virtual void accept(class Visitor * v);
+  virtual ~Expr() { }
 };
 
 class Call : public Expr {
@@ -18,11 +21,13 @@ class Call : public Expr {
   virtual std::string toString() {
     auto v = callee + "(";
     for(auto i = arguments.begin(); i != arguments.end(); i++) {
-      v += (i != arguments.begin() ? ", " : "") + (*i)->toString();      
+      if (*i) v += (i != arguments.begin() ? ", " : "") + (*i)->toString();
+      else v = v + (i != arguments.begin() ? ", " : "")  +  "(null)";
     }
     v += ")";
     return v;
   }
+    ~Call() { for(auto i = arguments.begin(); i < arguments.end(); i++) { delete *i; }  }
 };
 
 class BinOp : public Expr {
@@ -32,8 +37,15 @@ class BinOp : public Expr {
   BinOp(std::string oper, Expr * a, Expr * b) : op(oper), lhs(a), rhs(b) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString() {
+    if (!lhs || !rhs)
+      return (
+	      "(" + (lhs ? lhs->toString() : "??") +
+	      "|" + (rhs ? rhs->toString() : "??") +
+	      "|" + op + ")"
+	      );
     return "(" + lhs->toString() + op + rhs->toString() + ")";
   }
+    ~BinOp() { delete lhs; delete rhs; }
 };
 
 class Extern : public Expr {
@@ -43,8 +55,9 @@ class Extern : public Expr {
   Type *type;
   Extern(std::string a, std::string b, Type * type) :
     linkage(a), name(b), type(type) { }
-  virtual void accept(class Visitor * v);  
+  virtual void accept(class Visitor * v);
   virtual std::string toString() { return "extern " + linkage + " " + name; }
+  ~Extern() { delete type; }
 };
 
 class String : public Expr {
@@ -84,14 +97,10 @@ class Module : public Expr {
   std::string name;
   std::vector<Expr *> lines;
   Module(std::vector<Expr *> a) : name("module"), lines(a) { }
-  virtual void accept(class Visitor * v);  
-  virtual std::string toString() {
-    std::string s("");
-    for(auto iter = lines.begin(); iter != lines.end(); iter++) {
-      s += (*iter)->toString() + "\n";
-    }
-    return s;
-  }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString();
+  ~Module() {
+  for(auto i = lines.begin(), e = lines.end(); i != e; i++) delete *i; }
 };
 
 class BlockExpr : public Expr {
@@ -102,10 +111,12 @@ class BlockExpr : public Expr {
   virtual std::string toString() {
     std::string s("");
     for(auto iter = lines.begin(); iter != lines.end(); iter++) {
-      s += (*iter)->toString() + "\n";
+      if (*iter) s += (*iter)->toString() + "\n";
+      else s += "(null)\n";
     }
     return s;
   }
+  ~BlockExpr() { for(auto i = lines.begin(), e = lines.end(); i != e; i++) delete *i; }
 };
 
 class Def {
@@ -113,6 +124,7 @@ class Def {
   std::string name;
   Type * type;
   Def(std::string name, Type * t) : name(name), type(t) { }
+  ~Def() { delete type; }
 };
 
 class FuncDef : public Expr {
@@ -129,6 +141,11 @@ class FuncDef : public Expr {
 	      name(name), rettype(rettype), args(args), body(body), multi(multi) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString();
+  ~FuncDef() {
+      delete body;
+      delete rettype;
+      for(auto i = args.begin(), e = args.end(); i != e; i++) delete *i;
+  }
 };
 
 class Cast : public Expr {
@@ -138,6 +155,7 @@ public:
   Cast(Expr * expr, Type * to_type) : expr(expr), to_type(to_type) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString();
+  ~Cast() { delete expr; delete to_type; }
 };
 
 class If : public Expr {
@@ -146,6 +164,7 @@ public:
   If(Expr * cond, Expr * ifbody, Expr * elsebody) : cond(cond), ifbody(ifbody), elsebody(elsebody) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString();
+  ~If() { delete cond; delete ifbody; delete elsebody; }
 };
 
 class Let : public Expr {
@@ -155,8 +174,9 @@ public:
   Let(Def * var, Expr * value) : var(var), value(value) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString();
+  ~Let() { delete var; delete value; }
 };
-  
+
 class AddrOf : public Expr {
 public:
   std::string var;
@@ -164,13 +184,14 @@ public:
   virtual void accept(class Visitor * v);
   virtual std::string toString();
 };
-  
+
 class Return : public Expr {
 public:
   Expr * value;
   Return(Expr * value) : value(value) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString();
+  ~Return() { delete value; }
 };
 
 class Visitor {
@@ -184,15 +205,18 @@ class Visitor {
 
   virtual void visit(Call * c) { std::cerr << c->toString() << std::endl; }
   virtual void visit(BinOp * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Var * c) { std::cerr << c->toString() << std::endl; }  
+  virtual void visit(Var * c) { std::cerr << c->toString() << std::endl; }
   virtual void visit(String * c) { std::cerr << c->toString() << std::endl; }
   virtual void visit(Long * c) { std::cerr << c->toString() << std::endl; }
   virtual void visit(Double * c) { std::cerr << c->toString() << std::endl; }
 
-  virtual void visit(If * c) { std::cerr << c->toString() << std::endl; }        
+  virtual void visit(If * c) { std::cerr << c->toString() << std::endl; }
   virtual void visit(Return * c) { std::cerr << c->toString() << std::endl; }
   virtual void visit(Cast * c) { std::cerr << c->toString() << std::endl; }
   virtual void visit(Let * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(AddrOf * c) { std::cerr << c->toString() << std::endl; }      
+  virtual void visit(AddrOf * c) { std::cerr << c->toString() << std::endl; }
+  virtual ~Visitor () { }
 };
 
+FuncDef* BuildFunc(std::string name, Type* functype, std::vector<Def *> params, Expr * body);
+FuncDef* BuildVarFunc(std::string name, Type* functype, std::vector<Def *> params, Expr * body);

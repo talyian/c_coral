@@ -12,4 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get install -y make bison flex
 RUN apt-get install -y gdb
 RUN echo "PS1='[coral]\\w \\$ '" >> /etc/bash.bashrc
+RUN ln -s /usr/bin/llvm-symbolizer-5.0 /usr/bin/llvm-symbolizer
+ENV ASAN_SYMBOLIZER_PATH /usr/bin/llvm-symbolizer
 WORKDIR /work

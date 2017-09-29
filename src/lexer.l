@@ -12,26 +12,27 @@
 #define YYSTYPE yy::parser::semantic_type
 #define YYLTYPE yy::location
 #define tok(TOKEN_NAME) return yy::parser::token::TOKEN_NAME
-#define YY_USER_ACTION update(yylloc);
+#define YY_USER_ACTION update(yylloc, yyleng);
 
 int lineno = 0, colno = 0;
-void update(yy::location * yylloc) {
-  yylloc->begin.line = lineno;
-  yylloc->begin.column = colno;
-  yylloc->end.line = lineno;
-  colno += yyleng;
-  yylloc->end.column = colno;
+void update(yy::location * loc, int len) {
+  loc->begin.line = lineno;
+  loc->begin.column = colno;
+  loc->end.line = lineno;
+  colno += len;
+  loc->end.column = colno;
 }
 
 using std::vector;
 using std::string;
 
-std::queue<int> tokenq;
+std::queue<int> tokenq; // a queue to allow multiple return tokens;
 std::stack<int> indents({ 0 });
 %}
 
 %option bison-bridge
 %option bison-locations
+%option reentrant 
 
 int [0-9]+
 num [0-9]+[.][0-9]+
@@ -70,12 +71,9 @@ else   { tok(ELSE); }
 {int}  { yylval->build(std::stoll(yytext)); tok(INTEGER); }
 {num}  { yylval->build(std::stod(yytext)); tok(FLOAT); }
 {str}  { yylval->build(std::string(yytext, yyleng)); tok(STRING); }
-{id}   {
-    std::string s(yytext, yyleng);
-    if (s == "else") tok(ELSE);
-    else { yylval->build(s); tok(IDENTIFIER); }
-}
+{id}   { yylval->build(std::string(yytext, yyleng)); tok(IDENTIFIER); }
 [&]    { tok(ADDR_OF); }
+
 {br}   {
   lineno++; colno = yyleng - 1;
   

@@ -24,11 +24,13 @@ std::map<LLVMValueRef, std::map<string, LLVMValueRef>> names;
 void define_func(LLVMValueRef scope, string name, LLVMValueRef value) {
   names[scope][name] = value;
   names[scope][name + "=func"] = LLVMConstInt(LLVMInt32Type(), 0, false);
+  // cerr << "defining " << name << "\n";
 }
 void define(LLVMValueRef scope, string name, LLVMValueRef value) {
   // cerr << "define: " << name << ": " << TSTR(LLVMTypeOf(value)) << endl;
   names[scope][name] = value;
   names[scope][name + "=func"] = 0;
+  // cerr << "defining " << name << "\n";
 }
 #define lookup(scope, name) load(builder, scope, name)
 LLVMValueRef load(LLVMBuilderRef builder, LLVMValueRef scope, string name) {
@@ -39,6 +41,7 @@ LLVMValueRef load(LLVMBuilderRef builder, LLVMValueRef scope, string name) {
   // 					     TSTR(LLVMTypeOf(loc))) << endl;
   if (names[scope][name + "=func"])
     return loc;
+  cerr << "loading: " << name << "\n";
   return LLVMBuildLoad(builder, loc, "");
 }
 LLVMTypeRef FixArgument(LLVMTypeRef t) {
@@ -48,7 +51,7 @@ LLVMTypeRef FixArgument(LLVMTypeRef t) {
   }
   // cerr << "+ " << TSTR(t) << endl;
   // cerr << "| " << ISARR(t) << endl;
-  // cerr << "| " << ISPTR(t) << endl;  
+  // cerr << "| " << ISPTR(t) << endl;
   return t;
 }
 LLVMValueRef CastArgument(LLVMBuilderRef builder, LLVMValueRef arg, LLVMTypeRef paramtype) {
@@ -83,7 +86,7 @@ void GetLLVMType::visit(PtrType * f) { out = LLVMPointerType(LTYPE(f->inner), 0)
 void GetLLVMType::visit(ArrType * f) { out = LLVMArrayType(LTYPE(f->inner), f->len); }
 void GetLLVMType::visit(IntType * f) { out = LLVMIntTypeInContext(context, f->bits); }
 void GetLLVMType::visit(FloatType * f) { out =
-    f->bits == 32 ? LLVMFloatTypeInContext(context) : 
+    f->bits == 32 ? LLVMFloatTypeInContext(context) :
     f->bits == 64 ? LLVMDoubleTypeInContext(context) :
     0;
     if (!out) std::cerr << "Invalid Float Type " << f->toString() << std::endl;
@@ -150,6 +153,8 @@ void ExprValue::visit(Call * c)  {
 	args[i] = arg;
     }
     output = LLVMBuildCall(builder, func, args, nArgs, "");
+    delete [] args;
+    delete [] params;
 }
 
 void ExprValue::visit(Var * s) {
@@ -173,7 +178,7 @@ void BinaryValue::visitLong()  {
   else if (op->op == "-") { output = LLVMBuildSub(builder, lval, rval, ""); }
   else if (op->op == "*") { output = LLVMBuildMul(builder, lval, rval, ""); }
   else if (op->op == "/") { output = LLVMBuildSDiv(builder, lval, rval, ""); }
-  else if (op->op == "%") { output = LLVMBuildURem(builder, lval, rval, ""); }    
+  else if (op->op == "%") { output = LLVMBuildURem(builder, lval, rval, ""); }
   else if (op->op == "<") { output = LLVMBuildICmp(builder, LLVMIntSLT, lval, rval, ""); }
   else if (op->op == ">") { output = LLVMBuildICmp(builder, LLVMIntSGT, lval, rval, ""); }
   else if (op->op == "=") { output = LLVMBuildICmp(builder, LLVMIntEQ, lval, rval, ""); }
@@ -190,16 +195,23 @@ void BinaryValue::visitDouble() {
   else cerr << "unknown operation " << op->op << endl;
 }
 
-
 ModuleBuilder::ModuleBuilder(Module * m) {
-    module = LLVMModuleCreateWithNameInContext(m->name.c_str(), context);
-    builder = LLVMCreateBuilderInContext(context);
-    for(auto i = m->lines.begin(), e=m->lines.end(); i != e; i++)
-      (*i)->accept(this);
+  module = LLVMModuleCreateWithNameInContext(m->name.c_str(), context);
+  builder = LLVMCreateBuilderInContext(context);
+  for(auto i = m->lines.begin(), e=m->lines.end(); i != e; i++)
+    (*i)->accept(this);
 }
 
-char * ModuleBuilder::finalize() {
-  return LLVMPrintModuleToString(module);
+ModuleBuilder::~ModuleBuilder() {
+  // cerr << "freeing builder \n";
+  LLVMDisposeBuilder(builder);
+}
+
+std::string ModuleBuilder::finalize() {
+  std::unique_ptr<char, decltype(std::free) *> ptr(
+    LLVMPrintModuleToString(module),
+    std::free);
+  return std::string(ptr.get());
 }
 
 void ModuleBuilder::visit(Return * c) {
@@ -260,9 +272,9 @@ void ModuleBuilder::visit(FuncDef * c) {
   c->body->accept(this);
 
   // safety - all unterminated blocks get an implicit return
-  // This only works for voidfuncs 
+  // This only works for voidfuncs
   for(auto bb = LLVMGetFirstBasicBlock(func); bb; bb = LLVMGetNextBasicBlock(bb)) {
-    if (!LLVMGetBasicBlockTerminator(bb)) { 
+    if (!LLVMGetBasicBlockTerminator(bb)) {
       LLVMPositionBuilderAtEnd(builder, bb);
       LLVMBuildRetVoid(builder);
     }
@@ -276,7 +288,7 @@ void ModuleBuilder::visit(Extern * c) {
   define_func(0, c->name, func);
 }
 
-void handle_module(Module & m) {
+std::string handle_module(Module & m) {
   ModuleBuilder moduleB(&m);
-  printf("%s", moduleB.finalize());
+  return moduleB.finalize();
 }

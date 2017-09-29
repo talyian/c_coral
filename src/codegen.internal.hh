@@ -1,3 +1,5 @@
+#include "codegen.hh"
+
 #include "llvm-c/Core.h"
 #include <map>
 
@@ -57,26 +59,25 @@ public:
   LLVMValueRef function;
   LLVMBasicBlockRef bb;
 
-  std::map<std::tuple<LLVMValueRef, std::string>, LLVMValueRef> names;
-
   ModuleBuilder(Module * m);
-  ~ModuleBuilder();
+  ModuleBuilder() { }
+  char * finalize();
 
-  std::string finalize();
+  // std::map<std::tuple<LLVMValueRef, std::string>, LLVMValueRef> names;
 
-  virtual void visit(BlockExpr * c);
-  virtual void visit(FuncDef * c);
-  virtual void visit(Extern * c);
-  virtual void visit(Return * c);
-  virtual void visit(If * c);
-  virtual void visit(Let * c);
+  // virtual void visit(BlockExpr * c);
+  // virtual void visit(FuncDef * c);
+  // virtual void visit(Extern * c);
+  // virtual void visit(Return * c);
+  // virtual void visit(If * c);
+  // virtual void visit(Let * c);
 
-  // simulate possible side-effects
-  virtual void visit(Call * c) { VAL(c); }
-  virtual void visit(BinOp * c) { VAL(c); }
-  virtual void visit(Var * c) { VAL(c); }
-  virtual void visit(String * c) { VAL(c); }
-  virtual void visit(Long * c) { VAL(c); }
-  virtual void visit(Double * c) { VAL(c); }
-  virtual void visit(AddrOf * c) { VAL(c); }
+  // // simulate possible side-effects
+  // virtual void visit(Call * c) { VAL(c); }
+  // virtual void visit(BinOp * c) { VAL(c); }
+  // virtual void visit(Var * c) { VAL(c); }
+  // virtual void visit(String * c) { VAL(c); }
+  // virtual void visit(Long * c) { VAL(c); }
+  // virtual void visit(Double * c) { VAL(c); }
+  // virtual void visit(AddrOf * c) { VAL(c); }
 };

@@ -1,10 +1,15 @@
-* Rcoral Features [2/6]
+* Rcoral Features [2/7]
 ** DONE elseif syntax 
 ** DONE let syntax 
+** TODO Re-entrant lexer
 ** TODO while loops
-** TODO multiple modules
+** TODO multiple modules 
+   :depends: re-entrant lexer
 ** TODO basic prelude
+   :depends: multiple modules
 ** TODO declare library references
+   I wonder if this is actually needed for now. It should *really* go in a buildfile.
+   But perhaps like .fsx files we can have #r and #l.
 * Coral Features [0/2]
 ** TODO start working on type inference
 ** TODO struct

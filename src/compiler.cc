@@ -1,27 +1,20 @@
-#include "ast.hh"
-#include "parser.hh"
+#include "compiler.hh"
 #include "codegen.hh"
+#include <memory>
+#include <string>
 
-#include <vector>
-#include <iostream>
+class ModuleCompiler::impl {
+public:
+  ModuleBuilder builder;
+  impl(Module * m) : builder(m) { }
+  ~impl() { }
+};
 
-using std::vector;
-using std::ifstream;
+void ModuleCompiler::implDeleter::operator () (impl * p) { delete p; }
 
-void Compile(vector<ifstream *> input) {
-  Module * m;
-  for(auto i = input.begin(), e = input.end(); i != e; i++) {
-    yy::parser parser(m);
-    parser.parse();
-    ModuleBuilder mbuilder(m);
-    mbuilder.finalize();
-  }
-}
+ModuleCompiler::ModuleCompiler(Module * m)
+  : pimpl(std::unique_ptr<impl, implDeleter>(new impl(m))) { }
 
-void GenerateIR(Module & m) {
-
-}
-
-void GenerateObj(Module & m) {
-  
+std::string ModuleCompiler::getIR() {
+  return pimpl->builder.finalize();
 }

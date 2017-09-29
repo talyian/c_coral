@@ -21,7 +21,7 @@ void AddrOf::accept(Visitor * v) { v->visit(this); }
 std::string Escape(std::string s) {
   if (s == "\\\\") return "\\";
   if (s == "\\n") return "\n";
-  if (s == "\\\"") return "\"";    
+  if (s == "\\\"") return "\"";
   return "?";
 }
 
@@ -41,7 +41,18 @@ std::string Translate(std::string s) {
   if (matches) return res + suffix;
   return c;
 }
-  
+
+std::string Module::toString()  {
+    std::string s("");
+    s += std::to_string(lines.size()) + " lines\n";
+    for(auto iter = lines.begin(); iter != lines.end(); iter++)
+      if (*iter) {
+	s += (*iter)->toString() + "\n";
+      } else {
+	s += "(null line?) \n";
+      }
+    return s;
+}
 std::string String::toString() {
   return Translate(value);
 }
@@ -59,10 +70,10 @@ std::string If::toString() {
   return "(" + cond->toString() + "?" + ifbody->toString() + ":" + elsebody->toString() + ")";
 }
 std::string FuncDef::toString() {
-  return name + "(" + ")" + "\n" + body->toString();
+  return name + "(" + ")" + "\n" + (body ? body->toString() : " = 0");
 }
 std::string Return::toString() {
-  return "return " + value->toString();
+  return "return " + (value ? value->toString() : "(null)");
 }
 std::string Cast::toString() {
   return expr->toString() + " as " + to_type->toString();
@@ -74,3 +85,9 @@ std::string AddrOf::toString() {
   return "&" + var;
 }
 
+FuncDef* BuildVarFunc(std::string name, Type* return_type, std::vector<Def *> params, Expr * body) {
+  return new FuncDef(name, return_type, params, body, true);
+}
+FuncDef* BuildFunc(std::string name, Type* return_type, std::vector<Def *> params, Expr * body) {
+  return new FuncDef(name, return_type, params, body, false);
+}
