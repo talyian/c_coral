@@ -33,9 +33,22 @@ int main(int argc, char ** argv) {
 
   Module * module = 0;
   if (command == "ir") {
-    std::cerr << "ir" << std::endl;
+    dup2(fileno(fopen("samples/prelude/extern.coral", "r")), 0);
     yy::parser P(module);
     P.parse();
+
+    Module * module2 = 0;
+    dup2(inputstream, 0);
+    yy::parser Q(module);
+    Q.parse();
+
+    std::cerr << module->lines.size() <<"  " << module2->lines.size() << std::endl;
+    
+    module->lines.insert(
+      module->lines.end(),
+      module2->lines.begin(),
+      module2->lines.end());
+      
     ModuleBuilder builder(module);
     printf("%s", builder.finalize());
   }

@@ -33,9 +33,12 @@ void define(LLVMValueRef scope, string name, LLVMValueRef value) {
 #define lookup(scope, name) load(builder, scope, name)
 LLVMValueRef load(LLVMBuilderRef builder, LLVMValueRef scope, string name) {
   auto loc = names[scope][name];
+  // cerr << "lookup: " << name << " from " << (
+  // 					     (long long int)loc < 0 ? "multifunc" :
+  // 					     (long long int)loc == 0 ? "error" :
+  // 					     TSTR(LLVMTypeOf(loc))) << endl;
   if (names[scope][name + "=func"])
     return loc;
-  // cerr << "lookup: " << name << " from " << TSTR(LLVMTypeOf(loc)) << endl;
   return LLVMBuildLoad(builder, loc, "");
 }
 LLVMTypeRef FixArgument(LLVMTypeRef t) {
@@ -267,6 +270,7 @@ void ModuleBuilder::visit(FuncDef * c) {
 }
 
 void ModuleBuilder::visit(Extern * c) {
+  // cerr << "Extern " << c->name << ":" << (c->type ? c->type->toString() : "null") << endl;
   auto type = c->type ? c->type : new FuncType(new VoidType(), std::vector<Type *>(), true);
   LLVMValueRef func = LLVMAddFunction(module, c->name.c_str(), LTYPE(type));
   define_func(0, c->name, func);

@@ -1,0 +1,2 @@
+func main : Int32 ():
+    println "Hello World!"

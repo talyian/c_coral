@@ -157,7 +157,11 @@ typedef
     }
     $$ = new FuncType(retv, $3, var);
   }
-  else $$ = 0;
+  else {
+  std::cerr << "unknown type: " << $1 << std::endl;
+  exit(1);
+  $$ = 0;
+  }
 }
 TypeList
 : typedef { $$.push_back($1); }
