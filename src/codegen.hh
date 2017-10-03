@@ -1,12 +1,54 @@
 #include "llvm-c/Core.h"
 #include <map>
 
-#define LTYPE(t) GetLLVMType(builder, t).out
+#define lookup(scope, name) mb->load(mb->builder, scope, name)
+
+// Compile a coral file
+class ModuleBuilder : public Visitor {
+public:
+  LLVMContextRef context;
+  LLVMModuleRef module;
+  LLVMBuilderRef builder;
+  LLVMValueRef function;
+  LLVMBasicBlockRef bb;
+
+  std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> names;
+  void define_func(LLVMValueRef scope, std::string name, LLVMValueRef value);
+  void define(LLVMValueRef scope, std::string name, LLVMValueRef value);
+  LLVMValueRef load(LLVMBuilderRef builder, LLVMValueRef scope, std::string name);
+  
+  ModuleBuilder(Module * m);
+  ModuleBuilder * getModuleBuilder() { return this; }
+  ~ModuleBuilder();
+
+  std::string finalize();
+
+  virtual void visit(BlockExpr * c);
+  virtual void visit(FuncDef * c);
+  virtual void visit(Extern * c);
+  virtual void visit(Return * c);
+  virtual void visit(If * c);
+  virtual void visit(Let * c);
+
+  // simulate possible side-effects
+  virtual void visit(Call * c);
+  virtual void visit(BinOp * c);
+  virtual void visit(Var * c);
+  virtual void visit(String * c);
+  virtual void visit(Long * c);
+  virtual void visit(Double * c);
+  virtual void visit(AddrOf * c);
+};
+
+
+#define LTYPE(t) GetLLVMType(getModuleBuilder(), t).out
 class GetLLVMType : public TypeVisitor {
 public:
+  ModuleBuilder * mb;
+  ModuleBuilder * getModuleBuilder() { return mb; }
   LLVMTypeRef out;
-  LLVMBuilderRef builder;
-  GetLLVMType(LLVMBuilderRef b, Type * t) : builder(b) { t->accept(this); }
+  GetLLVMType(ModuleBuilder *mb, Type * t)
+    : mb(mb) { t->accept(this); }
   virtual void visit(Type * f);
   virtual void visit(VoidType * f);
   virtual void visit(FuncType * f);
@@ -17,12 +59,14 @@ public:
 };
 
 // VAL(e): Convert an Expr * e to LLVMValueRef
-#define VAL(e) ExprValue(builder, e).output
+#define VAL(e) ExprValue(getModuleBuilder(), e).output
 class ExprValue : public Visitor {
 public:
-  LLVMBuilderRef builder;
+  ModuleBuilder * mb;
+  ModuleBuilder * getModuleBuilder() { return mb; }
   LLVMValueRef output;
-  ExprValue(LLVMBuilderRef b, Expr * e) : builder(b) { e->accept(this); }
+  ExprValue(ModuleBuilder * mb, Expr * e)
+    : mb(mb) { e->accept(this); }
   virtual void visit(String * s);
   virtual void visit(Long * s);
   virtual void visit(Double * s);
@@ -36,47 +80,15 @@ public:
 // Type-specialize over different operand types
 class BinaryValue : public Visitor {
 public:
-  LLVMBuilderRef builder;
+  ModuleBuilder * mb;
+  ModuleBuilder * getModuleBuilder() { return mb; }
   LLVMValueRef output;
   BinOp * op;
-  BinaryValue(LLVMBuilderRef b, BinOp * e) : builder(b), op(e) { op->lhs->accept(this); }
+  BinaryValue(ModuleBuilder * mb, BinOp * e)
+    : mb(mb), op(e) { op->lhs->accept(this); }
   void visitLong();
   void visitDouble();
   virtual void visit(Long * s) { visitLong(); }
   virtual void visit(Double * s) { visitDouble(); }
   virtual void visit(Var * s) { visitLong(); }
-};
-
-extern LLVMContextRef context;
-
-// Compile a coral file
-class ModuleBuilder : public Visitor {
-public:
-  LLVMModuleRef module;
-  LLVMBuilderRef builder;
-  LLVMValueRef function;
-  LLVMBasicBlockRef bb;
-
-  std::map<std::tuple<LLVMValueRef, std::string>, LLVMValueRef> names;
-
-  ModuleBuilder(Module * m);
-  ~ModuleBuilder();
-
-  std::string finalize();
-
-  virtual void visit(BlockExpr * c);
-  virtual void visit(FuncDef * c);
-  virtual void visit(Extern * c);
-  virtual void visit(Return * c);
-  virtual void visit(If * c);
-  virtual void visit(Let * c);
-
-  // simulate possible side-effects
-  virtual void visit(Call * c) { VAL(c); }
-  virtual void visit(BinOp * c) { VAL(c); }
-  virtual void visit(Var * c) { VAL(c); }
-  virtual void visit(String * c) { VAL(c); }
-  virtual void visit(Long * c) { VAL(c); }
-  virtual void visit(Double * c) { VAL(c); }
-  virtual void visit(AddrOf * c) { VAL(c); }
 };

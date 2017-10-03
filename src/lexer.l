@@ -1,5 +1,8 @@
 %option never-interactive
 %option noyywrap
+%option bison-bridge
+%option bison-locations
+%option reentrant 
 
 %{
 #include <string>
@@ -29,10 +32,6 @@ using std::string;
 std::queue<int> tokenq; // a queue to allow multiple return tokens;
 std::stack<int> indents({ 0 });
 %}
-
-%option bison-bridge
-%option bison-locations
-%option reentrant 
 
 int [0-9]+
 num [0-9]+[.][0-9]+

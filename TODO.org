@@ -1,7 +1,7 @@
-* Rcoral Features [2/7]
+* Rcoral Features [3/7]
 ** DONE elseif syntax 
 ** DONE let syntax 
-** TODO Re-entrant lexer
+** DONE Re-entrant lexer
 ** TODO while loops
 ** TODO multiple modules 
    :depends: re-entrant lexer
