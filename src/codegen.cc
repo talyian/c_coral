@@ -20,19 +20,19 @@ LLVMValueRef FUNC_MULTI = (LLVMValueRef)-1;
 // Define takes a scope, a name, and a LLVMValueRef that
 // is a pointer to the the variable location!
 void ModuleBuilder::define_func(LLVMValueRef scope, string name, LLVMValueRef value) {
-    // cerr << "defining " << name << "\n";
+  // cerr << "defining " << name << "\n";
   names[scope][name] = value;
   names[scope][name + "=func"] = LLVMConstInt(LLVMInt32Type(), 0, false);
 }
 void ModuleBuilder::define(LLVMValueRef scope, string name, LLVMValueRef value) {
   // cerr << "define: " << name << ": " << TSTR(LLVMTypeOf(value)) << endl;
-    // cerr << "defining " << name << "\n";
+  // cerr << "defining " << name << "\n";
   names[scope][name] = value;
   names[scope][name + "=func"] = 0;
 }
 
 LLVMValueRef ModuleBuilder::load(LLVMBuilderRef builder, LLVMValueRef scope, string name) {
-    // cerr << "loading: " << name << "\n";
+  // cerr << "loading: " << name << "\n";
   auto loc = names[scope][name];
   // cerr << "lookup: " << name << " from " << (
   // 					     (long long int)loc < 0 ? "multifunc" :
@@ -87,7 +87,7 @@ void GetLLVMType::visit(FloatType * f) { out =
     f->bits == 32 ? LLVMFloatTypeInContext(mb->context) :
     f->bits == 64 ? LLVMDoubleTypeInContext(mb->context) :
     0;
-    if (!out) std::cerr << "Invalid Float Type " << f->toString() << std::endl;
+  if (!out) std::cerr << "Invalid Float Type " << f->toString() << std::endl;
 }
 
 void ExprValue::visit(String * s) {
@@ -99,60 +99,60 @@ void ExprValue::visit(Cast * s)  {
   output = LLVMBuildTrunc(mb->builder, VAL(s->expr), LTYPE(s->to_type), "");
 }
 void ExprValue::visit(Call * c)  {
-    output = 0;
-    auto bb = LLVMGetInsertBlock(mb->builder);
-    auto curfunc = LLVMGetBasicBlockParent(bb);
-    auto module = LLVMGetGlobalParent(curfunc);
+  output = 0;
+  auto bb = LLVMGetInsertBlock(mb->builder);
+  auto curfunc = LLVMGetBasicBlockParent(bb);
+  auto module = LLVMGetGlobalParent(curfunc);
 
-    // resolve arguments:
-    int nArgs = (int)c->arguments.size();
-    auto args = new LLVMValueRef[nArgs];
-    for(int i=0; i < (int)nArgs; i++) {
-      Expr * expr = c->arguments[i];
-      LLVMValueRef arg = VAL(expr);
-      args[i] = arg;
-    }
+  // resolve arguments:
+  int nArgs = (int)c->arguments.size();
+  auto args = new LLVMValueRef[nArgs];
+  for(int i=0; i < (int)nArgs; i++) {
+    Expr * expr = c->arguments[i];
+    LLVMValueRef arg = VAL(expr);
+    args[i] = arg;
+  }
 
-    LLVMValueRef func = lookup(0, c->callee);
-    if (func == (LLVMValueRef)-1) {
-      auto callee2 = c->callee + "$" + LLVMPrintTypeToString(FixArgument(LLVMTypeOf(args[0])));
-      func = lookup(0, callee2);
-      if ((size_t)func < (size_t)1) {
-	cerr << callee2 << " not found :(\n";
-	return;
-      }
-    }
-    else if (func == 0) {
-      cerr << bb << endl;
-      cerr << curfunc << endl;
-      cerr << module << endl;
-      cerr << "not found: " << c->callee << endl;
+  LLVMValueRef func = lookup(0, c->callee);
+  if (func == (LLVMValueRef)-1) {
+    auto callee2 = c->callee + "$" + LLVMPrintTypeToString(FixArgument(LLVMTypeOf(args[0])));
+    func = lookup(0, callee2);
+    if ((size_t)func < (size_t)1) {
+      cerr << callee2 << " not found :(\n";
       return;
     }
+  }
+  else if (func == 0) {
+    cerr << bb << endl;
+    cerr << curfunc << endl;
+    cerr << module << endl;
+    cerr << "not found: " << c->callee << endl;
+    return;
+  }
 
-    if (!func) return;
-    LLVMTypeRef functype = LLVMTypeOf(func);
-    int nParam = LLVMCountParamTypes(LLVMGetElementType(functype));
-    if (nParam < 0) cerr << TSTR(functype) << " Number of Params invalid : " << nParam << endl;
-    auto params = new LLVMTypeRef[nParam];
-    LLVMGetParamTypes(LLVMGetElementType(functype), params);
+  if (!func) return;
+  LLVMTypeRef functype = LLVMTypeOf(func);
+  int nParam = LLVMCountParamTypes(LLVMGetElementType(functype));
+  if (nParam < 0) cerr << TSTR(functype) << " Number of Params invalid : " << nParam << endl;
+  auto params = new LLVMTypeRef[nParam];
+  LLVMGetParamTypes(LLVMGetElementType(functype), params);
 
-    // cerr << "calling " << c->callee << "(" << TSTR(functype) << ")" << endl;
-    // cerr << "nargs: " << nArgs << ", nparams: " << nParam << endl;
-    for(int i=0; i < nArgs; i++) {
-      Expr * expr = c->arguments[i];
-      LLVMValueRef arg = VAL(expr);
-      LLVMTypeRef paramtype = i < nParam ? params[i] : LLVMTypeOf(arg);
-      // cerr << "arg " << i << " : " << LLVMPrintValueToString(arg) << endl;
-      // cerr << TSTR(LLVMTypeOf(arg)) << " => " << (paramtype ? TSTR(paramtype) : "null?") << endl;
-      if (paramtype)
-      	args[i] = CastArgument(mb->builder, arg, paramtype);
-      else
-	args[i] = arg;
-    }
-    output = LLVMBuildCall(mb->builder, func, args, nArgs, "");
-    delete [] args;
-    delete [] params;
+  // cerr << "calling " << c->callee << "(" << TSTR(functype) << ")" << endl;
+  // cerr << "nargs: " << nArgs << ", nparams: " << nParam << endl;
+  for(int i=0; i < nArgs; i++) {
+    Expr * expr = c->arguments[i];
+    LLVMValueRef arg = VAL(expr);
+    LLVMTypeRef paramtype = i < nParam ? params[i] : LLVMTypeOf(arg);
+    // cerr << "arg " << i << " : " << LLVMPrintValueToString(arg) << endl;
+    // cerr << TSTR(LLVMTypeOf(arg)) << " => " << (paramtype ? TSTR(paramtype) : "null?") << endl;
+    if (paramtype)
+      args[i] = CastArgument(mb->builder, arg, paramtype);
+    else
+      args[i] = arg;
+  }
+  output = LLVMBuildCall(mb->builder, func, args, nArgs, "");
+  delete [] args;
+  delete [] params;
 }
 
 void ExprValue::visit(Var * s) {
@@ -172,7 +172,7 @@ void ExprValue::visit(BinOp * c) { output = BinaryValue(mb, c).output; }
 void BinaryValue::visitLong()  {
   auto lval = VAL(op->lhs);
   auto rval = VAL(op->rhs);
-    if (op->op == "+") { output = LLVMBuildAdd(mb->builder, lval, rval, ""); }
+  if (op->op == "+") { output = LLVMBuildAdd(mb->builder, lval, rval, ""); }
   else if (op->op == "-") { output = LLVMBuildSub(mb->builder, lval, rval, ""); }
   else if (op->op == "*") { output = LLVMBuildMul(mb->builder, lval, rval, ""); }
   else if (op->op == "/") { output = LLVMBuildSDiv(mb->builder, lval, rval, ""); }
@@ -305,27 +305,27 @@ std::string handle_module(Module * m) {
 }
 
 std::string compile_bc_module(Module * m) {
-    std::string ir = handle_module(m);
-    return ir;
+  std::string ir = handle_module(m);
+  return ir;
 }
 
 #include "llvm-c/ExecutionEngine.h"
 void jit_modules(std::vector<Module *> modules) {
-    ModuleBuilder moduleb(modules[0]);
-    auto llvm_module = moduleb.module;
+  ModuleBuilder moduleb(modules[0]);
+  auto llvm_module = moduleb.module;
     
-    LLVMExecutionEngineRef engine;
-    char * error = NULL;
-    LLVMLinkInMCJIT();
-    LLVMInitializeNativeTarget();
-    LLVMInitializeNativeAsmPrinter();
+  LLVMExecutionEngineRef engine;
+  char * error = NULL;
+  LLVMLinkInMCJIT();
+  LLVMInitializeNativeTarget();
+  LLVMInitializeNativeAsmPrinter();
 
-    if (LLVMCreateExecutionEngineForModule(&engine, llvm_module, &error) != 0) {
-    	fprintf(stderr, "failed to create execution engine\n");
-    } else if (error) {
-    	fprintf(stderr, "error: %s\n", error);
-    	LLVMDisposeMessage(error);
-    } else {
-	LLVMRunFunction(engine, moduleb.load(moduleb.builder, 0, "main"), 0, 0);
-    }
+  if (LLVMCreateExecutionEngineForModule(&engine, llvm_module, &error) != 0) {
+    fprintf(stderr, "failed to create execution engine\n");
+  } else if (error) {
+    fprintf(stderr, "error: %s\n", error);
+    LLVMDisposeMessage(error);
+  } else {
+    LLVMRunFunction(engine, moduleb.load(moduleb.builder, 0, "main"), 0, 0);
+  }
 }
