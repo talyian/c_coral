@@ -1,4 +1,4 @@
-#include "llvm-c/Core.h"
+#include <llvm-c/Core.h>
 #include <map>
 
 #define lookup(scope, name) mb->load(mb->builder, scope, name)
@@ -6,6 +6,7 @@
 // Compile a coral file
 class ModuleBuilder : public Visitor {
 public:
+
   LLVMContextRef context;
   LLVMModuleRef module;
   LLVMBuilderRef builder;
@@ -16,8 +17,11 @@ public:
   void define_func(LLVMValueRef scope, std::string name, LLVMValueRef value);
   void define(LLVMValueRef scope, std::string name, LLVMValueRef value);
   LLVMValueRef load(LLVMBuilderRef builder, LLVMValueRef scope, std::string name);
-  
+  LLVMValueRef loadWithType(LLVMValueRef scope, std::string name, LLVMTypeRef type);  
+
+  void init(Module * m);
   ModuleBuilder(Module * m);
+  ModuleBuilder(Module * m, std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> _names);
   ModuleBuilder * getModuleBuilder() { return this; }
   ~ModuleBuilder();
 

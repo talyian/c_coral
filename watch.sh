@@ -17,6 +17,6 @@ debounce() {
     elif [[ "$dir" == "samples/"* && "$file" ]]; then
 	SRCFILE="$dir$file"
     fi
-    echo "-- [$file] -----($SRCFILE)-------------------------------------------------------"
-    make
+    echo "-- [$file] -----($SRCFILE)---------------------------------------------------"
+    make -s
 done

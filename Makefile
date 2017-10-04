@@ -4,7 +4,7 @@ WCLANG=clang++.exe
 WCONFIG=llvm-config.exe
 CONFIG=llvm-config-5.0
 CXXCONFIG=$(shell ${CONFIG} --cxxflags | sed 's/-Wl,-fuse-ld=gold//; s/-Wno-maybe-uninitialized//;')
-TESTFILE ?= samples/basic/collatz.coral
+TESTFILE ?= samples/basic/hello.coral
 COMPILE=${CLANG} -c -o $@ $<
 
 default: bin/coral

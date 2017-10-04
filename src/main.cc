@@ -29,8 +29,8 @@ int main(int argc, char **argv) {
     std::cerr << handle_module(module) << std::endl;
     delete module;
   } else if (command == "jit") {
-    std::cerr << "\n\n";
     auto modules = std::vector<Module *>();
+    modules.push_back(get_module(fopen("samples/prelude/extern.coral", "r")));
     for(int i=0; i<argc - 2; i++) {
       std::cerr << argv[i + 2] << "\n";
       modules.push_back(get_module(fopen(argv[i + 2], "r")));

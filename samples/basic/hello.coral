@@ -1,2 +1,4 @@
-func main : Int32 ():
-    println "Hello World!"
+func main : Int32():
+    println (1 as Int1)
+    println 3
+    println "foobar"

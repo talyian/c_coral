@@ -1,0 +1,18 @@
+open regex
+open collections
+
+func calc():
+  let input = stdin.raw.read_stream()
+  let dna = regex.search(">THREE", input).read()
+  for len in [1, 2]:
+    let d = collections.counter(for s in 0..dna: dna.[s, s+len])
+    let total = d.values.sum
+    for a, b in d.sortBy(snd . negate):
+	string<"%s %.3f">(a, b / total)
+
+  for sub in ["ggt","ggta","ggtatt","ggtattttaatt","ggtattttaatttatagt"]:
+    let len = sub.len
+    let d = collections.counter(for s in 0..dna: dna.[s, s+len]) 
+    string<"%d\t%s">(d[sub], sub)
+
+for line in calc: print line

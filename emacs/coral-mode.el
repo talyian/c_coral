@@ -1,0 +1,62 @@
+(defvar coral-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [foo] 'coral-do-foo)
+    map)
+  "Keymap for `coral-mode'.")
+
+(defvar coral-mode-syntax-table
+  (let ((st (make-syntax-table)))
+    (modify-syntax-entry ?# "<" st)
+    (modify-syntax-entry ?\n ">" st)
+    (modify-syntax-entry ?\' "\"\'" st)
+    (modify-syntax-entry ?\" "\"\"" st)        
+    st)
+  "Syntax table for `coral-mode'.")
+
+(defvar coral-font-lock-keywords '(
+   ("func" . font-lock-keyword-face)
+   ("let" . font-lock-keyword-face)
+   ("\\<\\(if\\|then\\|for\\|in\\)\\>" . font-lock-keyword-face)
+   ("\\<\\(if\\|then\\|for\\|in\\)\\>" . font-lock-keyword-face)
+   ("=>\\|\[$@<>=+*/%-\]" . font-lock-function-name-face)
+ ) "Keyword highlighting specification for `coral-mode'.")
+
+(defvar coral-imenu-generic-expression
+  ())
+
+(defvar coral-outline-regexp
+  ())
+
+ ;;;###autoload
+(define-derived-mode coral-mode fundamental-mode "Coral"
+  "A major mode for editing Coral files."
+  :syntax-table coral-mode-syntax-table
+  (setq-local comment-start "# ")
+  (setq-local comment-start-skip "#+\\s-*")
+  (setq-local font-lock-defaults
+	      '(coral-font-lock-keywords))
+  ;; (setq-local indent-line-function 'coral-indent-line)
+  (setq-local imenu-generic-expression
+	      coral-imenu-generic-expression)
+  (setq-local outline-regexp coral-outline-regexp)
+  ())
+
+ ;;; Indentation
+
+;; (defun coral-indent-line ()
+;;   "Indent current line of Coral code."
+;;   (interactive)
+;;   (let ((savep (> (current-column) (current-indentation)))
+;; 	(indent (condition-case nil (max (coral-calculate-indentation) 0)
+;; 		  (error 0))))
+;;     (if savep
+;; 	(save-excursion (indent-line-to indent))
+;;       (indent-line-to indent))))
+
+;; (defun coral-calculate-indentation ()
+;;   "Return the column to which the current line should be indented."
+;;   ())
+
+
+(provide 'coral-mode)
+(add-to-list 'auto-mode-alist '("\\.coral\\'" . coral-mode))

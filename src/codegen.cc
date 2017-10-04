@@ -2,7 +2,7 @@
 #include <map>
 #include <algorithm>
 #include <regex>
-#include "llvm-c/Core.h"
+#include <llvm-c/Core.h>
 
 #include "ast.hh"
 #include "parser.hh"
@@ -20,7 +20,9 @@ LLVMValueRef FUNC_MULTI = (LLVMValueRef)-1;
 // Define takes a scope, a name, and a LLVMValueRef that
 // is a pointer to the the variable location!
 void ModuleBuilder::define_func(LLVMValueRef scope, string name, LLVMValueRef value) {
-  // cerr << "defining " << name << "\n";
+  // cerr << "defining " << (scope ? "local " : "global ")
+  //      << name
+  //      << (value == FUNC_MULTI ? " [multi]" : "") <<"\n";
   names[scope][name] = value;
   names[scope][name + "=func"] = LLVMConstInt(LLVMInt32Type(), 0, false);
 }
@@ -31,15 +33,30 @@ void ModuleBuilder::define(LLVMValueRef scope, string name, LLVMValueRef value) 
   names[scope][name + "=func"] = 0;
 }
 
-LLVMValueRef ModuleBuilder::load(LLVMBuilderRef builder, LLVMValueRef scope, string name) {
-  // cerr << "loading: " << name << "\n";
+LLVMValueRef ModuleBuilder::loadWithType(LLVMValueRef scope, string name, LLVMTypeRef hint)  {
+  return 0;
+}
+LLVMValueRef ModuleBuilder::load(LLVMBuilderRef __unused__, LLVMValueRef scope, string name) {
+  
+  // cerr << this <<  " loading: " << name << "\n";
   auto loc = names[scope][name];
-  // cerr << "lookup: " << name << " from " << (
-  // 					     (long long int)loc < 0 ? "multifunc" :
-  // 					     (long long int)loc == 0 ? "error" :
-  // 					     TSTR(LLVMTypeOf(loc))) << endl;
+  if (!loc && scope) { 
+    loc = names[0][name];
+    if (loc) scope = 0;
+  }
   if (names[scope][name + "=func"])
     return loc;
+  
+  if (!loc) {
+    cerr << "scope :     " << scope << endl;
+    cerr << "not found : " << name << endl;
+    for(auto it = names.begin(); it != names.end(); it++) {
+      cerr << "    " << it->first << endl;
+      for (auto j = it->second.begin(); j != it->second.end(); j++) {
+	cerr << "        " << j->first << endl;
+      }
+    }
+  }
   return LLVMBuildLoad(builder, loc, "");
 }
 LLVMTypeRef FixArgument(LLVMTypeRef t) {
@@ -113,23 +130,25 @@ void ExprValue::visit(Call * c)  {
     args[i] = arg;
   }
 
-  LLVMValueRef func = lookup(0, c->callee);
-  if (func == (LLVMValueRef)-1) {
+  LLVMValueRef func = 0;
+  do {
+    // cerr << "lookup " << c->callee << endl;
+    func = lookup(0, c->callee);
+    // cerr << "FOUND " << (size_t)func << endl;
+    if (func != 0 && func != FUNC_MULTI) break;
+
     auto callee2 = c->callee + "$" + LLVMPrintTypeToString(FixArgument(LLVMTypeOf(args[0])));
+    // cerr << "trying " << callee2 << endl;
     func = lookup(0, callee2);
-    if ((size_t)func < (size_t)1) {
-      cerr << callee2 << " not found :(\n";
-      return;
-    }
-  }
-  else if (func == 0) {
+    if (func != 0 && func != FUNC_MULTI) break;
+
     cerr << bb << endl;
     cerr << curfunc << endl;
     cerr << module << endl;
     cerr << "not found: " << c->callee << endl;
     return;
-  }
-
+  } while(0);
+	  
   if (!func) return;
   LLVMTypeRef functype = LLVMTypeOf(func);
   int nParam = LLVMCountParamTypes(LLVMGetElementType(functype));
@@ -193,12 +212,18 @@ void BinaryValue::visitDouble() {
   else cerr << "unknown operation " << op->op << endl;
 }
 
-ModuleBuilder::ModuleBuilder(Module * m) {
+void ModuleBuilder::init(Module * m) {
   context = LLVMContextCreate();
   module = LLVMModuleCreateWithNameInContext(m->name.c_str(), context);
   builder = LLVMCreateBuilderInContext(context);
   for(auto i = m->lines.begin(), e=m->lines.end(); i != e; i++)
     (*i)->accept(this);
+}
+ModuleBuilder::ModuleBuilder(Module * m) { init(m); }
+ModuleBuilder::ModuleBuilder(Module * m, std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> _n)
+{
+  names = _n;
+  init(m);
 }
 
 ModuleBuilder::~ModuleBuilder() {
@@ -311,14 +336,23 @@ std::string compile_bc_module(Module * m) {
 
 #include "llvm-c/ExecutionEngine.h"
 void jit_modules(std::vector<Module *> modules) {
-  ModuleBuilder moduleb(modules[0]);
-  auto llvm_module = moduleb.module;
-    
-  LLVMExecutionEngineRef engine;
-  char * error = NULL;
   LLVMLinkInMCJIT();
   LLVMInitializeNativeTarget();
   LLVMInitializeNativeAsmPrinter();
+
+  std::vector<ModuleBuilder *> builders;
+  std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> all_names;
+  for(auto i = modules.begin(); i < modules.end(); i++) {
+    if (*i) { 
+      auto m = new ModuleBuilder(*i, all_names);
+      builders.push_back(m);
+      all_names = m->names;
+    }
+  }
+  auto llvm_module = builders[0]->module;
+
+  LLVMExecutionEngineRef engine;
+  char * error = NULL;
 
   if (LLVMCreateExecutionEngineForModule(&engine, llvm_module, &error) != 0) {
     fprintf(stderr, "failed to create execution engine\n");
@@ -326,6 +360,15 @@ void jit_modules(std::vector<Module *> modules) {
     fprintf(stderr, "error: %s\n", error);
     LLVMDisposeMessage(error);
   } else {
-    LLVMRunFunction(engine, moduleb.load(moduleb.builder, 0, "main"), 0, 0);
+
+    for(auto i = builders.begin() + 1; i < builders.end(); i++) {
+      LLVMAddModule(engine, (*i)->module);
+    }
+
+    LLVMValueRef fn;
+    if (!LLVMFindFunction(engine, "main", &fn))
+      LLVMRunFunction(engine, fn, 0, 0);
+    else
+      cerr << "No main function found\n";
   }
 }

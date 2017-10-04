@@ -18,5 +18,5 @@ func [] println :Void(x: Int64):
 
 func [] println :Void (x: Int1):
   if x:
-      printf "True"
-  else printf "False"
+      printf "True\n"
+  else printf "False\n"
