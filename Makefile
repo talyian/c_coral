@@ -21,7 +21,7 @@ docker:
 	docker run -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
 
 bin/coral: obj/codegen.o obj/compiler.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o
-	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs)
+	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre
 
 obj/ast.o: obj/ast.cc obj/ast.hh obj/type.hh
 	${COMPILE}

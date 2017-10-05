@@ -1,4 +1,5 @@
-extern "C" printf
+extern "C" malloc: Fn[Int32, Ptr[Int8]]
+extern "C" foo: Fn[Int64, Int64]
 extern "C" pcre_compile : Fn[..., Ptr[Int8]]
 extern "C" pcre_exec : Fn[..., Int32]
 
@@ -11,16 +12,14 @@ func Regex_search : Int64 (regex : Int64, target: Ptr[Int8]):
 func Regex_match : Int64 (regex : Int64, target: Ptr[Int8]):
    return 0
    
-func main:Int32():
-   printf("PCRE test\n")
+func main : Int32 ():
    let errString : Ptr[Int8] = "error----------------------------------------"
    let errOffset : Int32 = 0
-   let pattern : Ptr[Int8] = pcre_compile("e", 0 as Int32, &errString, &errOffset, 0)
-   printf("pattern ptr: %xd\n", pattern)
-   let res : Int32 = pcre_exec(pattern, 0, "best test", 4, 0, 0, 0, 0)
+   let pattern : Ptr[Int8] = pcre_compile("s...", 0 as Int32, &errString, &errOffset, 0)
+   let ovec : Ptr[Int8] = malloc (10 * 4 * 3)
+   let res : Int32 = pcre_exec(pattern, 0, "best test in the west", 21, 0, 0, ovec, 10)
    if res < 0:
-      printf("result: %d\n", res)
+      printf("error result: %d\n", res)
    else:
-      printf("result: %d\n", res)   
-   return 0
-   
+      printf("result: %d\n", res)
+      printf("a: (% - %d)\n", ovec, 0)

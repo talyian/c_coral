@@ -18,5 +18,6 @@ debounce() {
 	SRCFILE="$dir$file"
     fi
     echo "-- [$file] -----($SRCFILE)---------------------------------------------------"
-    make -s
+    make -s bin/coral && bin/coral jit ${SRCFILE}
+    echo $_
 done

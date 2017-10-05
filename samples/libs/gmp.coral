@@ -1,0 +1,70 @@
+# Standard Numbers
+  bool
+[u]int[1/8/16/32/64/128]
+ float[16/32/64/128]
+
+# Numbers: C++ stdint Interop
+module c_types:
+  uintsize = size_t 
+
+  int_ptr = intptr_t
+  int_short = short int
+  int = int
+  int_long = long int
+  int_longlong = long long int
+
+  uint_ptr = uintptr_t
+  uint_short = unsigned short int
+  uint = unsigned int
+  uint_long = unsigned long int
+  uint_longlong = unsigned long long int
+
+module c_interop:
+  extern "C" malloc: Fn[int, Ptr[int8]]
+  extern "C" free: Fn[Ptr[int8], Void]
+  
+# begin
+type mpz_struct = struct:
+  _mp_aloc: c_types.int
+  _mp_size: c_types.int
+  _mp_d: Ptr[Int8]
+
+type mpz_ptr = Ptr[mpz_struct]
+type ulong = c_types.uint_long
+
+extern "C" __gmpz_init_set_ui: Fn[mpz_ptr, ulong, Void]
+extern "C" __gmpz_clear:       Fn[mpz_ptr, Void]
+extern "C" __gmpz_get_ui:      Fn[mpz_ptr, ulong]
+extern "C" __gmpz_cmp: 	       Fn[mpz_ptr, mpz_ptr, c_types.int]
+extern "C" __gmpz_add: 	       Fn[mpz_ptr, mpz_ptr, mpz_ptr, Void]
+extern "C" __gmpz_mul_ui:      Fn[mpz_ptr, mpz_ptr, ulong, Void]
+extern "C" __gmpz_addmul_ui:   Fn[mpz_ptr, mpz_ptr, ulong, Void]
+extern "C" __gmpz_submul_ui:   Fn[mpz_ptr, mpz_ptr, ulong, Void]
+extern "C" __gmpz_tdiv_q:      Fn[mpz_ptr, mpz_ptr, mpz_ptr, Void]
+extern "C" __gmpz_get_str:     Fn[cstr, int, mpz_ptr, Void]
+
+type bignum:
+   mpz : mpz_struct 
+   func __new__(): __gmpz_init_set_ui(&mpz, 0)
+   func __destroy__(): __gmpz_clear(&mpz)
+   func getUIntNative(): __gmpz_get_ui(&mpz)
+   func setAdd(a, b): __gmpz_add(&mpz, &(a.mpz), &(b.mpz))
+   func setMul(a, n): __gmpz_mul_ui(&mpz, &(a.mpz), n)
+   func addmul(a, n): __gmpz_addmul_ui(&mpz.mpz), n)
+   func submul(a, n): __gmpz_submul_ui(&mpz, &(a.mpz), n)
+   func tdiv_q(a, b): __gmpz_tdiv_q(&mpz, &(a.mpz), &(b.mpz))
+   func (+) (a, b):
+       let result = bignum.new(0)
+       result.setAdd(a, b)
+       result
+   func (*) (a, b: UIntNative):
+       let result = bignum.new(0)
+       result.setMul(a, b)
+       result
+   func (/) (a, b):
+       let result = bignum.new(0)
+       result.tdiv_q(a, b)
+       result
+   func cast<UIntNative>(): return getUIntNative()
+   func cast<T>(): return getUIntNative().cast<T>()
+   func string(): 

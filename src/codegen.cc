@@ -57,6 +57,7 @@ LLVMValueRef ModuleBuilder::load(LLVMBuilderRef __unused__, LLVMValueRef scope, 
       }
     }
   }
+  // cerr << "loading " << name << " from " << LLVMPrintValueToString(loc) << endl; 
   return LLVMBuildLoad(builder, loc, "");
 }
 LLVMTypeRef FixArgument(LLVMTypeRef t) {
@@ -183,7 +184,16 @@ void ExprValue::visit(Var * s) {
 void ExprValue::visit(AddrOf * s) {
   auto bb = LLVMGetInsertBlock(mb->builder);
   auto fn = LLVMGetBasicBlockParent(bb);
-  output = lookup(fn, s->var);
+  auto name = s->var;
+  auto scope = fn;
+  auto loc = mb->names[scope][name];
+  if (!loc && scope) { 
+    loc = mb->names[0][name];
+    if (loc) scope = 0;
+  }
+  output = loc;
+  // cerr << "var : " << s->var << endl;
+  // cerr << "output: " << LLVMPrintValueToString(output) << endl;
 }
 
 void ExprValue::visit(BinOp * c) { output = BinaryValue(mb, c).output; }
