@@ -1,22 +1,9 @@
 #include "ast.hh"
 #include <regex>
 
-void Expr::accept(Visitor * v) { v->visit(this); }
-void BinOp::accept(Visitor * v) { v->visit(this); }
-void Call::accept(Visitor * v) { v->visit(this); }
-void Extern::accept(Visitor * v) { v->visit(this); }
-void String::accept(Visitor * v) { v->visit(this); }
-void Long::accept(Visitor * v) { v->visit(this); }
-void Double::accept(Visitor * v) { v->visit(this); }
-void Module::accept(Visitor * v) { v->visit(this); }
-void FuncDef::accept(Visitor * v) { v->visit(this); }
-void BlockExpr::accept(Visitor * v) { v->visit(this); }
-void Var::accept(Visitor * v) { v->visit(this); }
-void If::accept(Visitor * v) { v->visit(this); }
-void Return::accept(Visitor * v) { v->visit(this); }
-void Cast::accept(Visitor * v) { v->visit(this); }
-void Let::accept(Visitor * v) { v->visit(this); }
-void AddrOf::accept(Visitor * v) { v->visit(this); }
+#define ACCEPT_MACRO(NODE) void NODE::accept(Visitor * v) { v->visit(this); }
+EXPR_NODE_LIST(ACCEPT_MACRO)
+#undef ACCEPT_MACRO
 
 std::string Escape(std::string s) {
   if (s == "\\\\") return "\\";
@@ -83,6 +70,14 @@ std::string Let::toString() {
 }
 std::string AddrOf::toString() {
   return "&" + var;
+}
+std::string BlockExpr::toString() {
+    std::string s("block:\n");
+    for(auto iter = lines.begin(); iter != lines.end(); iter++) {
+      if (*iter) s += (*iter)->toString() + "\n";
+      else s += "(null)\n";
+    }
+    return s;
 }
 
 FuncDef* BuildVarFunc(std::string name, Type* return_type, std::vector<Def *> params, Expr * body) {

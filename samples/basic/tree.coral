@@ -1,0 +1,30 @@
+type Node:
+  value
+  left
+  right
+
+impl Node:
+  func insert(self, v):
+    match cmp(v, self.value):
+      LT:
+        match self.left:
+          None: set self.left = Node.new(v)
+          Some(n): n.insert(v)
+      GT:
+        match self.right:
+          None: set self.right = Node.new(v)
+          Some(n): n.insert(v)
+  func find(self, v):
+    match cmp(v, self.value):
+      LT:
+        match self.left:
+          None:
+            None
+          Some(x):
+            find(x, v)
+      GT: map (find @ (_, v)) self.right
+      EQ: True
+
+impl Show for Node:
+  func show(this):
+    concat [this.left.show(), this.value.show(), this.right.show()]

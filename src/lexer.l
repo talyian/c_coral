@@ -36,7 +36,7 @@ std::stack<int> indents({ 0 });
 int [0-9]+
 num [0-9]+[.][0-9]+
 str \"([^\\\"]|\\\\|\\\"|\\n)*\"
-id  [_a-zA-Z][_a-zA-Z0-9]*
+id  [$]?[_a-zA-Z][_a-zA-Z0-9]*
 br  \n[ ]*
 comment [#].*$
 			
@@ -59,6 +59,13 @@ comment [#].*$
     indents.pop();
     return yy::parser::token::DEDENT;
 }
+
+impl   { tok(IMPL); }
+for    { tok(FOR); }
+class  { tok(CLASS); }
+match  { tok(MATCH); }
+type   { tok(TYPE); }
+module { tok(MODULE); }
 let    { tok(LET); }
 as     { tok(AS); }
 return { tok(RETURN); }

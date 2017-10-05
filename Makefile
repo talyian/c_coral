@@ -1,5 +1,5 @@
-#CLANG=clang++-5.0 -std=c++11 -fsanitize=address -g3
-CLANG=clang++-5.0 -std=c++11
+# CLANG=clang++-5.0 -std=c++11 -fsanitize=address -g3
+CLANG=clang++-5.0 -std=c++11 -g3
 WCLANG=clang++.exe
 WCONFIG=llvm-config.exe
 CONFIG=llvm-config-5.0
@@ -20,8 +20,11 @@ docker:
 	docker build -t coral -f dockerenv/Dockerfile .
 	docker run -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
 
-bin/coral: obj/codegen.o obj/compiler.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o
-	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre
+bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o
+	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre -rdynamic
+
+obj/type.o: obj/type.cc obj/type.hh
+	${COMPILE}
 
 obj/ast.o: obj/ast.cc obj/ast.hh obj/type.hh
 	${COMPILE}
@@ -29,13 +32,10 @@ obj/ast.o: obj/ast.cc obj/ast.hh obj/type.hh
 obj/codegen.o: obj/codegen.cc obj/parser.hh obj/ast.hh obj/type.hh obj/codegen.hh
 	${COMPILE} ${CXXCONFIG}
 
-obj/compiler.o: obj/compiler.cc obj/ast.hh obj/type.hh obj/compiler.hh obj/codegen.hh
-	${COMPILE} ${CXXCONFIG}
-
 obj/lexer.o: obj/lexer.cc obj/ast.hh obj/type.hh obj/parser.hh
 	${COMPILE}
 
-obj/main.o: obj/main.cc obj/ast.hh obj/type.hh obj/parser.hh obj/compiler.hh obj/lexer.hh
+obj/main.o: obj/main.cc obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/mainfuncPass.hh obj/inferTypePass.hh obj/typeScope.hh
 	${COMPILE}
 
 obj/parser.o: obj/parser.cc obj/ast.hh obj/type.hh obj/parser.hh

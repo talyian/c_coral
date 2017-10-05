@@ -1,0 +1,34 @@
+
+let genericList = []
+list.add 5
+list.add "str"
+list.add []
+
+let typedList : List[Int32] = []
+typedList.add 5
+typedList.add 8
+typedList.add "5" # error
+
+# $t inferredList is List[GenericInt[Range[3-9]]]
+let inferredList = []
+inferredList.add 5
+inferredList.add 8
+inferredList.add 3
+
+# foo Fn[T, T]
+# :: T.add : Fn[Int, Void]
+func foo(list):
+  list.add 8
+  list.add 10
+  list
+
+let arr = Array[any].new 3
+arr[0] = 5
+arr[1] = "str"
+arr[2] = []
+
+let arr = Array[Int32].new 3
+arr[0] = 4
+arr[1] = -1
+arr[2] = 3
+

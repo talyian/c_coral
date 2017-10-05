@@ -1,13 +1,16 @@
 # Functions
-
+```
 func f (a, b):
-	b
+  b
+
 func id (a): a
-func flip (f): func (a, b): (b, a)
 
+func flip (f): 
+  func (a, b): f (b, a)
+	
 func add (a, b): 
-	a + b
-
+  a + b
+```
 # Partial Application
 
 `@` is partial application operator, `_` is the placeholder marker

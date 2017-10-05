@@ -1,4 +1,24 @@
-func main : Int32():
-    println (1 as Int1)
-    println 3
-    println "foobar"
+extern "C" strlen : Fn[Ptr[Int8], Int32]
+extern "C" fizzbuzz : Fn[Int32, Ptr[Int8]]
+
+extern "C" ByteString_create: Fn[Ptr[Int8], Int32, Ptr[Int8]]
+extern "C" ByteString_unsafe_cstr: Fn[Ptr[Int8], Ptr[Int8]]
+extern "C" ByteString_len: Fn[Ptr[Int8], Ptr[Int8]]
+
+type List:
+  | Nil
+  | Cons
+
+func show : Void (x: List):
+  match x:
+    Nil: printf ""
+    Cons: printf "Cons"
+
+func main : Void ():
+  let w : Ptr[Int8] = "World"
+  let s : Int32 = strlen w
+  printf ("Hello, %s\n", w)
+  printf ("%s.len = %d\n", w, s)
+  printf ("FizzBuzz:\n%s\n", fizzbuzz 20)
+  let bs : Ptr[Int8] = ByteString_create("foobar barbar", 8)
+  printf("(%d) [%s]\n", ByteString_len bs, ByteString_unsafe_cstr bs)

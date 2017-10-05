@@ -53,6 +53,13 @@ type bignum:
    func addmul(a, n): __gmpz_addmul_ui(&mpz.mpz), n)
    func submul(a, n): __gmpz_submul_ui(&mpz, &(a.mpz), n)
    func tdiv_q(a, b): __gmpz_tdiv_q(&mpz, &(a.mpz), &(b.mpz))
+
+   func (+=*) (a, b, c): a.addmul(b, c)
+   func (*=) (a, b: Int64): a.addmul(b)
+   func (=+) (a, b, c): a.setAdd(b, c)
+   func (=*) (a, b, c): a.setMul(b, c)
+   func (=/) (a, b, c): a.tdiv_q(b, c)
+   
    func (+) (a, b):
        let result = bignum.new(0)
        result.setAdd(a, b)

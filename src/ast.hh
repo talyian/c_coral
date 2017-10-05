@@ -12,6 +12,32 @@ class Expr {
   virtual ~Expr() { }
 };
 
+#define EXPR_NODE_LIST(M) /*
+*/ M(Expr) /*
+*/ M(BinOp) /*
+*/ M(Call) /*
+*/ M(Extern) /*
+*/ M(String) /*
+*/ M(Long) /*
+*/ M(Double) /*
+*/ M(Module) /*
+*/ M(FuncDef) /*
+*/ M(BlockExpr) /*
+*/ M(Var) /*
+*/ M(If) /*
+*/ M(Return) /*
+*/ M(Cast) /*
+*/ M(Let) /*
+*/ M(AddrOf) /*
+*/ M(DeclClass) /*
+*/ M(ImplType) /*
+*/ M(ImplClassFor) /*
+*/ M(DeclTypeEnum) /*
+*/ M(DeclTypeAlias) /*
+*/ M(MatchExpr) /*
+*/ M(MatchCaseTagsExpr) /*
+*/ M(EnumCase)
+
 class Call : public Expr {
  public:
   std::string callee;
@@ -108,14 +134,7 @@ class BlockExpr : public Expr {
   std::vector<Expr *>lines;
  BlockExpr(std::vector<Expr *>lines) : lines(lines) { }
   virtual void accept(class Visitor * v);
-  virtual std::string toString() {
-    std::string s("");
-    for(auto iter = lines.begin(); iter != lines.end(); iter++) {
-      if (*iter) s += (*iter)->toString() + "\n";
-      else s += "(null)\n";
-    }
-    return s;
-  }
+  virtual std::string toString();
   ~BlockExpr() { for(auto i = lines.begin(), e = lines.end(); i != e; i++) delete *i; }
 };
 
@@ -142,9 +161,9 @@ class FuncDef : public Expr {
   virtual void accept(class Visitor * v);
   virtual std::string toString();
   ~FuncDef() {
-      delete body;
-      delete rettype;
-      for(auto i = args.begin(), e = args.end(); i != e; i++) delete *i;
+    if (body) { delete body; }
+    if (rettype) { delete rettype; }
+    for(auto i = args.begin(), e = args.end(); i != e; i++) if (*i) { delete *i; }
   }
 };
 
@@ -194,28 +213,118 @@ public:
   ~Return() { delete value; }
 };
 
+class DeclTypeAlias : public Expr {
+public:
+  std::string name;
+  Type * wrapped;
+  DeclTypeAlias(std::string name, Type * wrapped)
+    : name(name), wrapped(wrapped) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "type-alias"; }
+  ~DeclTypeAlias() { delete wrapped; }
+};
+
+class DeclTypeEnum : public Expr {
+public:
+  std::string name;
+  std::vector<Expr *> body;
+  DeclTypeEnum(
+    std::string name,
+    std::string unused,
+    std::vector<Expr *> body
+    ) : name(name), body(body) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "type-enum"; }
+  ~DeclTypeEnum() { }
+};
+
+class EnumCase : public Expr {
+public:
+  std::string name;
+  std::vector<Def *> defs;
+  EnumCase(std::string name) : name(name) { }
+  EnumCase(std::string name, std::vector<Def *> defs)
+    :name(name), defs(defs) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "enum-case"; }
+};
+
+class MatchExpr : public Expr {
+public:
+  Expr * cond;
+  std::vector<Expr *> cases;
+  MatchExpr(Expr * cond, std::vector<Expr *> cases)
+    : cond(cond), cases(cases) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "enum-case"; }
+};
+
+class MatchCaseExpr : public Expr {
+};
+class MatchCaseTagsExpr : public MatchCaseExpr {
+public:
+  Expr * label;
+  Expr * body;
+  MatchCaseTagsExpr(Expr * label, Expr * body)
+    : label(label), body(body) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "match-case"; }
+  ~MatchCaseTagsExpr() { delete label; delete body; }
+};
+  
+class DeclClass : public Expr {
+public:
+  std::string name;
+  std::vector<Def *> lines;
+  DeclClass(std::string name, std::vector<Def *> lines)
+    : name(name), lines(lines) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "class-def-" + name; }
+};
+
+class ImplClassFor : public Expr {
+public:
+  std::string type_name;
+  std::string class_name;  
+  Expr * body;
+  ImplClassFor(
+    std::string classname,    
+    std::string name,
+    Expr * body)
+    : type_name(name), class_name(classname), body(body) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() {
+    return "impl-class-for-" + type_name + "-" + class_name; }
+};
+
+class ImplType : public Expr {
+public:
+  std::string name;
+  Expr * body;
+  ImplType(std::string name, Expr * body)
+    : name(name), body(body) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "impl-" + name; }
+};
+
+
 class Visitor {
  public:
-  virtual void visit(Expr * c) { std::cerr << c->toString() << std::endl; }
-
-  virtual void visit(Module * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Extern * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(BlockExpr * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(FuncDef * c) { std::cerr << c->toString() << std::endl; }
-
-  virtual void visit(Call * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(BinOp * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Var * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(String * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Long * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Double * c) { std::cerr << c->toString() << std::endl; }
-
-  virtual void visit(If * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Return * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Cast * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(Let * c) { std::cerr << c->toString() << std::endl; }
-  virtual void visit(AddrOf * c) { std::cerr << c->toString() << std::endl; }
+#define VISIT(NODE) virtual void visit(NODE * c) { std::cerr << "visit: " << #NODE << std::endl; }
+  EXPR_NODE_LIST(VISIT)
+#undef VISIT
   virtual ~Visitor () { }
+};
+
+// useful visitors go here
+#define EXPRNAME(t) ExprNameVisitor(t).out
+class ExprNameVisitor : public Visitor {
+public:
+  std::string out;
+  ExprNameVisitor(Expr * e) { e->accept(this); }
+#define VISIT(NODE) virtual void visit(NODE * c) { out = #NODE; }
+EXPR_NODE_LIST(VISIT)
+#undef VISIT
 };
 
 FuncDef* BuildFunc(std::string name, Type* functype, std::vector<Def *> params, Expr * body);

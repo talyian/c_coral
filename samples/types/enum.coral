@@ -1,0 +1,93 @@
+extern "C" printf : Fn[..., Void]
+
+func print_generic(x):
+  match x:
+    Friday: printf "Friday\n"
+    Saturday: printf "Saturday\n"
+    Other : printf "Sadderday\n"
+
+type DayOfWeek:
+  | Friday
+  | Saturday
+  | Other
+
+type List:
+  | Nil
+  | Cons
+
+func print(x: DayOfWeek):
+  match x:
+    Friday:
+      printf "Friday\n"
+    Saturday:
+      printf "Saturday\n"    
+    Other:
+      printf "Sadderday\n"
+
+printf "Enums Test\n"
+print Friday
+print Other
+print (DayOfWeek.Other)
+
+# type DayOfWeek:
+#   | Friday
+#   | Saturday
+#   | Other
+
+# # Enums and type classes
+# type Int2:
+#   | Zero
+#   | One
+#   | Two
+#   | Three
+
+# impl Monoid for Int2:
+#   let zero = Zero
+#   let mappend(a, b) =
+#     match (a, b):
+#       (Zero, n): n
+#       (One, One): Two
+#       (One, Two): Three
+#       (One, Three): Zero
+#       (Two, Two): Zero
+#       (Two, Three): One
+#       (Three, Three): Two
+#       (_, _): mappend(b, a)
+
+# impl Monoid for Int2 as Int2Mul:
+#   let zero = Zero
+#   func mappend (a, b):
+#     match a, b:
+#       Zero, n: Zero
+#       One, n: n
+#       n, n: Zero
+#       a, b: Two
+
+# let v1 = Int2.mappend Zero One
+# let v1 = mappend (Int2.Zero) One 
+# let v1 = mappend Zero One 
+# let v0 = Int2Mul.mappend Zero One
+# let v0 = mappend (Int2Mul.Zero) One
+
+# type Option:
+#   | None
+#   | Some(x)
+
+# impl Monoid for Option:
+#   let zero = None
+#   func mappend(a, b):
+#     match (a, b):
+#       (None, None): None
+#       (None, Some(x)): Some(x)
+#       (Some(x), None): Some(x)
+#       (Some(x), Some(y)): Some(x)
+
+# impl Functor for Option:
+#   func fmap(this, f):
+#     match this:
+#       None: None
+#       Some(x): Some(f x)
+
+# impl Applicative for Option:
+#   func pure(
+#   func apply(this, f):

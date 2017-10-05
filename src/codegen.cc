@@ -152,6 +152,7 @@ void ExprValue::visit(Call * c)  {
 	  
   if (!func) return;
   LLVMTypeRef functype = LLVMTypeOf(func);
+  // cerr << c->callee << " functype " << LLVMPrintTypeToString(functype) << endl;
   int nParam = LLVMCountParamTypes(LLVMGetElementType(functype));
   if (nParam < 0) cerr << TSTR(functype) << " Number of Params invalid : " << nParam << endl;
   auto params = new LLVMTypeRef[nParam];
@@ -163,8 +164,10 @@ void ExprValue::visit(Call * c)  {
     Expr * expr = c->arguments[i];
     LLVMValueRef arg = VAL(expr);
     LLVMTypeRef paramtype = i < nParam ? params[i] : LLVMTypeOf(arg);
-    // cerr << "arg " << i << " : " << LLVMPrintValueToString(arg) << endl;
+    // cerr << " call " << c->callee << " arg " << i << " : " << LLVMPrintValueToString(arg) << endl;
+    // cerr << "\t\t"  << i << " " << nParam << " " << LLVMPrintTypeToString(paramtype) << endl;
     // cerr << TSTR(LLVMTypeOf(arg)) << " => " << (paramtype ? TSTR(paramtype) : "null?") << endl;
+    
     if (paramtype)
       args[i] = CastArgument(mb->builder, arg, paramtype);
     else
@@ -334,14 +337,9 @@ void ModuleBuilder::visit(Extern * c) {
   define_func(0, c->name, func);
 }
 
-std::string handle_module(Module * m) {
+std::string ir_module(Module * m) {
   ModuleBuilder moduleB(m);
   return moduleB.finalize();
-}
-
-std::string compile_bc_module(Module * m) {
-  std::string ir = handle_module(m);
-  return ir;
 }
 
 #include "llvm-c/ExecutionEngine.h"

@@ -14,10 +14,8 @@
   "Syntax table for `coral-mode'.")
 
 (defvar coral-font-lock-keywords '(
-   ("func" . font-lock-keyword-face)
-   ("let" . font-lock-keyword-face)
-   ("\\<\\(if\\|then\\|for\\|in\\)\\>" . font-lock-keyword-face)
-   ("\\<\\(if\\|then\\|for\\|in\\)\\>" . font-lock-keyword-face)
+   ("\\<\\(impl\\|class\\)\\>" . font-lock-keyword-face)				   
+   ("\\<\\(if\\|then\\|for\\|in\\|func\\|let\\|type\\|match\\|with\\|module\\)\\>" . font-lock-keyword-face)
    ("=>\\|\[$@<>=+*/%-\]" . font-lock-function-name-face)
  ) "Keyword highlighting specification for `coral-mode'.")
 

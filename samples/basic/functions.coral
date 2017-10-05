@@ -1,0 +1,19 @@
+func nullary():
+  0
+
+func unary(a):
+  a
+
+func binary(a, b):
+  a + b
+
+func ternary(a, b, c):
+  100 * a + 10 * b + c
+
+print(nullary ())
+print(unary 1)
+print(binary(2, 3))
+print(ternary(4, 5, 5))
+
+# undefined for now - association of chained calls foo bar baz
+
