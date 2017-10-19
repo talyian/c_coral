@@ -37,16 +37,15 @@ LLVMValueRef ModuleBuilder::loadWithType(LLVMValueRef scope, string name, LLVMTy
   return 0;
 }
 LLVMValueRef ModuleBuilder::load(LLVMBuilderRef __unused__, LLVMValueRef scope, string name) {
-  
   // cerr << this <<  " loading: " << name << "\n";
   auto loc = names[scope][name];
-  if (!loc && scope) { 
+  if (!loc && scope) {
     loc = names[0][name];
     if (loc) scope = 0;
   }
   if (names[scope][name + "=func"])
     return loc;
-  
+
   if (!loc) {
     cerr << "scope :     " << scope << endl;
     cerr << "not found : " << name << endl;
@@ -57,7 +56,7 @@ LLVMValueRef ModuleBuilder::load(LLVMBuilderRef __unused__, LLVMValueRef scope, 
       }
     }
   }
-  // cerr << "loading " << name << " from " << LLVMPrintValueToString(loc) << endl; 
+  // cerr << "loading " << name << " from " << LLVMPrintValueToString(loc) << endl;
   return LLVMBuildLoad(builder, loc, "");
 }
 LLVMTypeRef FixArgument(LLVMTypeRef t) {
@@ -87,6 +86,10 @@ LLVMValueRef CastArgument(LLVMBuilderRef builder, LLVMValueRef arg, LLVMTypeRef 
   }
   return arg;
 }
+
+GetLLVMType::GetLLVMType(ModuleBuilder *mb, Type * t) : mb(mb) {
+  if (!t) { cerr << "trying to get LLVM type for null type" << endl; }
+  t->accept(this); }
 
 void GetLLVMType::visit(FuncType * f) {
   std::vector<LLVMTypeRef> llvm_params(f->args.size());
@@ -118,8 +121,8 @@ void ExprValue::visit(Cast * s)  {
 }
 void ExprValue::visit(Call * c)  {
   output = 0;
-  auto bb = LLVMGetInsertBlock(mb->builder);
-  auto curfunc = LLVMGetBasicBlockParent(bb);
+  // auto bb = LLVMGetInsertBlock(mb->builder);
+  // auto curfunc = LLVMGetBasicBlockParent(bb);
   // auto module = LLVMGetGlobalParent(curfunc);
 
   LLVMValueRef func = VAL(c->callee);
@@ -161,7 +164,7 @@ void ExprValue::visit(Call * c)  {
   //   cerr << "not found: " << c->callee << endl;
   //   return;
   // } while(0);
-	  
+
   // if (!func) return;
   // LLVMTypeRef functype = LLVMTypeOf(func);
   // // cerr << c->callee << " functype " << LLVMPrintTypeToString(functype) << endl;
@@ -179,7 +182,7 @@ void ExprValue::visit(Call * c)  {
   //   // cerr << " call " << c->callee << " arg " << i << " : " << LLVMPrintValueToString(arg) << endl;
   //   // cerr << "\t\t"  << i << " " << nParam << " " << LLVMPrintTypeToString(paramtype) << endl;
   //   // cerr << TSTR(LLVMTypeOf(arg)) << " => " << (paramtype ? TSTR(paramtype) : "null?") << endl;
-    
+
   //   if (paramtype)
   //     args[i] = CastArgument(mb->builder, arg, paramtype);
   //   else
@@ -201,7 +204,7 @@ void ExprValue::visit(AddrOf * s) {
   auto name = s->var;
   auto scope = fn;
   auto loc = mb->names[scope][name];
-  if (!loc && scope) { 
+  if (!loc && scope) {
     loc = mb->names[0][name];
     if (loc) scope = 0;
   }
@@ -271,7 +274,7 @@ void ModuleBuilder::visit(Return * c) {
 
 void ModuleBuilder::visit(Call * c) { VAL(c); }
 void ModuleBuilder::visit(BinOp * c){ VAL(c); }
-void ModuleBuilder::visit(Var * c){ VAL(c); } 
+void ModuleBuilder::visit(Var * c){ VAL(c); }
 void ModuleBuilder::visit(String * c){ VAL(c); }
 void ModuleBuilder::visit(Long * c){ VAL(c); }
 void ModuleBuilder::visit(Double * c){ VAL(c); }
@@ -313,9 +316,10 @@ void ModuleBuilder::visit(FuncDef * c) {
     c->args.begin(), c->args.end(),
     llvm_params.begin(),
     [this] (Def * p) { return LTYPE(p->type); });
-  // cerr << "funcdef " << c->name << "\n";
-  // cerr << TSTR(LLVMInt64TypeInContext(context)) << "\n";
-  // cerr << llvm_params[0] << "\n";
+
+  // cerr << "funcdef " << c->name << " -> " << c->rettype << "\n";
+
+  if (!c->rettype) c->rettype = new VoidType();
   auto type = LLVMFunctionType(LTYPE(c->rettype), &llvm_params[0], c->args.size(), true);
   LLVMValueRef func = LLVMAddFunction(module, c->name.c_str(), type);
   function = func;
@@ -331,6 +335,7 @@ void ModuleBuilder::visit(FuncDef * c) {
   LLVMPositionBuilderAtEnd(builder, LLVMAppendBasicBlockInContext(context, func, "entry"));
   c->body->accept(this);
 
+  // TODO - move this into a compile pass so we can push returns into if statements etc.
   // safety - all unterminated blocks get an implicit return
   // This only works for voidfuncs
   for(auto bb = LLVMGetFirstBasicBlock(func); bb; bb = LLVMGetNextBasicBlock(bb)) {
@@ -362,7 +367,7 @@ void jit_modules(std::vector<Module *> modules) {
   std::vector<ModuleBuilder *> builders;
   std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> all_names;
   for(auto i = modules.begin(); i < modules.end(); i++) {
-    if (*i) { 
+    if (*i) {
       auto m = new ModuleBuilder(*i, all_names);
       builders.push_back(m);
       all_names = m->names;

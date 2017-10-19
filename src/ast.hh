@@ -64,7 +64,7 @@ public:
   Expr *base;
   vector <Expr *> indices;
   Index(Expr * base, vector<Expr *> indices) : base(base), indices(indices) { }
-  virtual void accept(class Visitor * v);  
+  virtual void accept(class Visitor * v);
   virtual std::string toString() {
     auto v = base->toString() + "[";
     for(auto i = indices.begin(); i != indices.end(); i++) {
@@ -76,7 +76,7 @@ public:
     return v;
   }
 };
-  
+
 class BinOp : public Expr {
  public:
   std::string op;
@@ -183,7 +183,7 @@ class FuncDef : public Expr {
   virtual std::string toString();
   ~FuncDef() {
     if (body) { delete body; }
-    if (rettype) { delete rettype; }
+    // if (rettype) { delete rettype; }
     for(auto i = args.begin(), e = args.end(); i != e; i++) if (*i) { delete *i; }
   }
 };
@@ -302,7 +302,7 @@ public:
   virtual std::string toString() { return "match-case"; }
   ~MatchCaseTagsExpr() { delete label; delete body; }
 };
-  
+
 class DeclClass : public Expr {
 public:
   std::string name;
@@ -316,10 +316,10 @@ public:
 class ImplClassFor : public Expr {
 public:
   std::string type_name;
-  std::string class_name;  
+  std::string class_name;
   Expr * body;
   ImplClassFor(
-    std::string classname,    
+    std::string classname,
     std::string name,
     Expr * body)
     : type_name(name), class_name(classname), body(body) { }

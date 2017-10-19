@@ -20,7 +20,7 @@ let a = printf 'hi'
 func f(b):
   printf b
 
-in the first pass, 
+in the first pass,
 printf -> Fn[Str, ..., Void]
 a -> call (callee=(unknown typeof printf), args=string)
 f -> funcdef(
@@ -57,12 +57,12 @@ public:
     }
     value = 0;
   }
-  
+
   void visit(EnumCase * c) {
     cout << "visiting " << c->name << " : " << in_value << endl;
     scope.add(c->name, in_value);
   }
-  
+
   void visit(MatchExpr * e) {
     foreach(e->cases, it) {
       (*it)->accept(this);
@@ -72,7 +72,7 @@ public:
   void visit(MatchCaseTagsExpr * e) {
     e->body->accept(this);
   }
-  
+
   void visit(Extern * e) {
     scope.add(e->name, e->type);
   }
@@ -91,9 +91,9 @@ public:
     for(int i=0; i<argtypes.size(); i++) {
       argtypes[i] = func_scope.scope.get(f->args[i]->name);
     }
-    auto ftype = new FuncType(func_scope.value, argtypes, false);
+    if (!f->rettype) f->rettype = func_scope.value;
+    auto ftype = new FuncType(f->rettype, argtypes, false);
     scope.add(f->name, ftype);
-    f->rettype = func_scope.value;
   }
 
   void visit(Var * c) {

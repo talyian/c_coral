@@ -3,7 +3,7 @@ CLANG=clang++-5.0 -std=c++11 -g3
 WCLANG=clang++.exe
 WCONFIG=llvm-config.exe
 CONFIG=llvm-config-5.0
-CXXCONFIG=$(shell ${CONFIG} --cxxflags | sed 's/-Wl,-fuse-ld=gold//; s/-Wno-maybe-uninitialized//;')
+CXXCONFIG=$(shell ${CONFIG} --cxxflags) -Wno-unused-command-line-argument -Wno-unknown-warning-option
 TESTFILE ?= samples/basic/hello.coral
 COMPILE=${CLANG} -c -o $@ $<
 
@@ -18,10 +18,10 @@ clean:
 
 docker:
 	docker build -t coral -f dockerenv/Dockerfile .
-	docker run -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
+	docker run -e "TERM=${TERM}" -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
 
 bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o
-	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre -rdynamic
+	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
 
 obj/type.o: obj/type.cc obj/type.hh
 	${COMPILE}

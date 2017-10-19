@@ -17,7 +17,7 @@ public:
   void define_func(LLVMValueRef scope, std::string name, LLVMValueRef value);
   void define(LLVMValueRef scope, std::string name, LLVMValueRef value);
   LLVMValueRef load(LLVMBuilderRef builder, LLVMValueRef scope, std::string name);
-  LLVMValueRef loadWithType(LLVMValueRef scope, std::string name, LLVMTypeRef type);  
+  LLVMValueRef loadWithType(LLVMValueRef scope, std::string name, LLVMTypeRef type);
 
   void init(Module * m);
   ModuleBuilder(Module * m);
@@ -51,8 +51,7 @@ public:
   ModuleBuilder * mb;
   ModuleBuilder * getModuleBuilder() { return mb; }
   LLVMTypeRef out;
-  GetLLVMType(ModuleBuilder *mb, Type * t)
-    : mb(mb) { t->accept(this); }
+  GetLLVMType(ModuleBuilder *mb, Type * t);
   virtual void visit(Type * f);
   virtual void visit(VoidType * f);
   virtual void visit(FuncType * f);

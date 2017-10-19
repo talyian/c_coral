@@ -1,12 +1,12 @@
 func counter(input, len):
   let table = dict.new(default=0L)
   for end in range(len, input.length):
-     table[input[end-len, len]] += 1
+    table[input[end-len, len]] += 1
   table
 
 let dna = stdin.bytes.lines.skipUntil(x => x.startsWith(">TH")).concat
 
-for len in [1, 2]:
+for len in range(1, 2):
   let d = counter(dna, len)
   let total = sum d.values
   for a, b in d.sortBy(snd > negate):
