@@ -123,9 +123,13 @@ void ExprValue::visit(Call * c)  {
   // auto module = LLVMGetGlobalParent(curfunc);
 
   LLVMValueRef func = VAL(c->callee);
-  LLVMValueRef * args = 0;
-  auto nArgs = 0;
-  output = LLVMBuildCall(mb->builder, func, args, nArgs, "");
+  if (LLVMGetTypeKind(LLVMTypeOf(func)) == LLVMFunctionTypeKind) {
+    vector<LLVMValueRef> args(c->arguments.size());
+    std::transform(
+      c->arguments.begin(), c->arguments.end(), args.begin(),
+      [this] (Expr * arg) { return VAL(arg); });
+    output = LLVMBuildCall(mb->builder, func, &args[0], args.size(), "");
+  }
   return;
   // // resolve arguments:
   // int nArgs = (int)c->arguments.size();
