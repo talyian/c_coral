@@ -7,8 +7,10 @@ CXXCONFIG=$(shell ${CONFIG} --cxxflags) -Wno-unused-command-line-argument -Wno-u
 TESTFILE ?= samples/basic/hello.coral
 COMPILE=${CLANG} -c -o $@ $<
 
-default: bin/coral
-	bin/coral jit ${TESTFILE}
+# default: bin/coral
+# 	bin/coral jit ${TESTFILE}
+default: bin/coral-test
+	bin/coral-test
 
 watch:
 	/bin/bash watch.sh
@@ -21,6 +23,9 @@ docker:
 	docker run -e "TERM=${TERM}" -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
 
 bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o
+	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
+
+bin/coral-test: obj/test.o
 	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
 
 obj/type.o: obj/type.cc obj/type.hh

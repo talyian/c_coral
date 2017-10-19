@@ -1,9 +1,9 @@
 * Rcoral Features [3/7]
-** DONE elseif syntax 
-** DONE let syntax 
+** DONE elseif syntax
+** DONE let syntax
 ** DONE Re-entrant lexer
 ** TODO while loops
-** TODO multiple modules 
+** TODO multiple modules
    :depends: re-entrant lexer
 ** TODO basic prelude
    :depends: multiple modules
@@ -14,3 +14,17 @@
 ** TODO start working on type inference
 ** TODO struct
 ** TODO classes
+* Implement Features required for Fasta benchmark
+** Test Cases Setup
+** Ignore Whitespace inside of parens and lists
+** Define CString Type
+   let s : Cstring = "asdf"
+   printfn("%d", s.length)
+   printfn("%s", s)
+   printfn("%d", s.indexOf("df"))
+   printfn("%s", s + " qwer")
+
+** Statically concatenate string literals (operator +)
+   let str = ("foo " +
+      "bar " +
+             "speem")
