@@ -27,8 +27,21 @@ Module * get_module(FILE * in) {
 
 int main(int argc, char **argv) {
   std::string command(argv[1]);
-  
-  if (command == "parse") {
+  if (command == "lex") {
+    void * scanner;
+    YYSTYPE lval;
+    YYLTYPE loc;
+    yylex_init(&scanner);
+    yyset_in(fopen(argv[2], "r"), scanner);
+    int t = 0;
+    while((t = yylex(&lval, &loc, scanner))) {
+      string text(yyget_text(scanner));
+      replace(text.begin(), text.end(), '\n', ' ');
+      printf( "[%4d] %s\n", t, text.c_str());
+    }
+    yylex_destroy(scanner);
+  }
+  else if (command == "parse") {
     auto module = get_module(fopen(argv[2], "r"));
     // module = buildMainFunction(module);
     module = inferTypes(module);
@@ -45,7 +58,8 @@ int main(int argc, char **argv) {
     modules.push_back(get_module(fopen("samples/prelude/extern.coral", "r")));
     for(int i=0; i<argc - 2; i++) {
       std::cerr << argv[i + 2] << "\n";
-      modules.push_back(get_module(fopen(argv[i + 2], "r")));
+      auto module = get_module(fopen(argv[i + 2], "r"));
+      modules.push_back(inferTypes(module));
     }
     jit_modules(modules);
   }

@@ -120,62 +120,66 @@ void ExprValue::visit(Call * c)  {
   output = 0;
   auto bb = LLVMGetInsertBlock(mb->builder);
   auto curfunc = LLVMGetBasicBlockParent(bb);
-  auto module = LLVMGetGlobalParent(curfunc);
+  // auto module = LLVMGetGlobalParent(curfunc);
 
-  // resolve arguments:
-  int nArgs = (int)c->arguments.size();
-  auto args = new LLVMValueRef[nArgs];
-  for(int i=0; i < (int)nArgs; i++) {
-    Expr * expr = c->arguments[i];
-    LLVMValueRef arg = VAL(expr);
-    args[i] = arg;
-  }
-
-  LLVMValueRef func = 0;
-  do {
-    // cerr << "lookup " << c->callee << endl;
-    func = lookup(0, c->callee);
-    // cerr << "FOUND " << (size_t)func << endl;
-    if (func != 0 && func != FUNC_MULTI) break;
-
-    auto callee2 = c->callee + "$" + LLVMPrintTypeToString(FixArgument(LLVMTypeOf(args[0])));
-    // cerr << "trying " << callee2 << endl;
-    func = lookup(0, callee2);
-    if (func != 0 && func != FUNC_MULTI) break;
-
-    cerr << bb << endl;
-    cerr << curfunc << endl;
-    cerr << module << endl;
-    cerr << "not found: " << c->callee << endl;
-    return;
-  } while(0);
-	  
-  if (!func) return;
-  LLVMTypeRef functype = LLVMTypeOf(func);
-  // cerr << c->callee << " functype " << LLVMPrintTypeToString(functype) << endl;
-  int nParam = LLVMCountParamTypes(LLVMGetElementType(functype));
-  if (nParam < 0) cerr << TSTR(functype) << " Number of Params invalid : " << nParam << endl;
-  auto params = new LLVMTypeRef[nParam];
-  LLVMGetParamTypes(LLVMGetElementType(functype), params);
-
-  // cerr << "calling " << c->callee << "(" << TSTR(functype) << ")" << endl;
-  // cerr << "nargs: " << nArgs << ", nparams: " << nParam << endl;
-  for(int i=0; i < nArgs; i++) {
-    Expr * expr = c->arguments[i];
-    LLVMValueRef arg = VAL(expr);
-    LLVMTypeRef paramtype = i < nParam ? params[i] : LLVMTypeOf(arg);
-    // cerr << " call " << c->callee << " arg " << i << " : " << LLVMPrintValueToString(arg) << endl;
-    // cerr << "\t\t"  << i << " " << nParam << " " << LLVMPrintTypeToString(paramtype) << endl;
-    // cerr << TSTR(LLVMTypeOf(arg)) << " => " << (paramtype ? TSTR(paramtype) : "null?") << endl;
-    
-    if (paramtype)
-      args[i] = CastArgument(mb->builder, arg, paramtype);
-    else
-      args[i] = arg;
-  }
+  LLVMValueRef func = VAL(c->callee);
+  LLVMValueRef * args = 0;
+  auto nArgs = 0;
   output = LLVMBuildCall(mb->builder, func, args, nArgs, "");
-  delete [] args;
-  delete [] params;
+  return;
+  // // resolve arguments:
+  // int nArgs = (int)c->arguments.size();
+  // auto args = new LLVMValueRef[nArgs];
+  // for(int i=0; i < (int)nArgs; i++) {
+  //   Expr * expr = c->arguments[i];
+  //   LLVMValueRef arg = VAL(expr);
+  //   args[i] = arg;
+  // }
+
+  // LLVMValueRef func = 0;
+  // do {
+  //   // cerr << "lookup " << c->callee << endl;
+  //   func = lookup(0, c->callee);
+  //   // cerr << "FOUND " << (size_t)func << endl;
+  //   if (func != 0 && func != FUNC_MULTI) break;
+
+  //   auto callee2 = c->callee + "$" + LLVMPrintTypeToString(FixArgument(LLVMTypeOf(args[0])));
+  //   // cerr << "trying " << callee2 << endl;
+  //   func = lookup(0, callee2);
+  //   if (func != 0 && func != FUNC_MULTI) break;
+
+  //   cerr << bb << endl;
+  //   cerr << curfunc << endl;
+  //   cerr << module << endl;
+  //   cerr << "not found: " << c->callee << endl;
+  //   return;
+  // } while(0);
+	  
+  // if (!func) return;
+  // LLVMTypeRef functype = LLVMTypeOf(func);
+  // // cerr << c->callee << " functype " << LLVMPrintTypeToString(functype) << endl;
+  // int nParam = LLVMCountParamTypes(LLVMGetElementType(functype));
+  // if (nParam < 0) cerr << TSTR(functype) << " Number of Params invalid : " << nParam << endl;
+  // auto params = new LLVMTypeRef[nParam];
+  // LLVMGetParamTypes(LLVMGetElementType(functype), params);
+
+  // // cerr << "calling " << c->callee << "(" << TSTR(functype) << ")" << endl;
+  // // cerr << "nargs: " << nArgs << ", nparams: " << nParam << endl;
+  // for(int i=0; i < nArgs; i++) {
+  //   Expr * expr = c->arguments[i];
+  //   LLVMValueRef arg = VAL(expr);
+  //   LLVMTypeRef paramtype = i < nParam ? params[i] : LLVMTypeOf(arg);
+  //   // cerr << " call " << c->callee << " arg " << i << " : " << LLVMPrintValueToString(arg) << endl;
+  //   // cerr << "\t\t"  << i << " " << nParam << " " << LLVMPrintTypeToString(paramtype) << endl;
+  //   // cerr << TSTR(LLVMTypeOf(arg)) << " => " << (paramtype ? TSTR(paramtype) : "null?") << endl;
+    
+  //   if (paramtype)
+  //     args[i] = CastArgument(mb->builder, arg, paramtype);
+  //   else
+  //     args[i] = arg;
+  // }
+  // delete [] args;
+  // delete [] params;
 }
 
 void ExprValue::visit(Var * s) {

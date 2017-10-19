@@ -1,18 +1,16 @@
-open regex
-open collections
+func counter(input, len):
+  let table = dict.new(default=0L)
+  for end in len..input.length:
+     table[input[end-len, len]] += 1
+  table
 
-func calc(input):
-  let dna = regex.search(">THREE", input).read()
-  for len in [1, 2]:
-    let d = collections.counter(for s in 0..dna: dna.[s, s+len])
-    let total = d.values.sum
-    for a, b in d.sortBy(snd . negate):
-      yield string<"%s %.3f">(a, b / total)
+let dna = stdin.bytes.lines.skipUntil(x => x.startsWith ">TH").concat()
+for len in [1, 2]:
+  let d = counter(dna, len)
+  let total = sum d.values
+  for a, b in d.sortBy(snd & negate):
+    printfn<"%s %.3f">(a, b / total)
 
-  for sub in ["ggt","ggta","ggtatt","ggtattttaatt","ggtattttaatttatagt"]:
-    let len = sub.len
-    let d = collections.counter(for s in 0..dna: dna.[s, s+len]) 
-    yield string<"%d\t%s">(d[sub], sub)
-
-map(print, calc stdin.raw)
+for sub in ["ggt","ggta","ggtatt","ggtattttaatt","ggtattttaatttatagt"]:
+  printfn<"%d\t%s">(counter(dna, sub.len)[sub], sub)
 

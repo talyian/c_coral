@@ -17,7 +17,34 @@ public:
     module->accept(this);
   }
   void visit(Expr * e) { out << IND() << "# expr: " << EXPRNAME(e) << END(); }
-
+  void visit(Index * i) {
+    out << IND();
+    auto t = line_mode;
+    line_mode = 1;
+    i->base->accept(this);
+    out << '[';
+    foreach(i->indices, it) {
+      if (it != i->indices.begin()) { out << ", "; }
+      (*it)->accept(this); }
+    line_mode = t;    
+    out << ']' << END();
+    
+  }
+  void visit(For * f) {
+    out << IND() << "for ";
+    auto t = line_mode;
+    line_mode = 1;
+    foreach(f->var, it) {
+      visit(*it);
+    }
+    out << " in ";
+    f->source->accept(this);
+    line_mode = t;
+    out << ":" << END();
+    indent++;
+    f->body->accept(this);
+    indent--;
+  }
   void visit(Module * m) {
     foreach (module->lines, line) {
       (*line)->accept(this);
@@ -137,9 +164,10 @@ public:
     out << END();
   }
   void visit(Call * c) {
-    out << IND() << c->callee;
+    out << IND();
     TreePrinter lp(module, out);
     lp.line_mode = 1;
+    c->callee->accept(&lp);
     if (c->arguments.size() == 0) out << "()";
     else if (c->arguments.size() == 1) {
       out << '(';      

@@ -19,8 +19,9 @@
 %define api.value.type variant
 %locations
 
-%token IMPL
 %token FOR
+%token IN
+%token IMPL
 %token CLASS
 %token MATCH
 %token MODULE
@@ -73,9 +74,6 @@ line
 | FUNC IDENTIFIER ParameterList block { $$ = BuildFunc($2, 0, $3, $4); }
 | FUNC IDENTIFIER ':' typesig ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
 | FUNC '[' ']' IDENTIFIER ':' typesig ParameterList block { $$ = BuildVarFunc($4, $6, $7, $8); }
-| LET Parameter '=' expr { $$ = new Let($2, $4); }
-| RETURN expr { $$ = new Return($2); }
-| expr { $$ = $1; }
 | MODULE IDENTIFIER { $$ = new Expr(); }
 | MODULE IDENTIFIER '.' IDENTIFIER { $$ = new Expr(); }
 | TYPE IDENTIFIER '=' typesig { $$ = new DeclTypeAlias($2, $4); }
@@ -85,6 +83,10 @@ line
 | CLASS IDENTIFIER FOR IDENTIFIER classBlock { $$ = new DeclClass($2, $5); }
 | IMPL IDENTIFIER block { $$ = new ImplType($2, $3); }
 | IMPL IDENTIFIER FOR IDENTIFIER block { $$ = new ImplClassFor($2, $4, $5); }
+| LET Parameter '=' expr { $$ = new Let($2, $4); }
+| RETURN expr { $$ = new Return($2); }
+| expr { $$ = $1; }
+| FOR ParameterList_inner IN expr block { $$ = new For($2, $4, $5); }
 
 classBlock : ':' NEWLINE INDENT classLines DEDENT { $$ = $4; }
 classLines : NEWLINE { }
@@ -118,16 +120,14 @@ enumLine
 block
 : ':' NEWLINE INDENT lines DEDENT { $$ = new BlockExpr($4); }
 | ':' line { $$ = new BlockExpr(std::vector<Expr *>()); $$->lines.push_back($2); }
+
 Parameter
 : IDENTIFIER { $$ = new Def($1, new UnknownType()); }
 | IDENTIFIER ':' typesig { $$ = new Def($1, $3); }
 | IDENTIFIER '.' IDENTIFIER ':' typesig { $$ = new Def($3, $5); }
-
-
 ParameterList_inner
 : Parameter { $$.push_back($1); }
 | ParameterList_inner ',' Parameter { $$ = $1; $$.push_back($3); }
-
 ParameterList
 : '(' ')' { }
 | '(' ParameterList_inner ')' { $$ = $2; }
@@ -146,6 +146,7 @@ expr
 | INTEGER { $$ = new Long($1); }
 | FLOAT { $$ = new Double($1); }
 | IDENTIFIER { $$ = new Var($1); }
+
 | expr '+' expr { $$ = new BinOp("+", $1, $3); }
 | expr '-' expr { $$ = new BinOp("-", $1, $3); }
 | expr '*' expr { $$ = new BinOp("*", $1, $3); }
@@ -157,14 +158,29 @@ expr
 | expr '<' '=' expr { $$ = new BinOp("<=", $1, $4); }
 | expr '>' '=' expr { $$ = new BinOp(">=", $1, $4); }
 | expr '!' '=' expr { $$ = new BinOp("!=", $1, $4); }
+| expr '+' '=' expr { $$ = new BinOp("+=", $1, $4); }
+| expr '*' '=' expr { $$ = new BinOp("*=", $1, $4); }
+| expr '-' '=' expr { $$ = new BinOp("-=", $1, $4); }
+| expr '/' '=' expr { $$ = new BinOp("/=", $1, $4); }
+| expr '@' expr { $$ = new BinOp("@", $1, $3); }
+// TODO uhhh this is not a regular binop
+| expr '=' '>' expr { $$ = new BinOp("=>", $1, $4); }
 
-| IDENTIFIER ArgumentList { $$ = new Call($1, $2); }
+| expr '.' IDENTIFIER { $$ = new Call(new Var($3), std::vector<Expr*>{ $1 }); }
+| expr '.' IDENTIFIER '(' ArgumentList ')' {
+     $5.insert($5.begin(), $1);
+     $$ = new Call(new Var($3), $5); }
+| expr '[' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3 }); }
+| expr '[' expr ',' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3, $5 }); }
+
+| expr ArgumentList { $$ = new Call($1, $2); }
 | IF expr BlockOrExpr ELSE BlockOrExpr { $$ = new If($2, $3, $5); }
 | expr AS typesig { $$ = new Cast($1, $3); }
 | ADDR_OF IDENTIFIER { $$ = new AddrOf($2); }
-| expr '.' IDENTIFIER { $$ = new Call($3, std::vector<Expr*>{ $1 }); }
-| expr '.' IDENTIFIER '(' ArgumentList ')' { $5.insert($5.begin(), $1); $$ = new Call($3, $5); }
 | MATCH expr matchBlock { $$ = new MatchExpr($2, $3); }
+
+| '[' ArgumentList_inner ']' { $$ = new Call(new Var("List.create"), $2); }
+
 
 BlockOrExpr
 : block { $$ = $1; }

@@ -28,7 +28,6 @@ f -> funcdef(
 "
 */
 
-
 class TypeInferer : public Visitor {
   string name;
   Type * value, * in_value;
@@ -94,6 +93,7 @@ public:
     }
     auto ftype = new FuncType(func_scope.value, argtypes, false);
     scope.add(f->name, ftype);
+    f->rettype = func_scope.value;
   }
 
   void visit(Var * c) {
@@ -112,7 +112,7 @@ public:
 
   void visit(String * s) { value = new PtrType(new IntType(8)); }
   void visit(Call * c) {
-    auto functype = scope.get(c->callee);
+    auto functype = scope.get(getName(c->callee));
     Type * known_ret_value = 0;
     vector<Type *> params;
     if (getTypeName(functype) == "Func") {

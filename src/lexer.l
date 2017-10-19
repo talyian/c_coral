@@ -33,8 +33,10 @@ std::queue<int> tokenq; // a queue to allow multiple return tokens;
 std::stack<int> indents({ 0 });
 %}
 
-int [0-9]+
+int [0-9]+[L]?
 num [0-9]+[.][0-9]+
+bin 0b[01]+
+hex 0x[0-9a-fA-F]+
 str \"([^\\\"]|\\\\|\\\"|\\n)*\"
 id  [$]?[_a-zA-Z][_a-zA-Z0-9]*
 br  \n[ ]*
@@ -62,6 +64,7 @@ comment [#].*$
 
 impl   { tok(IMPL); }
 for    { tok(FOR); }
+in     { tok(IN); }		
 class  { tok(CLASS); }
 match  { tok(MATCH); }
 type   { tok(TYPE); }

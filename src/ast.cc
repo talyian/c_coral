@@ -86,3 +86,9 @@ FuncDef* BuildVarFunc(std::string name, Type* return_type, std::vector<Def *> pa
 FuncDef* BuildFunc(std::string name, Type* return_type, std::vector<Def *> params, Expr * body) {
   return new FuncDef(name, return_type, params, body, false);
 }
+
+string getName(Expr * e) {
+  NameGetter ng;
+  e->accept(&ng);
+  return ng.out;
+}

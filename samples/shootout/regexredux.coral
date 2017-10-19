@@ -15,7 +15,7 @@ let q = [
   "agggta[cgt]a|t[acg]taccct",
   "agggtaa[cgt]|[acg]ttaccct"]
 
-let out = threads.map(q, r => string<"%s %i">(r, regex.count_matches(r, text)))
+let out = threads.map(q, r => format<"%s %i">(r, regex.count_matches(r, text)))
 
 let q = [
   ("tHa[Nt]","<4>"),
@@ -24,6 +24,6 @@ let q = [
   ("<[^>]*>","|"),
   ("\\|[^|][^|]*\\|","-")]
 
-out.append (() => reduce(text, q, regex.replace . (flip tconcat)))
+out.add $ q.reduce(text, regex.replace . (flip tconcat))
 
 printf<"\n%d\n%d\n%d\n">(input.length, text.length, final.length)

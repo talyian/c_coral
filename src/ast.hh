@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <vector>
@@ -16,6 +17,7 @@ class Expr {
 */ M(Expr) /*
 */ M(BinOp) /*
 */ M(Call) /*
+*/ M(Index) /*
 */ M(Extern) /*
 */ M(String) /*
 */ M(Long) /*
@@ -25,6 +27,7 @@ class Expr {
 */ M(BlockExpr) /*
 */ M(Var) /*
 */ M(If) /*
+*/ M(For) /*
 */ M(Return) /*
 */ M(Cast) /*
 */ M(Let) /*
@@ -40,12 +43,12 @@ class Expr {
 
 class Call : public Expr {
  public:
-  std::string callee;
+  Expr * callee;
   std::vector<Expr *> arguments;
- Call(std::string a, std::vector<Expr *> b) : callee(a), arguments(b) { }
+ Call(Expr * a, std::vector<Expr *> b) : callee(a), arguments(b) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString() {
-    auto v = callee + "(";
+    auto v = callee->toString() + "(";
     for(auto i = arguments.begin(); i != arguments.end(); i++) {
       if (*i) v += (i != arguments.begin() ? ", " : "") + (*i)->toString();
       else v = v + (i != arguments.begin() ? ", " : "")  +  "(null)";
@@ -53,9 +56,27 @@ class Call : public Expr {
     v += ")";
     return v;
   }
-    ~Call() { for(auto i = arguments.begin(); i < arguments.end(); i++) { delete *i; }  }
+  ~Call() { delete callee; for(auto i = arguments.begin(); i < arguments.end(); i++) { delete *i; }  }
 };
 
+class Index : public Expr {
+public:
+  Expr *base;
+  vector <Expr *> indices;
+  Index(Expr * base, vector<Expr *> indices) : base(base), indices(indices) { }
+  virtual void accept(class Visitor * v);  
+  virtual std::string toString() {
+    auto v = base->toString() + "[";
+    for(auto i = indices.begin(); i != indices.end(); i++) {
+      v += (i != indices.begin() ? ", " : "");
+      if (*i) v += (*i)->toString();
+      else v += "(null)";
+    }
+    v += "]";
+    return v;
+  }
+};
+  
 class BinOp : public Expr {
  public:
   std::string op;
@@ -184,6 +205,16 @@ public:
   virtual void accept(class Visitor * v);
   virtual std::string toString();
   ~If() { delete cond; delete ifbody; delete elsebody; }
+};
+
+class For : public Expr {
+public:
+  vector<Def *> var;
+  Expr *source, *body;
+  For(vector<Def *> var, Expr * source, Expr * body) : var(var), source(source), body(body) { }
+  virtual void accept(class Visitor * v);
+  virtual std::string toString() { return "for"; }
+  ~For() { delete source; delete body; }
 };
 
 class Let : public Expr {
@@ -326,6 +357,16 @@ public:
 EXPR_NODE_LIST(VISIT)
 #undef VISIT
 };
+
+
+class NameGetter : public Visitor {
+public:
+  string out;
+  void visit(Var * v) { out = v->value; }
+  void visit(Expr * e) { out = ""; }
+};
+
+string getName(Expr * e);
 
 FuncDef* BuildFunc(std::string name, Type* functype, std::vector<Def *> params, Expr * body);
 FuncDef* BuildVarFunc(std::string name, Type* functype, std::vector<Def *> params, Expr * body);
