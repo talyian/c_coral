@@ -16,6 +16,14 @@ public:
   void print() {
     module->accept(this);
   }
+  void visit(Return * r) {
+    out << IND() << "return ";
+    auto t = line_mode;
+    line_mode = 1;
+    r->value->accept(this);
+    line_mode = t;
+    out << END();
+  }
   void visit(Expr * e) { out << IND() << "# expr: " << EXPRNAME(e) << END(); }
   void visit(Index * i) {
     out << IND();
