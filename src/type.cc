@@ -28,7 +28,9 @@ std::string getTypeName(Type * t) {
   return tn.out;
 }
 
-bool typeEquals(Type * a, Type * b) { return false; }
+bool typeEquals(Type * a, Type * b) {
+  return getTypeName(a) == getTypeName(b);
+}
 
 string VoidType::toString() { return "Void"; }
 string IntType::toString() { return "int" + to_string(bits); }

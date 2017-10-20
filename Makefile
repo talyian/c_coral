@@ -7,9 +7,10 @@ CXXCONFIG=$(shell ${CONFIG} --cxxflags) -Wno-unused-command-line-argument -Wno-u
 TESTFILE ?= samples/basic/hello.coral
 COMPILE=${CLANG} -c -o $@ $<
 
-# default: bin/coral
-# 	bin/coral jit ${TESTFILE}
-default: bin/coral-test
+run: bin/coral
+	bin/coral jit ${TESTFILE}
+
+test: bin/coral-test
 	bin/coral-test
 
 watch:
@@ -22,11 +23,17 @@ docker:
 	docker build -t coral -f dockerenv/Dockerfile .
 	docker run -e "TERM=${TERM}" -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
 
-bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o
+bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o obj/compiler.o
 	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
 
-bin/coral-test: obj/test.o
+bin/coral-test: obj/test.o obj/lexer.o obj/parser.o obj/type.o obj/ast.o obj/codegen.o obj/compiler.o obj/mainfuncPass.cc
 	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
+
+obj/test.o: obj/test.cc  obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/mainfuncPass.hh obj/inferTypePass.hh obj/typeScope.hh obj/compiler.hh
+	${COMPILE}
+
+obj/compiler.o: obj/compiler.cc obj/compiler.hh obj/lexer.hh obj/treeprinter.hh obj/inferTypePass.hh 
+	${COMPILE}
 
 obj/type.o: obj/type.cc obj/type.hh
 	${COMPILE}
@@ -40,7 +47,7 @@ obj/codegen.o: obj/codegen.cc obj/parser.hh obj/ast.hh obj/type.hh obj/codegen.h
 obj/lexer.o: obj/lexer.cc obj/ast.hh obj/type.hh obj/parser.hh
 	${COMPILE}
 
-obj/main.o: obj/main.cc obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/mainfuncPass.hh obj/inferTypePass.hh obj/typeScope.hh
+obj/main.o: obj/main.cc obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/mainfuncPass.hh obj/inferTypePass.hh obj/typeScope.hh obj/compiler.hh
 	${COMPILE}
 
 obj/parser.o: obj/parser.cc obj/ast.hh obj/type.hh obj/parser.hh

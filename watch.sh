@@ -8,7 +8,7 @@ debounce() {
 	LAST=$TIME
     done
 }
-(echo "0 0 watch"; inotifywait -q -m -r src samples Makefile watch.sh -e MODIFY --exclude "#") \
+(echo "0 0 watch"; inotifywait -q -m -r src samples tests Makefile watch.sh -e MODIFY --exclude "#") \
 | stdbuf -o0 grep -v ISDIR | debounce \
 | while read dir event file; do
     echo "$dir -> $event -> $file [$SRCFILE]"
@@ -18,7 +18,7 @@ debounce() {
 	SRCFILE="$dir$file"
     fi
     echo "-- [$file] -----($SRCFILE)-------------------------------"
-    make -s
-    # make bin/coral && bin/coral parse ${SRCFILE}
+    make -s test
+    # make -s bin/coral && bin/coral jit ${SRCFILE}
     # make -s bin/infer && bin/infer
 done

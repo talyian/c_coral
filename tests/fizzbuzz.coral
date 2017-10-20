@@ -1,0 +1,26 @@
+extern "C" printf : Fn[..., Void]
+
+func fizzbuzz : Void(n: Int64):
+  if 0 = n % 15:
+    printf " fizzbuzz"
+  else:
+    if 0 = n % 3:
+      printf " fizz"
+    else:
+      if 0 = n % 5:
+        printf " buzz"
+      else:
+        if n = 1:
+          printf("%d", n)
+        else:
+          printf(" %d", n)
+        
+func loop(n: Int64, m: Int64):
+  if n < m: 
+    fizzbuzz n
+    loop (n + 1, m)
+  else:
+    printf ""
+    
+func main():
+  loop(1, 17)

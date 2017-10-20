@@ -38,8 +38,8 @@ public:
     in_value = 0;
     value = 0;
     module->accept(this);
-    scope.show();
-    cerr << "----------------------------------------\n";
+    // scope.show();
+    // cerr << "----------------------------------------\n";
   }
   void visit(Module * m) {
     foreach(m->lines, it) {
@@ -49,7 +49,7 @@ public:
   }
 
   void visit(DeclTypeEnum * e) {
-    cout << e->name << endl;
+    cerr << e->name << endl;
     scope.add(e->name, new Type());
     foreach(e->body, case_iter) {
       in_value = new UserType(e->name);
@@ -59,10 +59,19 @@ public:
   }
 
   void visit(EnumCase * c) {
-    cout << "visiting " << c->name << " : " << in_value << endl;
+    cerr << "visiting " << c->name << " : " << in_value << endl;
     scope.add(c->name, in_value);
   }
 
+  void visit(If * e) {
+    value = 0;
+    e->ifbody->accept(this);
+    auto t1 = value;
+    e->elsebody->accept(this);
+    auto t2 = value;
+    if (t2 == 0) value = t1;
+  }
+  
   void visit(MatchExpr * e) {
     foreach(e->cases, it) {
       (*it)->accept(this);
@@ -130,15 +139,15 @@ public:
       in_value = i < params.size() ? params[i] : 0;
       (*arg)->accept(this);
       argtypes.push_back(value);
-      // cout << c->callee << "----------" << endl;
-      // cout << "argtype " << i << " " << value << endl;
-      // cout << "paramtype " << i << " "
+      // cerr << c->callee << "----------" << endl;
+      // cerr << "argtype " << i << " " << value << endl;
+      // cerr << "paramtype " << i << " "
       // 	   << (params.size() > i ? params[i]->toString() : "(short)") << endl;
       i++;
     }
-    // cout << this->in_value << " = call: " << c->callee << '(';
-    // foreach(argtypes, t) { cout << (t == argtypes.begin() ? "" : ", ") << *t; }
-    // cout << ')' << endl;
+    // cerr << this->in_value << " = call: " << c->callee << '(';
+    // foreach(argtypes, t) { cerr << (t == argtypes.begin() ? "" : ", ") << *t; }
+    // cerr << ')' << endl;
     value = known_ret_value;
   }
 
@@ -160,11 +169,11 @@ public:
     auto rtype = value;
 
     if (getTypeName(ltype) == "Unknown") {
-      cout << "unknown left type \n";
+      cerr << "unknown left type \n";
     } else if (getTypeName(rtype) == "Unknown") {
-      cout << "unknown right type \n";
+      cerr << "unknown right type \n";
     } else if (!typeEquals(ltype, rtype)) {
-      cout << "mismatched types: " << ltype << ", " << rtype << "\n";
+      cerr << "mismatched types: " << ltype << ", " << rtype << "\n";
     }
     // TODO: this isn't exactly kosher
     value = ltype;

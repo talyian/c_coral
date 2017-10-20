@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ast.hh"
 #include <iostream>
 #include <string>

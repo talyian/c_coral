@@ -9,6 +9,11 @@
 typedef size_t yy_size_t;
 #endif
 
+#ifndef YY_TYPEDEF_YY_BUFFER_STATE
+#define YY_TYPEDEF_YY_BUFFER_STATE
+typedef struct yy_buffer_state *YY_BUFFER_STATE;
+#endif
+
 #define YYSTYPE yy::parser::semantic_type
 #define YYLTYPE yy::location
 
@@ -28,5 +33,8 @@ void yyset_column (int _column_no ,yyscan_t yyscanner );
 void yyset_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
 yy_size_t yyget_leng (yyscan_t yyscanner );
 char *yyget_text (yyscan_t yyscanner );
+char *yyget_text (yyscan_t yyscanner );
 
+YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner);
+  
 int yylex(YYSTYPE * lval, YYLTYPE * loc, yyscan_t scanner);
