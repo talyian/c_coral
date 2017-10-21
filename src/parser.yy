@@ -198,12 +198,12 @@ expr
 | '[' ArgumentList_inner ']' { $$ = new Call(new Var("List.create"), $2); }
 
 IfExpr
-: IF expr block { $$ = new If($2, $3, new Expr()); }
+: IF expr block { $$ = new If($2, $3, new BlockExpr(vector<Expr*>{})); }
 | IF expr block NEWLINE ElseSequence { $$ = new If($2, $3, $5); }
 
 ElseSequence
 : /* empty */ { $$ = new BlockExpr(std::vector<Expr *>{ }); }
-| ELIF expr block NEWLINE ElseSequence { $$ = new If($2, $3, $5); }
+| ELIF expr block NEWLINE ElseSequence { $$ = new BlockExpr(vector<Expr*>{new If($2, $3, $5)}); }
 | ELSE block { $$ = $2; }
 
 typesig

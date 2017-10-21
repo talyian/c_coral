@@ -2,13 +2,13 @@
 %option noyywrap
 %option bison-bridge
 %option bison-locations
-%option reentrant 
+%option reentrant
 
 %{
 #include <string>
 #include <queue>
 #include <stack>
-#include "ast.hh"  
+#include "ast.hh"
 #include "parser.hh"
 
 #define YY_NO_UNISTD_H
@@ -36,8 +36,13 @@ int oper(string val) {
     if(val == "/") tok(OP_DIV);
     if(val == "%") tok(OP_MOD);
     if(val == "!") tok(OP_NOT);
-    
+
     if(val == "=") tok(OP_EQ);
+    if(val == "<") tok(OP_LT);
+    if(val == ">") tok(OP_GT);
+    if(val == "<=") tok(OP_LTE);
+    if(val == ">=") tok(OP_GTE);
+    if(val == "!=") tok(OP_NE);
     tok(OP_OPERATOR);
 }
 
@@ -55,11 +60,11 @@ id  [$]?[_a-zA-Z][_a-zA-Z0-9]*
 br  \n[ ]*
 op  ([-+*/%!^><=])+
 comment [#].*$
-			
+
 %%
 
 %{ // our little hack to return multiple tokens from a rule match
-  if (!tokenq.empty()) { 
+  if (!tokenq.empty()) {
     auto val = tokenq.front();
     tokenq.pop();
     return val;
@@ -78,7 +83,7 @@ comment [#].*$
 
 impl   { tok(IMPL); }
 for    { tok(FOR); }
-in     { tok(IN); }		
+in     { tok(IN); }
 class  { tok(CLASS); }
 match  { tok(MATCH); }
 type   { tok(TYPE); }
@@ -101,13 +106,13 @@ pass   { tok(PASS); }
 [&]    { tok(ADDR_OF); }
 {br}   {
   lineno++; colno = yyleng - 1;
-  
+
   if (indents.top() < colno) { tokenq.push(yy::parser::token::INDENT); indents.push(colno); }
   else if (indents.top() == colno) { }
   else while(indents.top() > colno) {
       indents.pop();
       tokenq.push(yy::parser::token::DEDENT);
-      tokenq.push(yy::parser::token::NEWLINE);      
+      tokenq.push(yy::parser::token::NEWLINE);
     }
   tok(NEWLINE);
 }

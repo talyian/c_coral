@@ -14,8 +14,8 @@ public:
   InstructionHandler(Expr * e) : out(e) { visitorName = "retinst "; e->accept(this); }
 
   void visit(If * a) {
-    a->ifbody = RETURN(a->ifbody);
-    a->elsebody = RETURN(a->elsebody);
+    a->ifbody = (BlockExpr *)RETURN(a->ifbody);
+    a->elsebody = (BlockExpr *)RETURN(a->elsebody);
   }
 
   void visit(BlockExpr * a) {

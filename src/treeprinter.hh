@@ -14,6 +14,7 @@ public:
   std::ostream & out;
   int indent = 0;
   int line_mode = 0;
+  int showElif = 0;
   TreePrinter(Module * m, std::ostream & c) : module(m), out(c) {
     visitorName = "tree ";
   }
@@ -105,16 +106,26 @@ public:
   void visit(If * e) {
     TreePrinter pp(module, out);
     pp.line_mode = 1;
-    out << IND() << "if ";
+    out << IND() << (showElif ? "elif " : "if ");
+    showElif = 0;
     e->cond->accept(&pp);
     out << ":\n";
     indent++;
     e->ifbody->accept(this);
     indent--;
-    out << IND() << "else:\n";
-    indent++;
-    e->elsebody->accept(this);
-    indent--;
+
+    if (e->elsebody->lines.size()) {
+      if (e->elsebody->lines.size() == 1 && EXPRNAME(e->elsebody->lines[0]) == "If") {
+	If * nextexpr = (If *)e->elsebody->lines[0];
+	showElif = 1;
+	nextexpr->accept(this);
+      } else {
+	out << IND() << "else:\n";
+	indent++;
+	e->elsebody->accept(this);
+	indent--;
+      }
+    }
   }
 
   void visit(MatchCaseTagsExpr * e) {

@@ -202,8 +202,10 @@ public:
 
 class If : public Expr {
 public:
-  Expr * cond, *ifbody, *elsebody;
-  If(Expr * cond, Expr * ifbody, Expr * elsebody) : cond(cond), ifbody(ifbody), elsebody(elsebody) { }
+  Expr * cond;
+  BlockExpr *ifbody, *elsebody;
+  If(Expr * cond, Expr * ifbody, Expr * elsebody) :
+    cond(cond), ifbody((BlockExpr *)ifbody), elsebody((BlockExpr *)elsebody) { }
   virtual void accept(class Visitor * v);
   virtual std::string toString();
   ~If() { delete cond; delete ifbody; delete elsebody; }
