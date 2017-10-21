@@ -11,6 +11,8 @@
 #include "compiler.hh"
 
 typedef void TestRun;
+int success = 0;
+int failure = 0;
 void _test_run(TestRun (*test)(), const char * name, const char * expected) {
   int pipes[2];
   if (pipe2(pipes, O_NONBLOCK) == -1) { perror("pipe"); exit(1); }
@@ -30,8 +32,12 @@ void _test_run(TestRun (*test)(), const char * name, const char * expected) {
     waitpid(pid, &status, 0);
     buf[0] = 0;
     buf[read(pipes[0], buf, 1023)] = 0;
-    if (strcmp(expected, buf) == 0) { cout << left << setw(20) << name << " \e[1;32mOK\e[0m" << endl; }
+    if (strcmp(expected, buf) == 0) {
+      success++;
+      cout << left << setw(20) << name << " \e[1;32mOK\e[0m" << endl;
+    }
     else {
+      failure++;
       cout << setw(20) << name << "\e[1;31m Err \e[0m\n";
       cout << "Expected: [" << expected << "]\n";
       cout << "Actual:   [" << buf << "]\n";
@@ -91,4 +97,7 @@ int main() {
   runTest(returns);
   runTest(tuple);
   runTest(enums);
+  printf("---------- [%d/%d] (%2.0f%%) ----------\n",
+	 success , success + failure,
+	 success * 100.0 / (success + failure));
 }

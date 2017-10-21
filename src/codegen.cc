@@ -415,7 +415,6 @@ void show_modules(std::vector<Module *> modules) {
       all_names = m->names;
     }
   }
-  auto llvm_module = builders[0]->module;
   cerr << builders.back()->finalize() << endl;
   return;
 }
