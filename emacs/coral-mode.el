@@ -23,7 +23,7 @@
   ())
 
 (defvar coral-outline-regexp
-  ())
+  "^func\\|extern\\|#")
 
  ;;;###autoload
 (define-derived-mode coral-mode fundamental-mode "Coral"
@@ -37,6 +37,7 @@
   (setq-local imenu-generic-expression
 	      coral-imenu-generic-expression)
   (setq-local outline-regexp coral-outline-regexp)
+  (setq-local indent-tabs-mode nil)
   (add-to-list 'write-file-functions 'delete-trailing-whitespace)
   ())
 
