@@ -21,6 +21,8 @@ class Expr {
 */ M(Extern) /*
 */ M(String) /*
 */ M(Long) /*
+*/ M(VoidExpr) /*
+*/ M(BoolExpr) /*
 */ M(Double) /*
 */ M(Module) /*
 */ M(FuncDef) /*
@@ -338,10 +340,23 @@ public:
   virtual std::string toString() { return "impl-" + name; }
 };
 
+class VoidExpr : public Expr {
+public:
+  VoidExpr() { }
+  virtual void accept(class Visitor * v);
+};
+
+class BoolExpr : public Expr {
+public:
+  BoolExpr() { }
+  virtual void accept(class Visitor * v);
+};
+
 
 class Visitor {
  public:
-#define VISIT(NODE) virtual void visit(NODE * c) { std::cerr << "visit: " << #NODE << std::endl; }
+  std::string visitorName;
+#define VISIT(NODE) virtual void visit(NODE * c) { std::cerr << visitorName << "visit: " << #NODE << std::endl; }
   EXPR_NODE_LIST(VISIT)
 #undef VISIT
   virtual ~Visitor () { }

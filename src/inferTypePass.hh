@@ -32,14 +32,19 @@ class TypeInferer : public Visitor {
   string name;
   Type * value, * in_value;
   Scope scope;
-  TypeInferer() { name = ""; value = 0; in_value = 0; }
+  TypeInferer() { visitorName = "infer "; name = ""; value = 0; in_value = 0; }
 public:
   TypeInferer(Module * module) {
+    visitorName = "infer ";
     in_value = 0;
     value = 0;
     module->accept(this);
     // scope.show();
     // cerr << "----------------------------------------\n";
+  }
+
+  void visit(VoidExpr * e) {
+    value = new VoidType();
   }
   void visit(Module * m) {
     foreach(m->lines, it) {

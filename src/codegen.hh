@@ -42,6 +42,7 @@ public:
   virtual void visit(Long * c);
   virtual void visit(Double * c);
   virtual void visit(AddrOf * c);
+  virtual void visit(VoidExpr * c);  
 };
 
 
@@ -69,7 +70,7 @@ public:
   ModuleBuilder * getModuleBuilder() { return mb; }
   LLVMValueRef output;
   ExprValue(ModuleBuilder * mb, Expr * e)
-    : mb(mb) { e->accept(this); }
+    : mb(mb) { visitorName = "VAL "; e->accept(this); }
   virtual void visit(String * s);
   virtual void visit(Long * s);
   virtual void visit(Double * s);

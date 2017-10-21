@@ -213,21 +213,23 @@ void ExprValue::visit(AddrOf * s) {
   // cerr << "output: " << LLVMPrintValueToString(output) << endl;
 }
 
-void ExprValue::visit(BinOp * c) { output = BinaryValue(mb, c).output; }
+void ExprValue::visit(BinOp * c) {
+  auto lval = VAL(c->lhs);
+  auto rval = VAL(c->rhs);
+  
+  if (c->op == "+") { output = LLVMBuildAdd(mb->builder, lval, rval, ""); }
+  else if (c->op == "-") { output = LLVMBuildSub(mb->builder, lval, rval, ""); }
+  else if (c->op == "*") { output = LLVMBuildMul(mb->builder, lval, rval, ""); }
+  else if (c->op == "/") { output = LLVMBuildSDiv(mb->builder, lval, rval, ""); }
+  else if (c->op == "%") { output = LLVMBuildURem(mb->builder, lval, rval, ""); }
+  else if (c->op == "<") { output = LLVMBuildICmp(mb->builder, LLVMIntSLT, lval, rval, ""); }
+  else if (c->op == ">") { output = LLVMBuildICmp(mb->builder, LLVMIntSGT, lval, rval, ""); }
+  else if (c->op == "=") { output = LLVMBuildICmp(mb->builder, LLVMIntEQ, lval, rval, ""); }
+  else if (c->op == "!=") { output = LLVMBuildICmp(mb->builder, LLVMIntNE, lval, rval, ""); }
+  else cerr << "unknown operation " << c->op << endl;
+}
 
 void BinaryValue::visitLong()  {
-  auto lval = VAL(op->lhs);
-  auto rval = VAL(op->rhs);
-  if (op->op == "+") { output = LLVMBuildAdd(mb->builder, lval, rval, ""); }
-  else if (op->op == "-") { output = LLVMBuildSub(mb->builder, lval, rval, ""); }
-  else if (op->op == "*") { output = LLVMBuildMul(mb->builder, lval, rval, ""); }
-  else if (op->op == "/") { output = LLVMBuildSDiv(mb->builder, lval, rval, ""); }
-  else if (op->op == "%") { output = LLVMBuildURem(mb->builder, lval, rval, ""); }
-  else if (op->op == "<") { output = LLVMBuildICmp(mb->builder, LLVMIntSLT, lval, rval, ""); }
-  else if (op->op == ">") { output = LLVMBuildICmp(mb->builder, LLVMIntSGT, lval, rval, ""); }
-  else if (op->op == "=") { output = LLVMBuildICmp(mb->builder, LLVMIntEQ, lval, rval, ""); }
-  else if (op->op == "!=") { output = LLVMBuildICmp(mb->builder, LLVMIntNE, lval, rval, ""); }
-  else cerr << "unknown operation " << op->op << endl;
 }
 
 void BinaryValue::visitDouble() {
@@ -240,6 +242,7 @@ void BinaryValue::visitDouble() {
 }
 
 void ModuleBuilder::init(Module * m) {
+  visitorName = "codegen ";
   context = LLVMContextCreate();
   module = LLVMModuleCreateWithNameInContext(m->name.c_str(), context);
   builder = LLVMCreateBuilderInContext(context);
@@ -277,6 +280,7 @@ void ModuleBuilder::visit(BinOp * c){ VAL(c); }
 void ModuleBuilder::visit(Var * c){ VAL(c); }
 void ModuleBuilder::visit(String * c){ VAL(c); }
 void ModuleBuilder::visit(Long * c){ VAL(c); }
+void ModuleBuilder::visit(VoidExpr * c){ }
 void ModuleBuilder::visit(Double * c){ VAL(c); }
 void ModuleBuilder::visit(AddrOf * c){ VAL(c); }
 
@@ -291,11 +295,15 @@ void ModuleBuilder::visit(If * c) {
   auto fn = LLVMGetBasicBlockParent(bb);
   auto ifbb = LLVMAppendBasicBlock(fn, "ifbb");
   auto elbb = LLVMAppendBasicBlock(fn, "elbb");
+  auto nextbb = LLVMAppendBasicBlock(fn, "nextbb");
   LLVMBuildCondBr(builder, VAL(c->cond), ifbb, elbb);
   LLVMPositionBuilderAtEnd(builder, ifbb);
   c->ifbody->accept(this);
+  LLVMBuildBr(builder, nextbb);  
   LLVMPositionBuilderAtEnd(builder, elbb);
   c->elsebody->accept(this);
+  LLVMBuildBr(builder, nextbb);
+  LLVMPositionBuilderAtEnd(builder, nextbb);  
 }
 
 void ModuleBuilder::visit(Let * a) {

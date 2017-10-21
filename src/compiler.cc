@@ -5,6 +5,7 @@
 #include "lexer.hh"
 
 #include "inferTypePass.hh"
+#include "returnInsertionPass.hh"
 #include "mainfuncPass.hh"
 
 std::string ir_module(Module * m);
@@ -19,6 +20,7 @@ void CoralModule::init(FILE * in, const char * src) {
   yylex_destroy(scanner);
 
   module = inferTypes(module);
+  module = insertReturns(module);  
   module = buildMainFunction(module);
 }
 

@@ -13,9 +13,11 @@ class MainFuncBuilder : public Visitor {
   std::vector<Expr *> mainLines;
 public:
   MainFuncBuilder(Module * m) : module(m) {
+    visitorName = "mainfunc ";
     foreach(m->lines, it) (*it)->accept(this);
   }
   void visit(Extern * e) { decls[e->name] = e; }
+  void visit(If * e) { mainLines.push_back(e); }  
   void visit(Call * e) { mainLines.push_back(e); }
   void visit(Let * a) { mainLines.push_back(a); } //decls[a->var->name] = a; }
   void visit(DeclTypeAlias * a) { decls[a->name] = a; }

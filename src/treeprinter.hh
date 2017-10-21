@@ -14,7 +14,9 @@ public:
   std::ostream & out;
   int indent = 0;
   int line_mode = 0;
-  TreePrinter(Module * m, std::ostream & c) : module(m), out(c) { }
+  TreePrinter(Module * m, std::ostream & c) : module(m), out(c) {
+    visitorName = "tree ";
+  }
   void print() {
     module->accept(this);
   }
@@ -193,7 +195,10 @@ public:
     }
     out << END();
   }
-
+  void visit(VoidExpr * e) {
+    out << IND() << "()" << END();
+  }
+  
   void visit(ImplType * a) {
     out << IND() << "impl " << a->name << ":" << END();
     indent++;

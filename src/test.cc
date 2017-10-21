@@ -62,9 +62,21 @@ DefTest(fizzbuzz, "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16"
   CoralCompiler cc; cc.load(cm); cc.run();
 };
 
+DefTest(ifstatement, "0 DFJ\n1 ADFJ\n2 BDFJ\n3 CFJ\n4 DEJ\n5 DFG\n6 DFH\n7 DFI\n8 DFJ\n9\n5\n") {
+  CoralModule cm(fopen("tests/if.coral", "r"));
+  CoralCompiler cc; cc.load(cm); cc.run();
+};
+
+DefTest(returns, "101\n200\n201\n402\n") {
+  CoralModule cm(fopen("tests/returns.coral", "r"));
+  CoralCompiler cc; cc.load(cm); cc.run();
+};
+
 int main() {
   cout << "---------- [Starting Test Run] ----------\n";
   runTest(empty);
   runTest(hello_world);
+  runTest(ifstatement);
   runTest(fizzbuzz);
+  runTest(returns);
 }

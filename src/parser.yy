@@ -19,6 +19,7 @@
 %define api.value.type variant
 %locations
 
+
 %token FOR
 %token IN
 %token IMPL
@@ -41,13 +42,28 @@
 %token DEDENT
 %token IF
 %token ELSE
+%token ELIF
 %token RETURN
+%token PASS
+
+%precedence OP_ARROW
+%precedence OP_EQ OP_LTE OP_GTE OP_LT OP_GT OP_NE
+%precedence OP_MULEQ OP_DIVEQ OP_ADDEQ OP_SUBEQ OP_MODEQ
+%precedence OP_BIND
+
+%precedence OP_OPERATOR
+
+%left OP_ADD OP_SUB
+%precedence OP_MOD
+%left OP_MUL OP_DIV
+%precedence OP_NOT
+
 
 %type <std::vector<Expr *>> lines ArgumentList ArgumentList_inner
 %type <std::vector<Expr *>> enumBlock matchBlock
 %type <std::vector<Expr *>> enumLines matchLines
 %type <Expr *> enumLine matchLine
-%type <Expr *> line expr Argument BlockOrExpr 
+%type <Expr *> line expr Argument IfExpr ElseSequence
 %type <Type *> typesig
 %type <std::vector<Type *>> TypeList
 %type <Def *> Parameter classLine
@@ -85,8 +101,10 @@ line
 | IMPL IDENTIFIER FOR IDENTIFIER block { $$ = new ImplClassFor($2, $4, $5); }
 | LET Parameter '=' expr { $$ = new Let($2, $4); }
 | RETURN expr { $$ = new Return($2); }
+| PASS { $$ = new VoidExpr(); }
 | expr { $$ = $1; }
 | FOR ParameterList_inner IN expr block { $$ = new For($2, $4, $5); }
+| IfExpr { $$ = $1; }
 
 classBlock : ':' NEWLINE INDENT classLines DEDENT { $$ = $4; }
 classLines : NEWLINE { }
@@ -147,24 +165,24 @@ expr
 | FLOAT { $$ = new Double($1); }
 | IDENTIFIER { $$ = new Var($1); }
 
-| expr '+' expr { $$ = new BinOp("+", $1, $3); }
-| expr '-' expr { $$ = new BinOp("-", $1, $3); }
-| expr '*' expr { $$ = new BinOp("*", $1, $3); }
-| expr '/' expr { $$ = new BinOp("/", $1, $3); }
-| expr '%' expr { $$ = new BinOp("%", $1, $3); }
-| expr '<' expr { $$ = new BinOp("<", $1, $3); }
-| expr '>' expr { $$ = new BinOp(">", $1, $3); }
-| expr '=' expr { $$ = new BinOp("=", $1, $3); }
-| expr '<' '=' expr { $$ = new BinOp("<=", $1, $4); }
-| expr '>' '=' expr { $$ = new BinOp(">=", $1, $4); }
-| expr '!' '=' expr { $$ = new BinOp("!=", $1, $4); }
-| expr '+' '=' expr { $$ = new BinOp("+=", $1, $4); }
-| expr '*' '=' expr { $$ = new BinOp("*=", $1, $4); }
-| expr '-' '=' expr { $$ = new BinOp("-=", $1, $4); }
-| expr '/' '=' expr { $$ = new BinOp("/=", $1, $4); }
-| expr '@' expr { $$ = new BinOp("@", $1, $3); }
-// TODO uhhh this is not a regular binop
-| expr '=' '>' expr { $$ = new BinOp("=>", $1, $4); }
+| expr OP_ADD expr { $$ = new BinOp("+", $1, $3); }
+| expr OP_SUB expr { $$ = new BinOp("-", $1, $3); }
+| expr OP_MUL expr { $$ = new BinOp("*", $1, $3); }
+| expr OP_DIV expr { $$ = new BinOp("/", $1, $3); }
+| expr OP_MOD expr { $$ = new BinOp("%", $1, $3); }
+| expr OP_LT expr { $$ = new BinOp("<", $1, $3); }
+| expr OP_GT expr { $$ = new BinOp(">", $1, $3); }
+| expr OP_EQ expr { $$ = new BinOp("=", $1, $3); }
+| expr OP_LTE expr { $$ = new BinOp("<=", $1, $3); }
+| expr OP_GTE expr { $$ = new BinOp(">=", $1, $3); }
+| expr OP_NE expr { $$ = new BinOp("!=", $1, $3); }
+| expr OP_ADDEQ expr { $$ = new BinOp("+=", $1, $3); }
+| expr OP_MULEQ expr { $$ = new BinOp("*=", $1, $3); }
+| expr OP_SUBEQ expr { $$ = new BinOp("-=", $1, $3); }
+| expr OP_DIVEQ expr { $$ = new BinOp("/=", $1, $3); }
+| expr OP_MODEQ expr { $$ = new BinOp("%=", $1, $3); }
+| expr OP_BIND expr { $$ = new BinOp("@", $1, $3); }
+| expr OP_ARROW expr { $$ = new BinOp("=>", $1, $3); }
 
 | expr '.' IDENTIFIER { $$ = new Call(new Var($3), std::vector<Expr*>{ $1 }); }
 | expr '.' IDENTIFIER '(' ArgumentList ')' {
@@ -172,19 +190,21 @@ expr
      $$ = new Call(new Var($3), $5); }
 | expr '[' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3 }); }
 | expr '[' expr ',' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3, $5 }); }
-
 | expr ArgumentList { $$ = new Call($1, $2); }
-| IF expr BlockOrExpr ELSE BlockOrExpr { $$ = new If($2, $3, $5); }
 | expr AS typesig { $$ = new Cast($1, $3); }
 | ADDR_OF IDENTIFIER { $$ = new AddrOf($2); }
 | MATCH expr matchBlock { $$ = new MatchExpr($2, $3); }
 
 | '[' ArgumentList_inner ']' { $$ = new Call(new Var("List.create"), $2); }
 
+IfExpr
+: IF expr block { $$ = new If($2, $3, new Expr()); }
+| IF expr block NEWLINE ElseSequence { $$ = new If($2, $3, $5); }
 
-BlockOrExpr
-: block { $$ = $1; }
-| expr { $$ = $1; }
+ElseSequence
+: /* empty */ { $$ = new BlockExpr(std::vector<Expr *>{ }); }
+| ELIF expr block NEWLINE ElseSequence { $$ = new If($2, $3, $5); }
+| ELSE block { $$ = $2; }
 
 typesig
 : IDENTIFIER { $$ = BuildType($1); }
