@@ -18,6 +18,9 @@ func test(n: Int64):
     printf "J"
   printf "\n"
 
+func foo(n: Int64):
+  printf "hi"
+
 test 0
 test 1
 test 2
@@ -33,6 +36,6 @@ func val(n : Int64):
     n * n
   else:
     n + 1
-    
+
 printf("%d\n", val 3)
 printf("%d\n", val 4)

@@ -1,3 +1,5 @@
+let _expected = "Friday\nSaturday\nSadderday\n"
+
 type DayOfWeek:
   | Friday
   | Saturday
@@ -8,7 +10,7 @@ func show(d : DayOfWeek):
     Friday: printf "Friday\n"
     Saturday: printf "Saturday\n"
     Other: printf "Sadderday\n"
-    
+
 let x = DayOfWeek.Friday
 let y = DayOfWeek.Saturday
 show x

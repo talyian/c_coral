@@ -34,6 +34,8 @@ public:
   virtual void visit(If * c);
   virtual void visit(Let * c);
 
+  virtual void visit(DeclTypeEnum * c);
+
   // simulate possible side-effects
   virtual void visit(Call * c);
   virtual void visit(BinOp * c);
@@ -42,7 +44,7 @@ public:
   virtual void visit(Long * c);
   virtual void visit(Double * c);
   virtual void visit(AddrOf * c);
-  virtual void visit(VoidExpr * c);  
+  virtual void visit(VoidExpr * c);
 };
 
 
@@ -70,7 +72,7 @@ public:
   ModuleBuilder * getModuleBuilder() { return mb; }
   LLVMValueRef output;
   ExprValue(ModuleBuilder * mb, Expr * e)
-    : mb(mb) { visitorName = "VAL "; e->accept(this); }
+    : Visitor("VAL "), mb(mb) { e->accept(this); }
   virtual void visit(String * s);
   virtual void visit(Long * s);
   virtual void visit(Double * s);
@@ -89,7 +91,7 @@ public:
   LLVMValueRef output;
   BinOp * op;
   BinaryValue(ModuleBuilder * mb, BinOp * e)
-    : mb(mb), op(e) { op->lhs->accept(this); }
+    : Visitor("binop "), mb(mb), op(e)  { op->lhs->accept(this); }
   void visitLong();
   void visitDouble();
   virtual void visit(Long * s) { visitLong(); }

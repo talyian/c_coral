@@ -242,15 +242,14 @@ void BinaryValue::visitDouble() {
 }
 
 void ModuleBuilder::init(Module * m) {
-  visitorName = "codegen ";
   context = LLVMContextCreate();
   module = LLVMModuleCreateWithNameInContext(m->name.c_str(), context);
   builder = LLVMCreateBuilderInContext(context);
   for(auto i = m->lines.begin(), e=m->lines.end(); i != e; i++)
     (*i)->accept(this);
 }
-ModuleBuilder::ModuleBuilder(Module * m) { init(m); }
-ModuleBuilder::ModuleBuilder(Module * m, std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> _n)
+ModuleBuilder::ModuleBuilder(Module * m) : Visitor("codegen "){ init(m); }
+ModuleBuilder::ModuleBuilder(Module * m, std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> _n) : Visitor("codegen ")
 {
   names = _n;
   init(m);
@@ -283,7 +282,7 @@ void ModuleBuilder::visit(Long * c){ VAL(c); }
 void ModuleBuilder::visit(VoidExpr * c){ }
 void ModuleBuilder::visit(Double * c){ VAL(c); }
 void ModuleBuilder::visit(AddrOf * c){ VAL(c); }
-
+void ModuleBuilder::visit(DeclTypeEnum * c) { }
 void ModuleBuilder::visit(BlockExpr * c) {
   for(auto i = c->lines.begin(), e = c->lines.end(); i != e; i++) {
     (*i)->accept(this);
@@ -337,9 +336,14 @@ void ModuleBuilder::visit(FuncDef * c) {
     define_func(0, c->name, FUNC_MULTI);
   } else define_func(0, c->name, func);
 
+  cerr << c->name << " ";
+  cerr << "args(" << c->args.size() << ") ";
+  cerr << "(" << LLVMPrintTypeToString(LLVMTypeOf(func)) << ") ";
   for(auto i=0; i<(int)c->args.size(); i++) {
+    cerr << i << " " << c->args[i]->name << ", ";
     define_func(func, c->args[i]->name, LLVMGetParam(func, i));
   }
+  cerr << endl;
   LLVMPositionBuilderAtEnd(builder, LLVMAppendBasicBlockInContext(context, func, "entry"));
   c->body->accept(this);
 

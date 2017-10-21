@@ -1,22 +1,33 @@
 #include <iostream>
+#include <fstream>
+#include <regex>
+#include <sstream>
 #include <iomanip>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <cstring>
 
-#include "ast.hh"
-#include "parser.hh"
-#include "lexer.hh"
+#include "../obj/ast.hh"
+#include "../obj/parser.hh"
+#include "../obj/lexer.hh"
 #include "compiler.hh"
 
-typedef void TestRun;
-int success = 0;
-int failure = 0;
-void _test_run(TestRun (*test)(), const char * name, const char * expected) {
+int success = 0, failure = 0;
+
+class TestCase {
+public:
+  string name;
+  string expected;
+  TestCase() { }
+};
+
+// forks and runs a function with a given parameter
+// returns its stdout as a string
+template <typename T>
+string fork_run (void (*run_func)(T a), T args) {
   int pipes[2];
   if (pipe2(pipes, O_NONBLOCK) == -1) { perror("pipe"); exit(1); }
-
   pid_t pid = fork();
   if (pid == -1) { perror("fork"); exit(2); }
   else if (pid == 0) {
@@ -24,7 +35,7 @@ void _test_run(TestRun (*test)(), const char * name, const char * expected) {
     close(0);
     close(pipes[1]);
     close(pipes[0]);
-    test();
+    run_func(args);
     exit(0);
   } else {
     char buf[1024];
@@ -32,71 +43,75 @@ void _test_run(TestRun (*test)(), const char * name, const char * expected) {
     waitpid(pid, &status, 0);
     buf[0] = 0;
     buf[read(pipes[0], buf, 1023)] = 0;
-    if (strcmp(expected, buf) == 0) {
-      success++;
-      cout << left << setw(20) << name << " \e[1;32mOK\e[0m" << endl;
-    }
-    else {
-      failure++;
-      cout << setw(20) << name << "\e[1;31m Err \e[0m\n";
-      cout << "Expected: [" << expected << "]\n";
-      cout << "Actual:   [" << buf << "]\n";
-      if (status) {
-	cout << "Child exited with code " << status << "\n";
-      }
-    }
+    return string(buf);
   }
 }
 
+class FileTestCase : public TestCase {
+public:
+  string path;
+  string source;
+  string output;
+  static regex expect_search;
+  static regex s_escape;
+  FileTestCase(string testName, string path) {
+    name = testName;
+    this->path = path;
+    ifstream ff(path.c_str());
+    stringstream buffer;
+    buffer << ff.rdbuf();
+    this->source = buffer.str();
+    smatch m;
+    if (regex_search(this->source, m, expect_search)) {
+      string s = m[1];
+      expected = regex_replace(s, s_escape, "\n");
+    }
+  }
+  bool run() {
+    output = fork_run<string>([] (string args) {
+	CoralCompiler cc;
+	cc.load(CoralModule(args.c_str()));
+	cc.run();
+    }, source);
+    success += output == expected;
+    failure += output != expected;
+    return output == expected;
+  }
+  void runStandalone() {
+    if (run()) printf("%-20s \e[1;32mOK\e[0m\n", name.c_str());
+    else {
+      printf("%-20s \e[1;31mMismatch\e[0m\n", name.c_str());
+      printf("Expected: [%s]\n", expected.c_str());
+      printf("Result:   [%s]\n", output.c_str());
+    }
+  }
+};
+
+regex FileTestCase::expect_search = regex("_expected = \"(.*)\"");
+regex FileTestCase::s_escape = regex("\\\\n");
+
 #define runTest(TESTNAME) _test_run(run_##TESTNAME, #TESTNAME, expected_##TESTNAME)
-#define DefTest(TESTNAME, expected) const char * expected_##TESTNAME=expected; auto run_##TESTNAME = [] ()
+#define DefTest(TESTNAME, expected) void run_##TESTNAME()
+#define runFileTest(TESTNAME, fname, _expected) do { \
+    FileTestCase tc(#TESTNAME, fname); \
+    if (_expected != "") tc.expected = _expected; \
+    tc.runStandalone(); } while(0);
 using std::vector;
 using std::cout;
 
-DefTest(empty, "test") {
-  cout << "test";
-};
-
-DefTest(hello_world, "Hello, World!") {
-  CoralCompiler cc;
-  cc.load(CoralModule(fopen("tests/hello_world.coral", "r")));
-  cc.run();
-};
-
-DefTest(fizzbuzz, "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16") {
-  CoralModule cm(fopen("tests/fizzbuzz.coral", "r"));
-  CoralCompiler cc; cc.load(cm); cc.run();
-};
-
-DefTest(ifstatement, "0 DFJ\n1 ADFJ\n2 BDFJ\n3 CFJ\n4 DEJ\n5 DFG\n6 DFH\n7 DFI\n8 DFJ\n9\n5\n") {
-  CoralModule cm(fopen("tests/if.coral", "r"));
-  CoralCompiler cc; cc.load(cm); cc.run();
-};
-
-DefTest(returns, "101\n200\n201\n402\n") {
-  CoralModule cm(fopen("tests/returns.coral", "r"));
-  CoralCompiler cc; cc.load(cm); cc.run();
-};
-
-DefTest(tuple, "n/a") {
-  CoralModule cm(fopen("tests/tuple.coral", "r"));
-  CoralCompiler cc; cc.load(cm); cc.run();
-};
-
-DefTest(enums, "n/a") {
-  CoralModule cm(fopen("tests/enums.coral", "r"));
-  CoralCompiler cc; cc.load(cm); cc.run();
-};
-
 int main() {
   cout << "---------- [Starting Test Run] ----------\n";
-  runTest(empty);
-  runTest(hello_world);
-  runTest(ifstatement);
-  runTest(fizzbuzz);
-  runTest(returns);
-  runTest(tuple);
-  runTest(enums);
+  // runFileTest(hello_world, "tests/hello_world.coral", "");
+  // runFileTest(
+  //   ifstatement, "tests/if.coral",
+  //   "0 DFJ\n1 ADFJ\n2 BDFJ\n3 CFJ\n4 DEJ\n5 DFG\n6 DFH\n7 DFI\n8 DFJ\n9\n5\n");
+  // runFileTest(
+  //   fizzbuzz, "tests/fizzbuzz.coral",
+  //   "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16");
+  // runFileTest(returns, "tests/returns.coral",
+  //   "101\n200\n201\n402\n");
+  // runFileTest(enums, "tests/enums.coral", "");
+  runFileTest(scope, "tests/scope.coral", "");
   printf("---------- [%d/%d] (%2.0f%%) ----------\n",
 	 success , success + failure,
 	 success * 100.0 / (success + failure));

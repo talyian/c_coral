@@ -15,9 +15,7 @@ public:
   int indent = 0;
   int line_mode = 0;
   int showElif = 0;
-  TreePrinter(Module * m, std::ostream & c) : module(m), out(c) {
-    visitorName = "tree ";
-  }
+  TreePrinter(Module * m, std::ostream & c) : Visitor("treeprint "), module(m), out(c) { }
   void print() {
     module->accept(this);
   }
@@ -39,9 +37,9 @@ public:
     foreach(i->indices, it) {
       if (it != i->indices.begin()) { out << ", "; }
       (*it)->accept(this); }
-    line_mode = t;    
+    line_mode = t;
     out << ']' << END();
-    
+
   }
   void visit(For * f) {
     out << IND() << "for ";
@@ -69,11 +67,11 @@ public:
     pp.line_mode = 1;
     if (m->rettype != 0)
       out << IND() << "func " << m->name << " : " << m->rettype->toString();
-    else 
+    else
       out << IND() << "func " << m->name;
     out << "(";
     foreach(m->args, arg) {
-      if (arg != m->args.begin()) out << ", ";      
+      if (arg != m->args.begin()) out << ", ";
       pp.visit(*arg);
     }
     out << ")";
@@ -99,10 +97,10 @@ public:
     op->lhs->accept(&pp);
     out << " " << op->op << " ";
     op->rhs->accept(&pp);
-    out << ")";    
+    out << ")";
     out << END();
   }
-  
+
   void visit(If * e) {
     TreePrinter pp(module, out);
     pp.line_mode = 1;
@@ -138,7 +136,7 @@ public:
     e->body->accept(this);
     indent--;
   }
-  
+
   void visit(MatchExpr * e) {
     TreePrinter pp(module, out);
     pp.line_mode = 1;
@@ -147,7 +145,7 @@ public:
     out << ":\n";
     indent++;
     foreach(e->cases, c) (*c)->accept(this);
-    indent--;    
+    indent--;
   }
 
   void visit(DeclClass * a) {
@@ -159,10 +157,10 @@ public:
     indent--;
     out << END();
   }
-  
+
   void visit(DeclTypeAlias * a) {
     out << IND() << "type " << a->name << " = " << a->wrapped->toString() << END();
-    out << END();    
+    out << END();
   }
   void visit(DeclTypeEnum * a) {
     out << IND() << "type " << a->name << ":" << END();
@@ -173,7 +171,7 @@ public:
       else out << IND() << "(expr?)\n";
     }
     indent--;
-    out << END();    
+    out << END();
   }
   void visit(EnumCase * e) {
     TreePrinter lp(module, out);
@@ -193,9 +191,9 @@ public:
     c->callee->accept(&lp);
     if (c->arguments.size() == 0) out << "()";
     else if (c->arguments.size() == 1) {
-      out << '(';      
+      out << '(';
       c->arguments[0]->accept(&lp);
-      out << ')';      
+      out << ')';
     } else {
       out << '(';
       foreach(c->arguments, it) {
@@ -209,14 +207,14 @@ public:
   void visit(VoidExpr * e) {
     out << IND() << "()" << END();
   }
-  
+
   void visit(ImplType * a) {
     out << IND() << "impl " << a->name << ":" << END();
     indent++;
     a->body->accept(this);
     indent--;
   }
-  
+
   void visit(ImplClassFor * a) {
     out << IND()
 	<< "impl " << a->class_name
@@ -251,13 +249,13 @@ public:
     d->value->accept(&lp);
     out << END();
   }
-  
+
   void visit(Long * d) { out << IND() << d->value << END(); }
 
-  void visit(String * d) { out << IND() << d->value << END(); }  
+  void visit(String * d) { out << IND() << d->value << END(); }
 
   void visit(Var * d) {  out << IND() << d->value << END(); }
-  
+
   std::string END() {
     if (line_mode) return "";
     return "\n";

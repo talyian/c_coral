@@ -1,3 +1,3 @@
-# Hello, World!
+let _expected = "Hello, World!"
 printf("Hello, %s", "World")
 printf "!"

@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <vector>
@@ -358,6 +357,7 @@ public:
 class Visitor {
  public:
   std::string visitorName;
+  Visitor(string name) : visitorName(name) { }
 #define VISIT(NODE) virtual void visit(NODE * c) { std::cerr << visitorName << "visit: " << #NODE << std::endl; }
   EXPR_NODE_LIST(VISIT)
 #undef VISIT
@@ -369,7 +369,7 @@ class Visitor {
 class ExprNameVisitor : public Visitor {
 public:
   std::string out;
-  ExprNameVisitor(Expr * e) { e->accept(this); }
+  ExprNameVisitor(Expr * e) : Visitor("exprname ") { e->accept(this); }
 #define VISIT(NODE) virtual void visit(NODE * c) { out = #NODE; }
 EXPR_NODE_LIST(VISIT)
 #undef VISIT
@@ -378,6 +378,7 @@ EXPR_NODE_LIST(VISIT)
 
 class NameGetter : public Visitor {
 public:
+  NameGetter() : Visitor("nameget ") { }
   string out;
   void visit(Var * v) { out = v->value; }
   void visit(Expr * e) { out = ""; }

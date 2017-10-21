@@ -32,14 +32,12 @@ class TypeInferer : public Visitor {
   string name;
   Type * value, * in_value;
   Scope scope;
-  TypeInferer() { visitorName = "infer "; name = ""; value = 0; in_value = 0; }
+  TypeInferer() : Visitor("infer ") { name = ""; value = 0; in_value = 0; }
 public:
-  TypeInferer(Module * module) {
-    visitorName = "infer ";
+  TypeInferer(Module * module) : Visitor("infer ") {
     in_value = 0;
     value = 0;
     module->accept(this);
-    // scope.show();
     // cerr << "----------------------------------------\n";
   }
 
@@ -64,7 +62,6 @@ public:
   }
 
   void visit(EnumCase * c) {
-    cerr << "visiting " << c->name << " : " << in_value << endl;
     scope.add(c->name, in_value);
   }
 
@@ -76,7 +73,7 @@ public:
     auto t2 = value;
     if (t2 == 0) value = t1;
   }
-  
+
   void visit(MatchExpr * e) {
     foreach(e->cases, it) {
       (*it)->accept(this);
@@ -112,7 +109,7 @@ public:
 
   void visit(Var * c) {
     value = scope.get(c->value);
-    if (value && value->toString() == "Unknown" && in_value) {
+    if (value && value->toString() == "unknown" && in_value) {
       value = in_value;
       scope.set(c->value, value);
     }
@@ -120,7 +117,10 @@ public:
   void visit(Long * c) { value = new IntType(64); }
   void visit(Let * l) {
     value = l->var->type;
-    if (!value) l->value->accept(this);
+    if (!value || value->toString() == "unknown") {
+      l->value->accept(this);
+      l->var->type = value;
+    }
     scope.add(l->var->name, value);
   }
 

@@ -11,12 +11,14 @@ debounce() {
 (echo "0 0"; inotifywait -q -m -r src samples tests Makefile watch.sh -e MODIFY --exclude "#") \
 | stdbuf -o0 grep -v ISDIR | debounce \
 | while read dir event file; do
-    echo "-- [$file] -----($SRCFILE)-------------------------------"    
+    echo "-- [$file] -----($SRCFILE)-------------------------------"
     echo "$dir -> $event -> $file [$SRCFILE]"
-    if [[ "$file" == "watch.sh" ]]; then
+    if [[ $SRCFILE == "test" ]]; then
+	make -s test
+	continue
+    elif [[ "$file" == "watch.sh" ]]; then
 	exec /bin/bash watch.sh $SRCFILE
     elif [[ "$file" == *.coral ]]; then
-	echo "woohoo"
 	SRCFILE="$dir$file"
     fi
     echo "-- [$file] -----($SRCFILE)-------------------------------"

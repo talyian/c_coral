@@ -19,11 +19,13 @@
    ("=>\\|\[$@<>=+*/%-\]" . font-lock-function-name-face)
  ) "Keyword highlighting specification for `coral-mode'.")
 
-(defvar coral-imenu-generic-expression
-  ())
+(defvar coral-imenu-generic-expression '(
+    ("Types" "type \\(\w+\\)" 1)
+    ("Functions" "func \\(\w+\\)" 0)
+    ))
 
 (defvar coral-outline-regexp
-  "^func\\|extern\\|#")
+  "\\<func\\|\\<extern\\|^#\\|\\<type")
 
  ;;;###autoload
 (define-derived-mode coral-mode fundamental-mode "Coral"
@@ -38,6 +40,7 @@
 	      coral-imenu-generic-expression)
   (setq-local outline-regexp coral-outline-regexp)
   (setq-local indent-tabs-mode nil)
+  (outline-minor-mode 1)
   (add-to-list 'write-file-functions 'delete-trailing-whitespace)
   ())
 

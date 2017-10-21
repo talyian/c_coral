@@ -1,0 +1,36 @@
+let _expected = "TODO..."
+extern "C" printf : Fn[..., Void]
+
+func print(x: Int64):
+  printf("%d\n", x)
+
+let x = 1
+print x
+
+func f(x : Int64):
+  print x
+  let x = 3
+  print x
+  func g(x : Int64):
+    print x
+  print x
+  if 1 = 1:
+    print x
+    let x = 4
+    func h(x : Int64):
+      print x
+    h x
+    g x
+    print x
+  else:
+    print x
+    let x = 5
+    func h(x : Int64):
+      print (0 - x)
+    h x
+    g x
+    print x
+
+print x
+f 2
+print x
