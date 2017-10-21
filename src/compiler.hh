@@ -18,6 +18,7 @@ public:
   void load(CoralModule module);
   void load(std::vector<CoralModule> modules);
   void run();
+  void showIR();
 };
 
 ostream& operator << (ostream & os, CoralModule t);

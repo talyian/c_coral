@@ -9,12 +9,12 @@
     (modify-syntax-entry ?# "<" st)
     (modify-syntax-entry ?\n ">" st)
     (modify-syntax-entry ?\' "\"\'" st)
-    (modify-syntax-entry ?\" "\"\"" st)        
+    (modify-syntax-entry ?\" "\"\"" st)
     st)
   "Syntax table for `coral-mode'.")
 
 (defvar coral-font-lock-keywords '(
-   ("\\<\\(impl\\|class\\)\\>" . font-lock-keyword-face)				   
+   ("\\<\\(impl\\|class\\)\\>" . font-lock-keyword-face)
    ("\\<\\(if\\|then\\|for\\|in\\|func\\|let\\|type\\|match\\|with\\|module\\)\\>" . font-lock-keyword-face)
    ("=>\\|\[$@<>=+*/%-\]" . font-lock-function-name-face)
  ) "Keyword highlighting specification for `coral-mode'.")
@@ -37,6 +37,7 @@
   (setq-local imenu-generic-expression
 	      coral-imenu-generic-expression)
   (setq-local outline-regexp coral-outline-regexp)
+  (add-to-list 'write-file-functions 'delete-trailing-whitespace)
   ())
 
  ;;; Indentation

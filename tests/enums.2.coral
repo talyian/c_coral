@@ -1,0 +1,11 @@
+type Int64Option:
+  | None
+  | Some(Int64)
+
+func show(d: Int64Option):
+  match d:
+    None: printf "None "
+    Some(val): printf("%d ", val)
+
+show (Int64Option.None)
+show (Int64Option.Some(31337)

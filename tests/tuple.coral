@@ -1,0 +1,8 @@
+let x = 2
+let y = "a"
+let z = (4, "b")
+let a = (x, y, z)
+
+printf("%d ", z[0])
+printf("%s ", z[1])
+printf("%d %d ", a[0], a[2][1])

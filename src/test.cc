@@ -72,6 +72,16 @@ DefTest(returns, "101\n200\n201\n402\n") {
   CoralCompiler cc; cc.load(cm); cc.run();
 };
 
+DefTest(tuple, "n/a") {
+  CoralModule cm(fopen("tests/tuple.coral", "r"));
+  CoralCompiler cc; cc.load(cm); cc.run();
+};
+
+DefTest(enums, "n/a") {
+  CoralModule cm(fopen("tests/enums.coral", "r"));
+  CoralCompiler cc; cc.load(cm); cc.run();
+};
+
 int main() {
   cout << "---------- [Starting Test Run] ----------\n";
   runTest(empty);
@@ -79,4 +89,6 @@ int main() {
   runTest(ifstatement);
   runTest(fizzbuzz);
   runTest(returns);
+  runTest(tuple);
+  runTest(enums);
 }

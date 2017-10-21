@@ -29,7 +29,7 @@ bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.
 bin/coral-test: obj/test.o obj/lexer.o obj/parser.o obj/type.o obj/ast.o obj/codegen.o obj/compiler.o obj/mainfuncPass.cc
 	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
 
-obj/test.o: obj/test.cc  obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/typeScope.hh
+obj/test.o: obj/test.cc  obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/typeScope.hh obj/compiler.hh
 	${COMPILE}
 
 obj/compiler.o: obj/compiler.cc obj/compiler.hh obj/lexer.hh obj/treeprinter.hh obj/inferTypePass.hh  obj/returnInsertionPass.hh

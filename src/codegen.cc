@@ -216,7 +216,7 @@ void ExprValue::visit(AddrOf * s) {
 void ExprValue::visit(BinOp * c) {
   auto lval = VAL(c->lhs);
   auto rval = VAL(c->rhs);
-  
+
   if (c->op == "+") { output = LLVMBuildAdd(mb->builder, lval, rval, ""); }
   else if (c->op == "-") { output = LLVMBuildSub(mb->builder, lval, rval, ""); }
   else if (c->op == "*") { output = LLVMBuildMul(mb->builder, lval, rval, ""); }
@@ -299,11 +299,11 @@ void ModuleBuilder::visit(If * c) {
   LLVMBuildCondBr(builder, VAL(c->cond), ifbb, elbb);
   LLVMPositionBuilderAtEnd(builder, ifbb);
   c->ifbody->accept(this);
-  LLVMBuildBr(builder, nextbb);  
+  LLVMBuildBr(builder, nextbb);
   LLVMPositionBuilderAtEnd(builder, elbb);
   c->elsebody->accept(this);
   LLVMBuildBr(builder, nextbb);
-  LLVMPositionBuilderAtEnd(builder, nextbb);  
+  LLVMPositionBuilderAtEnd(builder, nextbb);
 }
 
 void ModuleBuilder::visit(Let * a) {
@@ -405,4 +405,17 @@ void jit_modules(std::vector<Module *> modules) {
   }
 }
 
-
+void show_modules(std::vector<Module *> modules) {
+  std::vector<ModuleBuilder *> builders;
+  std::map<LLVMValueRef, std::map<std::string, LLVMValueRef>> all_names;
+  for(auto i = modules.begin(); i < modules.end(); i++) {
+    if (*i) {
+      auto m = new ModuleBuilder(*i, all_names);
+      builders.push_back(m);
+      all_names = m->names;
+    }
+  }
+  auto llvm_module = builders[0]->module;
+  cerr << builders.back()->finalize() << endl;
+  return;
+}

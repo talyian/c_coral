@@ -92,14 +92,14 @@ line
 | FUNC '[' ']' IDENTIFIER ':' typesig ParameterList block { $$ = BuildVarFunc($4, $6, $7, $8); }
 | MODULE IDENTIFIER { $$ = new Expr(); }
 | MODULE IDENTIFIER '.' IDENTIFIER { $$ = new Expr(); }
-| TYPE IDENTIFIER '=' typesig { $$ = new DeclTypeAlias($2, $4); }
+| TYPE IDENTIFIER OP_EQ typesig { $$ = new DeclTypeAlias($2, $4); }
 | TYPE IDENTIFIER enumBlock { $$ = new DeclTypeEnum($2, "??", $3); }
 | TYPE IDENTIFIER ':' IDENTIFIER enumBlock { $$ = new DeclTypeEnum($2, $4, $5); }
 | CLASS IDENTIFIER classBlock { $$ = new DeclClass($2, $3); }
 | CLASS IDENTIFIER FOR IDENTIFIER classBlock { $$ = new DeclClass($2, $5); }
 | IMPL IDENTIFIER block { $$ = new ImplType($2, $3); }
 | IMPL IDENTIFIER FOR IDENTIFIER block { $$ = new ImplClassFor($2, $4, $5); }
-| LET Parameter '=' expr { $$ = new Let($2, $4); }
+| LET Parameter OP_EQ expr { $$ = new Let($2, $4); }
 | RETURN expr { $$ = new Return($2); }
 | PASS { $$ = new VoidExpr(); }
 | expr { $$ = $1; }
@@ -133,8 +133,8 @@ enumLines
 enumLine
   : '|' IDENTIFIER { $$ = new EnumCase($2); }
   | '|' IDENTIFIER '(' ParameterList_inner ')' { $$ = new EnumCase($2, $4); }
-  | '|' IDENTIFIER '=' expr { $$ = new EnumCase($2); }
-		
+  | '|' IDENTIFIER OP_EQ expr { $$ = new EnumCase($2); }
+
 block
 : ':' NEWLINE INDENT lines DEDENT { $$ = new BlockExpr($4); }
 | ':' line { $$ = new BlockExpr(std::vector<Expr *>()); $$->lines.push_back($2); }

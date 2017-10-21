@@ -40,7 +40,9 @@ int main(int argc, char **argv) {
     cout << CoralModule(fopen(argv[2], "r")) << endl;
   }
   if (command == "ir") {
-    std::cerr << CoralModule(fopen(argv[2], "r")).getIR() << "\n";
+    CoralCompiler cc;
+    cc.load(CoralModule(fopen(argv[2], "r")));
+    cc.showIR();
   } else if (command == "jit") {
     CoralCompiler cc;
     cc.load(CoralModule(fopen(argv[2], "r")));
