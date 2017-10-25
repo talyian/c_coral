@@ -1,3 +1,4 @@
+let _expected = "0 DFJ\n1 ADFJ\n2 BDFJ\n3 CFJ\n4 DEJ\n5 DFG\n6 DFH\n7 DFI\n8 DFJ\n9\n5\n"
 func test(n: Int64):
   printf("%d ", n)
   if n = 1: printf "A"

@@ -101,17 +101,12 @@ using std::cout;
 
 int main() {
   cout << "---------- [Starting Test Run] ----------\n";
-  // runFileTest(hello_world, "tests/hello_world.coral", "");
-  // runFileTest(
-  //   ifstatement, "tests/if.coral",
-  //   "0 DFJ\n1 ADFJ\n2 BDFJ\n3 CFJ\n4 DEJ\n5 DFG\n6 DFH\n7 DFI\n8 DFJ\n9\n5\n");
-  // runFileTest(
-  //   fizzbuzz, "tests/fizzbuzz.coral",
-  //   "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16");
-  // runFileTest(returns, "tests/returns.coral",
-  //   "101\n200\n201\n402\n");
+  runFileTest(hello_world, "tests/hello_world.coral", "");
+  runFileTest(ifstatement, "tests/if.coral", "");
+  runFileTest(fizzbuzz, "tests/fizzbuzz.coral", "");
+  runFileTest(returns, "tests/returns.coral", "101\n200\n201\n402\n");
   // runFileTest(enums, "tests/enums.coral", "");
-  runFileTest(scope, "tests/scope.coral", "");
+  // runFileTest(scope, "tests/scope.coral", "");
   printf("---------- [%d/%d] (%2.0f%%) ----------\n",
 	 success , success + failure,
 	 success * 100.0 / (success + failure));

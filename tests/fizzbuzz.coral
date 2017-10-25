@@ -1,4 +1,3 @@
-extern "C" printf : Fn[..., Void]
 
 func fizzbuzz(n: Int64):
   if n % 15 = 0: printf "fizzbuzz"
@@ -6,11 +5,12 @@ func fizzbuzz(n: Int64):
   elif n % 3 = 0: printf "fizz"
   else: printf("%d", n)
 
-func loop(n: Int64, m: Int64):
+func loop : Void(n: Int64, m: Int64):
   fizzbuzz n
   if n < m:
     printf " "
     loop(n + 1, m)
 
-func main():
+func main : Void ():
+  let _expected = "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16"
   loop(1, 16)

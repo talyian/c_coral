@@ -336,14 +336,14 @@ void ModuleBuilder::visit(FuncDef * c) {
     define_func(0, c->name, FUNC_MULTI);
   } else define_func(0, c->name, func);
 
-  cerr << c->name << " ";
-  cerr << "args(" << c->args.size() << ") ";
-  cerr << "(" << LLVMPrintTypeToString(LLVMTypeOf(func)) << ") ";
+  // cerr << c->name << " ";
+  // cerr << "args(" << c->args.size() << ") ";
+  // cerr << "(" << LLVMPrintTypeToString(LLVMTypeOf(func)) << ") ";
   for(auto i=0; i<(int)c->args.size(); i++) {
-    cerr << i << " " << c->args[i]->name << ", ";
+    // cerr << i << " " << c->args[i]->name << ", ";
     define_func(func, c->args[i]->name, LLVMGetParam(func, i));
   }
-  cerr << endl;
+  // cerr << endl;
   LLVMPositionBuilderAtEnd(builder, LLVMAppendBasicBlockInContext(context, func, "entry"));
   c->body->accept(this);
 

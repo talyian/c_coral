@@ -1,0 +1,16 @@
+let a : CString = "a " + "aa " + "aaaa"
+let b : Bytes = "a " + "aa " + "aaaa"
+let c : Text = "a " + "aa " + "aaaa"
+
+printf("%s\n", a)
+print b
+print c
+
+# Roman Numerals test
+let a : CString = "ⅠⅡⅢⅣ"
+let b : Bytes = "ⅠⅡⅢⅣ"
+let c : Text = "ⅠⅡⅢⅣ"
+
+printf("%s\n", a)
+print b
+print c

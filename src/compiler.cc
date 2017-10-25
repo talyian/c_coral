@@ -7,6 +7,7 @@
 #include "inferTypePass.hh"
 #include "returnInsertionPass.hh"
 #include "mainfuncPass.hh"
+#include "concatenator.hh"
 
 std::string ir_module(Module * m);
 void jit_modules(std::vector<Module *> m);
@@ -20,6 +21,7 @@ void CoralModule::init(FILE * in, const char * src) {
   coralp.parse();
   yylex_destroy(scanner);
 
+  module = (Module *)StaticConcat(module);
   module = inferTypes(module);
   module = insertReturns(module);
   module = buildMainFunction(module);

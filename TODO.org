@@ -14,17 +14,21 @@
 ** TODO start working on type inference
 ** TODO struct
 ** TODO classes
-* Implement Features required for Fasta benchmark
-** Test Cases Setup
-** Ignore Whitespace inside of parens and lists
+* Implement
+* Implement Features required for Fasta benchmark [1/3]
+** DONE Test Cases Setup
+** TODO Statically concatenate string literals (operator +)
+   let str = ("foo " +
+      "bar " +
+             "speem")
+** TODO Ignore Whitespace inside of parens and lists
+** TODO declare tuples
+** TODO declare lists
+** TODO declare lists-of-tuples
+
 ** Define CString Type
    let s : Cstring = "asdf"
    printfn("%d", s.length)
    printfn("%s", s)
    printfn("%d", s.indexOf("df"))
    printfn("%s", s + " qwer")
-
-** Statically concatenate string literals (operator +)
-   let str = ("foo " +
-      "bar " +
-             "speem")
