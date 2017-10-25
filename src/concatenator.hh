@@ -1,11 +1,10 @@
 #include "ast.hh"
-
+#include <string>
 Expr * StaticConcat(Expr * m);
 
-class Concatenator : public Visitor {
+class Concatenator : public FunctorVisitor {
 public:
-  Concatenator (Expr * e) : out(e), Visitor("concat ") { e->accept(this); }
-  Expr * out = 0;
+  Concatenator (Expr * e) : FunctorVisitor("concat ", e) { e->accept(this); }
   void visit(Module * n);
   void visit(FuncDef * n);
   void visit(Let * n);

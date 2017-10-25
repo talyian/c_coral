@@ -364,17 +364,62 @@ class Visitor {
   virtual ~Visitor () { }
 };
 
+template <typename T> Expr * mapExpr(Expr * e);
+class FunctorVisitor : public Visitor {
+public:
+  Expr * out = 0;
+  FunctorVisitor(std::string name, Expr * e) : Visitor(name), out(e) { e->accept(this); }
+#define VISIT(EXPR) virtual void visit(EXPR * n) { out = n; }
+  EXPR_NODE_LIST(VISIT)
+#undef VISIT
+};
+
+class Traverser : public FunctorVisitor {
+public:
+  Traverser(std::string name, Expr * e) : FunctorVisitor(name, e) { e->accept(this); }
+#define VISIT(EXPR) \
+  virtual void handle(EXPR * n) { out = n; }
+  EXPR_NODE_LIST(VISIT)
+#undef VISIT
+  void visit(Expr * a) { handle(a); }
+  void visit(Module * a) { foreach(a->lines, it) (*it)->accept(this); handle(a); }
+  void visit(FuncDef * a) { a->body->accept(this); handle(a); }
+  void visit(Extern *a ) { handle(a); }
+  void visit(Return * a) { handle(a); }
+  void visit(BinOp * a) { a->lhs->accept(this); a->rhs->accept(this); handle(a); }
+  void visit(Call * a) { a->callee->accept(this); foreach(a->arguments, it) (*it)->accept(this); handle(a); }
+  void visit(Index * a) { a->base->accept(this); foreach(a->indices, it) (*it)->accept(this); handle(a); }
+  void visit(BlockExpr * a) { foreach(a->lines, it) (*it)->accept(this); handle(a); }
+  void visit(If * a) { a->cond->accept(this); a->ifbody->accept(this); a->elsebody->accept(this); handle(a); }
+
+
+};
+
 // useful visitors go here
 #define EXPRNAME(t) ExprNameVisitor(t).out
 class ExprNameVisitor : public Visitor {
 public:
   std::string out;
   ExprNameVisitor(Expr * e) : Visitor("exprname ") { e->accept(this); }
-#define VISIT(NODE) virtual void visit(NODE * c) { out = #NODE; }
-EXPR_NODE_LIST(VISIT)
+#define VISIT(NODE) virtual void visit(__attribute__((unused)) NODE * c) { out = #NODE; }
+  EXPR_NODE_LIST(VISIT)
 #undef VISIT
 };
 
+enum ExprType {
+#define TYPEDEC(EXPR) EXPR##Type,
+  EXPR_NODE_LIST(TYPEDEC)
+#undef TYPEDEC
+};
+#define EXPRTYPE(t) ExprTypeVisitor(t).out
+class ExprTypeVisitor : public Visitor {
+public:
+  enum ExprType out = ExprType;
+  ExprTypeVisitor(Expr * e) : Visitor("exprtype ") { e->accept(this); }
+#define VISIT(NODE) virtual void visit(__attribute__((unused)) NODE * c) { out = NODE##Type; }
+  EXPR_NODE_LIST(VISIT)
+#undef VISIT
+};
 
 class NameGetter : public Visitor {
 public:

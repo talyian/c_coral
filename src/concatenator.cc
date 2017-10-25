@@ -6,6 +6,7 @@ void Concatenator::visit(Module * m) {
   foreach(m->lines, it) { (*it) = StaticConcat(*it); }
   out = m;
 }
+
 void Concatenator::visit(FuncDef * m) {
   m->body = StaticConcat(m->body);
   out = m;

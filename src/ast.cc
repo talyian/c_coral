@@ -5,6 +5,8 @@
 EXPR_NODE_LIST(ACCEPT_MACRO)
 #undef ACCEPT_MACRO
 
+template <typename T> Expr * mapExpr(Expr * e) { T t(e); return t.out; }
+
 std::string Escape(std::string s) {
   if (s == "\\\\") return "\\";
   if (s == "\\n") return "\n";
