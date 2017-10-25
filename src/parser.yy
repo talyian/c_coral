@@ -59,11 +59,13 @@
 %precedence OP_NOT
 
 
-%type <std::vector<Expr *>> lines ArgumentList ArgumentList_inner
+%type <std::vector<Expr *>> lines ArgumentList
 %type <std::vector<Expr *>> enumBlock matchBlock
 %type <std::vector<Expr *>> enumLines matchLines
+%type <std::vector<Expr *>> Tuple_inner
 %type <Expr *> enumLine matchLine
-%type <Expr *> line expr Argument IfExpr ElseSequence
+%type <Expr *> line expr IfExpr ElseSequence
+%type <Tuple *> Tuple
 %type <Type *> typesig
 %type <std::vector<Type *>> TypeList
 %type <Def *> Parameter classLine
@@ -150,14 +152,8 @@ ParameterList
 : '(' ')' { }
 | '(' ParameterList_inner ')' { $$ = $2; }
 
-Argument : expr { $$ = $1; }
-ArgumentList
-: '(' ')' { }
-| Argument { $$.push_back($1); }
-| '(' ArgumentList_inner ')' { $$ = $2; }
-ArgumentList_inner
-: Argument { $$.push_back($1); }
-| ArgumentList_inner ',' Argument { $$ = $1; $$.push_back($3); }
+ArgumentList : expr  { $$.push_back($1); }
+	     | Tuple { $$ = $1->items; }
 
 expr
 : STRING { $$ = new String($1); }
@@ -195,7 +191,16 @@ expr
 | ADDR_OF IDENTIFIER { $$ = new AddrOf($2); }
 | MATCH expr matchBlock { $$ = new MatchExpr($2, $3); }
 
-| '[' ArgumentList_inner ']' { $$ = new Call(new Var("List.create"), $2); }
+| '[' Tuple_inner ']' { $$ = new Call(new Var("List.create"), $2); }
+| Tuple { $$ = $1; }
+
+Tuple
+: '(' ')' { $$ = new Tuple(std::vector<Expr *>()); }
+| '(' Tuple_inner ')' { $$ = new Tuple($2); }
+
+Tuple_inner
+: expr { $$.push_back($1); }
+| Tuple_inner ',' expr { $$ = $1; $$.push_back($3); }
 
 IfExpr
 : IF expr block { $$ = new If($2, $3, new BlockExpr(vector<Expr*>{})); }

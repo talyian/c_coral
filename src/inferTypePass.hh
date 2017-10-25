@@ -88,6 +88,19 @@ public:
     scope.add(e->name, e->type);
   }
 
+  void visit(Index * i) {
+    value = 0;
+    i->base->accept(this);
+    auto basevalue = value;
+    value = 0;
+    if (value && getTypeName(value) == "Tuple") {
+      auto tuplevalue = (TupleType *) value;
+      if (tuplevalue->inner.size() > 0)
+	value = tuplevalue->inner[0];
+    }
+    return;
+  }
+
   void visit(FuncDef * f) {
     // push a new scope with the function's arguments in it
     TypeInferer func_scope(*this);
@@ -182,6 +195,16 @@ public:
     }
     // TODO: this isn't exactly kosher
     value = ltype;
+  }
+
+  void visit(Tuple * t) {
+    std::vector<Type *> types;
+    foreach(t->items, it) {
+      value = 0;
+      (*it)->accept(this);
+      types.push_back(value);
+    }
+    value = new TupleType(types);
   }
 };
 

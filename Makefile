@@ -23,14 +23,17 @@ docker:
 	docker build -t coral -f dockerenv/Dockerfile .
 	docker run -e "TERM=${TERM}" -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
 
-bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o obj/compiler.o obj/concatenator.o
+bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o obj/compiler.o obj/concatenator.o obj/codegenExpr.o
 	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
 
-bin/coral-test: obj/test.o obj/lexer.o obj/parser.o obj/type.o obj/ast.o obj/codegen.o obj/compiler.o obj/mainfuncPass.cc obj/concatenator.o
+bin/coral-test: obj/test.o obj/lexer.o obj/parser.o obj/type.o obj/ast.o obj/codegen.o obj/compiler.o obj/mainfuncPass.cc obj/concatenator.o obj/codegenExpr.o
 	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
 
 obj/test.o: obj/test.cc  obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/typeScope.hh obj/compiler.hh
 	${COMPILE}
+
+obj/codegenExpr.o: obj/codegenExpr.cc obj/codegen.hh
+	${COMPILE} ${CXXCONFIG}
 
 obj/compiler.o: obj/compiler.cc obj/compiler.hh obj/lexer.hh obj/treeprinter.hh obj/inferTypePass.hh  obj/returnInsertionPass.hh obj/mainfuncPass.hh obj/concatenator.hh
 	${COMPILE}

@@ -9,7 +9,7 @@ using namespace std;
 
 #define foreach(COLL, IT) for(auto IT = COLL.begin(); IT != COLL.end(); IT++)
 
-#define TYPE_LOOP(MACRO) MACRO() MACRO(Void) MACRO(Int) MACRO(Func) MACRO(Ptr) MACRO(Unknown) MACRO(Arr) MACRO(Float) MACRO(User)
+#define TYPE_LOOP(MACRO) MACRO() MACRO(Void) MACRO(Int) MACRO(Func) MACRO(Ptr) MACRO(Unknown) MACRO(Arr) MACRO(Float) MACRO(User) MACRO(Tuple)
 
 class TypeVisitor;
 
@@ -84,6 +84,14 @@ public:
   Type * inner;
   int len = 0;
   ArrType(Type * inner) : inner(inner) { }
+  virtual void accept(TypeVisitor * v);
+  string toString();
+};
+
+class TupleType : public Type {
+public:
+  std::vector<Type *> inner;
+  TupleType(std::vector<Type *> inner) : inner(inner) { }
   virtual void accept(TypeVisitor * v);
   string toString();
 };

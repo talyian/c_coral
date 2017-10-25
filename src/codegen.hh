@@ -35,6 +35,7 @@ public:
   virtual void visit(Let * c);
 
   virtual void visit(DeclTypeEnum * c);
+  virtual void visit(Tuple * n);
 
   // simulate possible side-effects
   virtual void visit(Call * c);
@@ -53,7 +54,7 @@ class GetLLVMType : public TypeVisitor {
 public:
   ModuleBuilder * mb;
   ModuleBuilder * getModuleBuilder() { return mb; }
-  LLVMTypeRef out;
+  LLVMTypeRef out = 0;
   GetLLVMType(ModuleBuilder *mb, Type * t);
   virtual void visit(Type * f);
   virtual void visit(VoidType * f);
@@ -62,6 +63,11 @@ public:
   virtual void visit(ArrType * f);
   virtual void visit(IntType * f);
   virtual void visit(FloatType * f);
+  virtual void visit(TupleType * t) {
+    vector<LLVMTypeRef> subtypes;
+    foreach(t->inner, it) subtypes.push_back(LTYPE(*it));
+    out = LLVMStructType(&subtypes[0], subtypes.size(), false);
+  }
 };
 
 // VAL(e): Convert an Expr * e to LLVMValueRef
@@ -70,7 +76,7 @@ class ExprValue : public Visitor {
 public:
   ModuleBuilder * mb;
   ModuleBuilder * getModuleBuilder() { return mb; }
-  LLVMValueRef output;
+  LLVMValueRef output = 0;
   ExprValue(ModuleBuilder * mb, Expr * e)
     : Visitor("VAL "), mb(mb) { e->accept(this); }
   virtual void visit(String * s);
@@ -81,6 +87,8 @@ public:
   virtual void visit(Call * s);
   virtual void visit(Cast * s);
   virtual void visit(AddrOf * s);
+  virtual void visit(Tuple * t);
+  virtual void visit(Index * t);
 };
 
 // Type-specialize over different operand types

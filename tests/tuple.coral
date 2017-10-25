@@ -1,3 +1,4 @@
+let _expected = "4 b 2 b "
 let x = 2
 let y = "a"
 let z = (4, "b")

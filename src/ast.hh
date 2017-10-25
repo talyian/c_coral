@@ -40,7 +40,9 @@ class Expr {
 */ M(DeclTypeAlias) /*
 */ M(MatchExpr) /*
 */ M(MatchCaseTagsExpr) /*
+*/ M(Tuple) /*
 */ M(EnumCase)
+
 
 class Call : public Expr {
  public:
@@ -353,6 +355,12 @@ public:
   virtual void accept(class Visitor * v);
 };
 
+class Tuple : public Expr {
+public:
+  std::vector<Expr *> items;
+  Tuple(std::vector<Expr *> items) : items(items) { }
+  virtual void accept(class Visitor * v);
+};
 
 class Visitor {
  public:
@@ -392,7 +400,6 @@ public:
   void visit(BlockExpr * a) { foreach(a->lines, it) (*it)->accept(this); handle(a); }
   void visit(If * a) { a->cond->accept(this); a->ifbody->accept(this); a->elsebody->accept(this); handle(a); }
 
-
 };
 
 // useful visitors go here
@@ -407,16 +414,16 @@ public:
 };
 
 enum ExprType {
-#define TYPEDEC(EXPR) EXPR##Type,
+#define TYPEDEC(EXPR) EXPR##TypeKind,
   EXPR_NODE_LIST(TYPEDEC)
 #undef TYPEDEC
 };
 #define EXPRTYPE(t) ExprTypeVisitor(t).out
 class ExprTypeVisitor : public Visitor {
 public:
-  enum ExprType out = ExprType;
+  enum ExprType out = ExprTypeKind;
   ExprTypeVisitor(Expr * e) : Visitor("exprtype ") { e->accept(this); }
-#define VISIT(NODE) virtual void visit(__attribute__((unused)) NODE * c) { out = NODE##Type; }
+#define VISIT(NODE) virtual void visit(__attribute__((unused)) NODE * c) { out = NODE##TypeKind; }
   EXPR_NODE_LIST(VISIT)
 #undef VISIT
 };

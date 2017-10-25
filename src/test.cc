@@ -105,6 +105,7 @@ int main() {
   runFileTest(ifstatement, "tests/if.coral", "");
   runFileTest(fizzbuzz, "tests/fizzbuzz.coral", "");
   runFileTest(returns, "tests/returns.coral", "101\n200\n201\n402\n");
+  runFileTest(tuple, "tests/tuple.coral", "");
   // runFileTest(enums, "tests/enums.coral", "");
   // runFileTest(scope, "tests/scope.coral", "");
   printf("---------- [%d/%d] (%2.0f%%) ----------\n",

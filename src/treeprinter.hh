@@ -27,6 +27,17 @@ public:
     line_mode = t;
     out << END();
   }
+  void visit(Tuple * t) {
+    auto lm = line_mode;
+    line_mode = 1;
+    out << '(';
+    foreach(t->items, it) {
+      if (it != t->items.begin()) out << ", ";
+      (*it)->accept(this);
+    }
+    out << ')';
+    line_mode = lm;
+  }
   void visit(Expr * e) { out << IND() << "# expr: " << EXPRNAME(e) << END(); }
   void visit(Index * i) {
     out << IND();

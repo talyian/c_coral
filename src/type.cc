@@ -38,7 +38,7 @@ string FloatType::toString() { return "float"; }
 string FuncType::toString() {
     string val = "Func[";
     for(auto it = args.begin(); it != args.end(); it++) {
-      if (*it) 
+      if (*it)
 	val += (*it)->toString() + ", ";
     }
     if (variadic) val += "... , ";
@@ -50,17 +50,25 @@ string UnknownType::toString() {
   return info;
 }
 string PtrType::toString() {
-    if (inner) 
+    if (inner)
       return "Ptr[" + inner->toString() + "]";
     return "Ptr[???]";
   }
 
 string ArrType::toString() {
-  if (inner) 
+  if (inner)
     return "Arr[" + inner->toString() + "]";
   return "Arr[???]";
 }
 
+string TupleType::toString() {
+  string s = "(";
+  foreach(inner, it) {
+    if (it != inner.begin()) s += ", ";
+    s += (*it ? (*it)->toString() : "(null)");
+  }
+  return s + ")";
+}
 
 Type * BuildType(std::string name) {
   // std::cerr << "buildling type " << name << std::endl;
