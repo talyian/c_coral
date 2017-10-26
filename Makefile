@@ -50,7 +50,7 @@ DEPFILES=$(shell find obj -name '*.o.d')
 
 .PRECIOUS: obj/%.o.d
 
-## Whenever a cc file is updated, its mk is updated
+## Whenever a cc file is updated, its deps are updated
 obj/%.o.d: src/%.cc
 	@mkdir -p $(shell dirname $@)
 	@set -e; \
