@@ -1,25 +1,8 @@
-#pragma once
+#include "treeprinter.hh"
 
-#include "ast.hh"
-#include <iostream>
-#include <string>
+void coral::TreePrinter::print() { module->accept(this); }
 
-using std::string;
-using std::cerr;
-using std::endl;
-
-class TreePrinter : public Visitor {
-public:
-  Module * module;
-  std::ostream & out;
-  int indent = 0;
-  int line_mode = 0;
-  int showElif = 0;
-  TreePrinter(Module * m, std::ostream & c) : Visitor("treeprint "), module(m), out(c) { }
-  void print() {
-    module->accept(this);
-  }
-  void visit(Return * r) {
+  void coral::TreePrinter::visit(Return * r) {
     out << IND() << "return ";
     auto t = line_mode;
     line_mode = 1;
@@ -27,7 +10,7 @@ public:
     line_mode = t;
     out << END();
   }
-  void visit(Tuple * t) {
+  void coral::TreePrinter::visit(Tuple * t) {
     auto lm = line_mode;
     line_mode = 1;
     out << '(';
@@ -38,8 +21,8 @@ public:
     out << ')';
     line_mode = lm;
   }
-  void visit(Expr * e) { out << IND() << "# expr: " << EXPRNAME(e) << END(); }
-  void visit(Index * i) {
+  void coral::TreePrinter::visit(Expr * e) { out << IND() << "# expr: " << EXPRNAME(e) << END(); }
+  void coral::TreePrinter::visit(Index * i) {
     out << IND();
     auto t = line_mode;
     line_mode = 1;
@@ -52,7 +35,7 @@ public:
     out << ']' << END();
 
   }
-  void visit(For * f) {
+  void coral::TreePrinter::visit(For * f) {
     out << IND() << "for ";
     auto t = line_mode;
     line_mode = 1;
@@ -67,13 +50,13 @@ public:
     f->body->accept(this);
     indent--;
   }
-  void visit(Module * m) {
+  void coral::TreePrinter::visit(Module * m) {
     foreach (module->lines, line) {
       (*line)->accept(this);
     }
   }
 
-  void visit(FuncDef * m) {
+  void coral::TreePrinter::visit(FuncDef * m) {
     TreePrinter pp(module, out);
     pp.line_mode = 1;
     if (m->rettype != 0)
@@ -93,14 +76,14 @@ public:
     out << END();
   }
 
-  void visit(BlockExpr * e) {
+  void coral::TreePrinter::visit(BlockExpr * e) {
     auto lines = e->lines;
     foreach(lines, it) {
       (*it)->accept(this);
     }
   }
 
-  void visit(BinOp * op) {
+  void coral::TreePrinter::visit(BinOp * op) {
     out << IND();
     TreePrinter pp(module, out);
     pp.line_mode = 1;
@@ -112,7 +95,7 @@ public:
     out << END();
   }
 
-  void visit(If * e) {
+  void coral::TreePrinter::visit(If * e) {
     TreePrinter pp(module, out);
     pp.line_mode = 1;
     out << IND() << (showElif ? "elif " : "if ");
@@ -137,7 +120,7 @@ public:
     }
   }
 
-  void visit(MatchCaseTagsExpr * e) {
+  void coral::TreePrinter::visit(MatchCaseTagsExpr * e) {
     TreePrinter pp(module, out);
     pp.line_mode = 1;
     out << IND();
@@ -148,7 +131,7 @@ public:
     indent--;
   }
 
-  void visit(MatchExpr * e) {
+  void coral::TreePrinter::visit(MatchExpr * e) {
     TreePrinter pp(module, out);
     pp.line_mode = 1;
     out << IND() << "match ";
@@ -159,7 +142,7 @@ public:
     indent--;
   }
 
-  void visit(DeclClass * a) {
+  void coral::TreePrinter::visit(DeclClass * a) {
     out << IND() << "class " << a->name << ":" << END();
     indent++;
     foreach(a->lines, line) {
@@ -169,11 +152,11 @@ public:
     out << END();
   }
 
-  void visit(DeclTypeAlias * a) {
+  void coral::TreePrinter::visit(DeclTypeAlias * a) {
     out << IND() << "type " << a->name << " = " << a->wrapped->toString() << END();
     out << END();
   }
-  void visit(DeclTypeEnum * a) {
+  void coral::TreePrinter::visit(DeclTypeEnum * a) {
     out << IND() << "type " << a->name << ":" << END();
     indent++;
     foreach(a->body, it) {
@@ -184,7 +167,7 @@ public:
     indent--;
     out << END();
   }
-  void visit(EnumCase * e) {
+  void coral::TreePrinter::visit(EnumCase * e) {
     TreePrinter lp(module, out);
     lp.line_mode = 1;
     out << IND() << e->name;
@@ -195,7 +178,7 @@ public:
     }
     out << END();
   }
-  void visit(Call * c) {
+  void coral::TreePrinter::visit(Call * c) {
     out << IND();
     TreePrinter lp(module, out);
     lp.line_mode = 1;
@@ -215,18 +198,18 @@ public:
     }
     out << END();
   }
-  void visit(VoidExpr * e) {
+  void coral::TreePrinter::visit(VoidExpr * e) {
     out << IND() << "()" << END();
   }
 
-  void visit(ImplType * a) {
+  void coral::TreePrinter::visit(ImplType * a) {
     out << IND() << "impl " << a->name << ":" << END();
     indent++;
     a->body->accept(this);
     indent--;
   }
 
-  void visit(ImplClassFor * a) {
+  void coral::TreePrinter::visit(ImplClassFor * a) {
     out << IND()
 	<< "impl " << a->class_name
         << " for " << a->type_name
@@ -236,22 +219,22 @@ public:
     indent--;
   }
 
-  void visit(Extern * e) {
+  void coral::TreePrinter::visit(Extern * e) {
     out << IND() << "extern " << e->name << " : " << e->type << END();
   }
-  void visit(Def * d) {
+  void coral::TreePrinter::visit(Def * d) {
     out << IND() << d->name;
     if (d->type && getTypeName(d->type) != "Unknown")
       out << " : " << d->type->toString();
     out << END();
   }
 
-  void visit(Cast * c) {
+  void coral::TreePrinter::visit(Cast * c) {
     out << IND() << "(";
     c->expr->accept(this);
     out << " as " << c->to_type << ")" << END();
   }
-  void visit(Let * d) {
+  void coral::TreePrinter::visit(Let * d) {
     TreePrinter lp(module, out);
     lp.line_mode = 1;
     out << IND() << "let ";
@@ -261,18 +244,23 @@ public:
     out << END();
   }
 
-  void visit(Long * d) { out << IND() << d->value << END(); }
+  void coral::TreePrinter::visit(Long * d) { out << IND() << d->value << END(); }
 
-  void visit(String * d) { out << IND() << d->value << END(); }
+  void coral::TreePrinter::visit(String * d) { out << IND() << d->value << END(); }
 
-  void visit(Var * d) {  out << IND() << d->value << END(); }
+  void coral::TreePrinter::visit(Var * d) {  out << IND() << d->value << END(); }
 
-  std::string END() {
+  void coral::TreePrinter::visit(BoolExpr * d) { out << IND() << d->value << END(); }
+
+  void coral::TreePrinter::visit(Double * d) { out << IND() << d->value << END(); }
+
+  void coral::TreePrinter::visit(AddrOf * d) { out << IND() << "addr " << d->var << END(); }
+
+  std::string coral::TreePrinter::END () {
     if (line_mode) return "";
     return "\n";
   }
-  std::string IND() {
+  std::string coral::TreePrinter::IND() {
     if (line_mode) return "";
     return std::string(indent * 2, ' ');
   }
-};

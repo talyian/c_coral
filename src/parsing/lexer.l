@@ -8,7 +8,8 @@
 #include <string>
 #include <queue>
 #include <stack>
-#include "ast.hh"
+#include "../../core/expr.hh"
+using namespace coral;
 #include "parser.hh"
 
 #define YY_NO_UNISTD_H
@@ -16,6 +17,8 @@
 #define YYLTYPE yy::location
 #define tok(TOKEN_NAME) return yy::parser::token::TOKEN_NAME
 #define YY_USER_ACTION update(yylloc, yyleng);
+#define YY_NO_UNPUT
+#define YY_NO_INPUT
 
 int lineno = 0, colno = 0;
 void update(yy::location * loc, int len) {
@@ -119,3 +122,15 @@ pass   { tok(PASS); }
 [ \t]  { }
 .      { return *yytext; }
 %%
+
+Module * parse(FILE * in, const char * src) {
+  void * scanner;
+  Module * module;
+  yylex_init(&scanner);
+  if (in) yyset_in(in, scanner);
+  if (src) yy_scan_string(src, scanner);
+  yy::parser coralp(module, scanner);
+  coralp.parse();
+  yylex_destroy(scanner);
+  return module;
+}

@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <vector>
 
-#include "ast.hh"
+#include "expr.hh"
 #include "lexer.hh"
 #include "compiler.hh"
 

@@ -1,75 +1,75 @@
-# CLANG=clang++-5.0 -std=c++11 -fsanitize=address -g3
-CLANG=clang++-5.0 -std=c++11 -g3
-WCLANG=clang++.exe
-WCONFIG=llvm-config.exe
-CONFIG=llvm-config-5.0
-CXXCONFIG=$(shell ${CONFIG} --cxxflags) -Wno-unused-command-line-argument -Wno-unknown-warning-option
-TESTFILE ?= samples/basic/hello.coral
-COMPILE=${CLANG} -c -o $@ $<
+CC=clang++-5.0
+SHELL:=/bin/bash
+COMPILE=${CC} -Wall -std=c++11 -c -o $@ $<
 
-run: bin/coral
-	bin/coral jit ${TESTFILE}
+.PHONY: build test clean
 
-test: bin/coral-test
-	bin/coral-test
+## SECTION auto-dependency generation
+DEPFILES=$(shell find obj -name '*.o.d')
 
-watch:
-	/bin/bash watch.sh
+-include ${DEPFILES}
 
-clean:
-	git clean -xf bin obj
+.PRECIOUS: obj/%.o.d
 
-docker:
-	docker build -t coral -f dockerenv/Dockerfile .
-	docker run -e "TERM=${TERM}" -u $(shell id -u):$(shell id -g) -v ${PWD}:/work --rm -it coral
+## Whenever a cc file is updated, its mk is updated
+obj/%.o.d: src/%.cc
+	@mkdir -p $(shell dirname $@)
+	@set -e; \
+	set -o pipefail; \
+	OUT=$$(${CC} -Wall -std=c++11 -MM $< | sed 's/\\//g'); \
+	echo $$(dirname $@)/$${OUT} > $@; \
+	echo $$'\t' '$(value COMPILE)' >> $@; \
+	exit 0
 
-bin/coral: obj/codegen.o obj/parser.o obj/lexer.o obj/ast.o obj/main.o obj/type.o obj/mainfuncPass.o obj/compiler.o obj/concatenator.o obj/codegenExpr.o
-	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
+## If we build a .o, we need its .d
+## If the .cc was updated, we re-generate the .d and then rebuild
+obj/%.o: obj/%.o.d
+	@CC=${CC} ${MAKE} --no-print-directory -r -f $<
 
-bin/coral-test: obj/test.o obj/lexer.o obj/parser.o obj/type.o obj/ast.o obj/codegen.o obj/compiler.o obj/mainfuncPass.cc obj/concatenator.o obj/codegenExpr.o
-	${CLANG} -o $@ $+ $(shell ${CONFIG} --libs) -lpcre2-8 -rdynamic
+build: obj/type.o obj/main.o
+	@true
 
-obj/test.o: obj/test.cc  obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/typeScope.hh obj/compiler.hh
-	${COMPILE}
+test: bin/run-test
+	bin/run-test
 
-obj/codegenExpr.o: obj/codegenExpr.cc obj/codegen.hh
-	${COMPILE} ${CXXCONFIG}
+src/parsing/generated/parser.hh: src/parsing/parser.yy
+	bison -d -o src/parsing/generated/parser.cc $<
 
-obj/compiler.o: obj/compiler.cc obj/compiler.hh obj/lexer.hh obj/treeprinter.hh obj/inferTypePass.hh  obj/returnInsertionPass.hh obj/mainfuncPass.hh obj/concatenator.hh
-	${COMPILE}
+src/parsing/generated/parser.cc: src/parsing/parser.yy
+	bison -d -o $@ $<
 
-obj/type.o: obj/type.cc obj/type.hh
-	${COMPILE}
-
-obj/ast.o: obj/ast.cc obj/ast.hh obj/type.hh
-	${COMPILE}
-
-obj/codegen.o: obj/codegen.cc obj/parser.hh obj/ast.hh obj/type.hh obj/codegen.hh
-	${COMPILE} ${CXXCONFIG}
-
-obj/lexer.o: obj/lexer.cc obj/ast.hh obj/type.hh obj/parser.hh
-	${COMPILE}
-
-obj/main.o: obj/main.cc obj/ast.hh obj/type.hh obj/parser.hh obj/lexer.hh obj/treeprinter.hh obj/mainfuncPass.hh obj/inferTypePass.hh obj/typeScope.hh obj/compiler.hh
-	${COMPILE}
-
-obj/parser.o: obj/parser.cc obj/ast.hh obj/type.hh obj/parser.hh
-	${COMPILE}
-
-obj/lexer.cc : src/lexer.l
+src/parsing/generated/lexer.cc: src/parsing/lexer.l src/parsing/generated/parser.hh
+	@mkdir -p $(shell dirname $@)
 	flex -o $@ $<
 
-obj/parser.hh: src/parser.yy obj/ast.hh
-	bison -d -o obj/parser.cc $<
+bin/run-test: obj/expr.o obj/type.o obj/tests/expr.o obj/tests/type.o obj/tests/main.o
+	${CC} -o $@ $^
 
-obj/parser.cc: obj/parser.hh
-	true
+clean:
+	rm -r bin obj src/parsing/generated
+	mkdir bin
+	mkdir obj
+	mkdir -p src/parsing/generated
 
-obj/%.o : obj/%.cc
-	${COMPILE}
+## sub-projects
+.PHONY: core parsing
 
-obj/%.hh : src/%.hh
-	ln -sf ../$< $@
+core: bin/coral-core
 
-obj/%.cc : src/%.cc
-	ln -sf ../$< $@
+parsing: bin/coral-parse
+
+# Core includes code that other submodules are allowed to depend on
+COREFILES=obj/core/expr.o obj/core/type.o obj/core/treeprinter.o
+bin/coral-core: ${COREFILES} obj/core/__main__.o
+	${CC} -o bin/coral-core $^
+
+# Parsing includes all code involved in turning text into an AST
+PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o
+bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main__.o
+	${CC} -o bin/coral-parse $^
+
+# Codegen includes all the parts involved in compiling the coral AST
+
+# Aux is all coral logic that isn't needed in Core/Parsing/Codegen
+
+# Main includes the primary facade for Coral

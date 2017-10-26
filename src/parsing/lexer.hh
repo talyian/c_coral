@@ -1,4 +1,9 @@
-#include "parser.hh"
+#include "../core/expr.hh"
+
+using namespace coral;
+
+#include "generated/parser.hh"
+Module * parse(FILE * in, const char * src);
 
 #ifndef YY_EXTRA_TYPE
 #define YY_EXTRA_TYPE void *
@@ -36,5 +41,7 @@ char *yyget_text (yyscan_t yyscanner );
 char *yyget_text (yyscan_t yyscanner );
 
 YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner);
-  
+
 int yylex(YYSTYPE * lval, YYLTYPE * loc, yyscan_t scanner);
+
+Module * parse(FILE * in, const char * src);

@@ -9,7 +9,6 @@
 #include <vector>
 #include <iostream>
 #include <memory>
-#include "ast.hh"
 %}
 
 %token-table
@@ -72,7 +71,10 @@
 %type <std::vector<Def *>> ParameterList_inner ParameterList classLines classBlock
 %type <BlockExpr *> block
 %{
+#include "../../core/expr.hh"
+using namespace coral;
 #include "parser.hh"
+
 int yylex(yy::parser::semantic_type * pp, yy::location * loc, void * yyscanner);
 %}
 
@@ -203,12 +205,12 @@ Tuple_inner
 | Tuple_inner ',' expr { $$ = $1; $$.push_back($3); }
 
 IfExpr
-: IF expr block { $$ = new If($2, $3, new BlockExpr(vector<Expr*>{})); }
+: IF expr block { $$ = new If($2, $3, new BlockExpr(std::vector<Expr*>{})); }
 | IF expr block NEWLINE ElseSequence { $$ = new If($2, $3, $5); }
 
 ElseSequence
 : /* empty */ { $$ = new BlockExpr(std::vector<Expr *>{ }); }
-| ELIF expr block NEWLINE ElseSequence { $$ = new BlockExpr(vector<Expr*>{new If($2, $3, $5)}); }
+| ELIF expr block NEWLINE ElseSequence { $$ = new BlockExpr(std::vector<Expr*>{new If($2, $3, $5)}); }
 | ELSE block { $$ = $2; }
 
 typesig
