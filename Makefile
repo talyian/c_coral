@@ -40,10 +40,8 @@ src/parsing/generated/lexer.cc: src/parsing/lexer.l src/parsing/generated/parser
 	flex -o $@ $<
 
 clean:
-	rm -r bin obj src/parsing/generated
-	mkdir bin
-	mkdir obj
-	mkdir -p src/parsing/generated
+	mkdir -p bin obj src/parsing/generated
+	rm -rf bin/* obj/* src/parsing/generated/*
 
 ## SECTION auto-dependency generation
 DEPFILES=$(shell find obj -name '*.o.d')
