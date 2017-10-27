@@ -1,6 +1,8 @@
 CC=clang++-5.0
 SHELL:=/bin/bash
-COMPILE=${CC} -Wall -std=c++11 -c -o $@ $<
+COMPILE=${CC} -Wall -std=c++11 -g -c -o $@ $<
+MM=${CC} -Wall -std=c++11 -MM $<
+LINK=${CC}
 
 .PHONY: build test clean
 
@@ -14,15 +16,15 @@ parsing: bin/coral-parse
 # Core includes code that other submodules are allowed to depend on
 COREFILES=obj/core/expr.o obj/core/type.o obj/core/treeprinter.o
 bin/coral-core: ${COREFILES} obj/core/__main__.o
-	${CC} -o $@ $^
+	${LINK} -o $@ $^
 
 # Parsing includes all code involved in turning text into an AST
 PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o
 bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main__.o
-	${CC} -o bin/coral-parse $^
+	${LINK} -o bin/coral-parse $^
 
-bin/test-coral-parse: ${COREFILES} ${PARSERFILES} obj/tests/parsing/__main__.o
-	${CC} -o $@ $^
+bin/test-coral-parse: ${COREFILES} ${PARSERFILES} obj/tests/parsing/parser.o obj/tests/parsing/__main__.o
+	${LINK} -o $@ $^
 
 test: bin/test-coral-parse
 	$<
@@ -61,7 +63,7 @@ obj/%.o.d: src/%.cc
 	@mkdir -p $(shell dirname $@)
 	@set -e; \
 	set -o pipefail; \
-	OUT=$$(${CC} -Wall -std=c++11 -MM $< | sed 's/\\//g'); \
+	OUT=$$(${MM} | sed 's/\\//g'); \
 	echo $$(dirname $@)/$${OUT} > $@; \
 	echo $$'\t' '$(value COMPILE)' >> $@; \
 	exit 0

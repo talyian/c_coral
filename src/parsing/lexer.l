@@ -110,6 +110,7 @@ pass   { tok(PASS); }
 {br}   {
   lineno++; colno = yyleng - 1;
 
+  if (indents.empty()) { std::cerr << "mismatched indent/dedent!\n"; }
   if (indents.top() < colno) { tokenq.push(yy::parser::token::INDENT); indents.push(colno); }
   else if (indents.top() == colno) { }
   else while(indents.top() > colno) {
@@ -124,13 +125,25 @@ pass   { tok(PASS); }
 %%
 
 Module * parse(FILE * in, const char * src) {
-  void * scanner;
-  Module * module;
+  if (!in && !src) {
+      std::cerr << "failed to initialize input\n";
+      return new Module(std::vector<Expr *> { new String("\"parse error\"") });
+  }
+  void * scanner = 0;
+  Module * module = 0;
   yylex_init(&scanner);
+
+  // TODO: make this reentrant;
+  while(!tokenq.empty()) tokenq.pop();
+  while(!indents.empty()) indents.pop();
+  indents.push(0);
+
   if (in) yyset_in(in, scanner);
-  if (src) yy_scan_string(src, scanner);
+  else if (src) yy_scan_string(src, scanner);
+
   yy::parser coralp(module, scanner);
   coralp.parse();
   yylex_destroy(scanner);
-  return module;
+  if (module) return module;
+  return new Module(std::vector<Expr *> { new String("\"parse error\"") });
 }
