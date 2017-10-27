@@ -237,5 +237,5 @@ void yy::parser::error(const yy::location &loc, const std::string& m) {
     std::getline(ss, line, '\n');
     std::cout << line << std::endl;
   }
-  std::cout << '[' << loc << "]: " << m << std::endl;
+  std::cout << '[' << loc.begin << '-' << loc.end << "]: " << m << std::endl;
 }

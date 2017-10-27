@@ -20,10 +20,8 @@ using namespace coral;
 #define YY_NO_UNPUT
 #define YY_NO_INPUT
 
-int last_token_was_newline = 0;
 int lineno = 0, colno = 0;
 void update(yy::location * loc, int len) {
-  last_token_was_newline++;
   loc->begin.line = lineno;
   loc->begin.column = colno;
   loc->end.line = lineno;
@@ -162,6 +160,8 @@ Module * parse(FILE * in, const char * src) {
   while(!tokenq.empty()) tokenq.pop();
   while(!indents.empty()) indents.pop_back();
   indents.push_back(0);
+  lineno = 0;
+  colno = 0;
 
   if (in) yyset_in(in, scanner);
   else if (src) yy_scan_string(src, scanner);
