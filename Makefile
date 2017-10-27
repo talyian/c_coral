@@ -36,9 +36,11 @@ test: bin/test-coral-parse
 
 
 src/parsing/generated/parser.hh: src/parsing/parser.yy
+	@mkdir -p $(shell dirname $@)
 	bison -d -o src/parsing/generated/parser.cc $<
 
 src/parsing/generated/parser.cc: src/parsing/parser.yy
+	@mkdir -p $(shell dirname $@)
 	bison -d -o $@ $<
 
 src/parsing/generated/lexer.cc: src/parsing/lexer.l src/parsing/generated/parser.hh
@@ -48,6 +50,10 @@ src/parsing/generated/lexer.cc: src/parsing/lexer.l src/parsing/generated/parser
 clean:
 	mkdir -p bin obj src/parsing/generated
 	rm -rf bin/* obj/* src/parsing/generated/*
+
+docker:
+	docker build -t coral dockerenv
+	docker run --rm -it -v ${PWD}:/work coral bash
 
 ## SECTION auto-dependency generation
 DEPFILES=$(shell find obj -name '*.o.d')
