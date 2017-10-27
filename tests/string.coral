@@ -7,9 +7,9 @@ print b
 print c
 
 # Roman Numerals test
-let a : CString = "ⅠⅡⅢⅣ"
-let b : Bytes = "ⅠⅡⅢⅣ"
-let c : Text = "ⅠⅡⅢⅣ"
+let a : CString = "ⅠⅡⅢ"
+let b : Bytes   = "ⅠⅡⅢ"
+let c : Text    = "ⅠⅡⅢ"
 
 printf("%s\n", a)
 print b

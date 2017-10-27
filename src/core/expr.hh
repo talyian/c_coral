@@ -15,8 +15,8 @@ namespace coral {
   };
 
 #define EXPR_NODE_LIST(M) /*
-			   */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase)
-			   ;
+ */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr)
+ ;
 
   class Call : public Expr {
   public:
@@ -274,9 +274,16 @@ namespace coral {
     virtual std::string toString() { return "enum-case"; }
   };
 
-  class MatchCaseExpr : public Expr {
+  class MatchEnumCaseExpr : public EnumCase {
+  public:
+    MatchEnumCaseExpr(std::string name) : EnumCase(name) { }
+    MatchEnumCaseExpr(std::string name, std::vector<Def *> defs)
+      : EnumCase(name, defs) { }
+    virtual void accept(class Visitor * v);
+    virtual std::string toString() { return "match-enum-case"; }
   };
-  class MatchCaseTagsExpr : public MatchCaseExpr {
+
+  class MatchCaseTagsExpr : public Expr {
   public:
     Expr * label;
     Expr * body;

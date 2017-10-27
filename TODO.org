@@ -1,3 +1,4 @@
+#+STARTUP: showall
 * Rcoral Features [4/8]
 ** DONE elseif syntax
 ** DONE let syntax

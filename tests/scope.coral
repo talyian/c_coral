@@ -1,5 +1,4 @@
 let _expected = "TODO..."
-extern "C" printf : Fn[..., Void]
 
 func print(x: Int64):
   printf("%d\n", x)
@@ -30,7 +29,6 @@ func f(x : Int64):
     h x
     g x
     print x
-
 print x
 f 2
 print x

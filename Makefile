@@ -6,6 +6,8 @@ LINK=${CC}
 
 .PHONY: build test clean
 
+default: bin/coral-core bin/coral-parse bin/coral-token
+
 ## sub-projects
 .PHONY: core parsing
 
@@ -20,8 +22,11 @@ bin/coral-core: ${COREFILES} obj/core/__main__.o
 
 # Parsing includes all code involved in turning text into an AST
 PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o
-bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main__.o
-	${LINK} -o bin/coral-parse $^
+bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main_parse.o
+	${LINK} -o $@ $^
+PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o
+bin/coral-token: ${COREFILES} ${PARSERFILES} obj/parsing/__main_token.o
+	${LINK} -o $@ $^
 
 bin/test-coral-parse: ${COREFILES} ${PARSERFILES} obj/tests/parsing/parser.o obj/tests/parsing/__main__.o
 	${LINK} -o $@ $^
@@ -37,9 +42,8 @@ test: bin/test-coral-parse
 
 
 
-src/parsing/generated/parser.hh: src/parsing/parser.yy
-	@mkdir -p $(shell dirname $@)
-	bison -d -o src/parsing/generated/parser.cc $<
+src/parsing/generated/parser.hh: src/parsing/generated/parser.cc
+	@true
 
 src/parsing/generated/parser.cc: src/parsing/parser.yy
 	@mkdir -p $(shell dirname $@)
@@ -69,8 +73,8 @@ obj/%.o.d: src/%.cc
 	@mkdir -p $(shell dirname $@)
 	@set -e; \
 	set -o pipefail; \
-	OUT=$$(${MM} | sed 's/\\//g'); \
-	echo $$(dirname $@)/$${OUT} > $@; \
+	OUT=$$(${MM} || exit 1); \
+	echo $$(dirname $@)/"$${OUT}" > $@; \
 	echo $$'\t' '$(value COMPILE)' >> $@; \
 	exit 0
 

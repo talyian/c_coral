@@ -111,10 +111,11 @@ line
 | IfExpr { $$ = $1; }
 
 classBlock : ':' NEWLINE INDENT classLines DEDENT { $$ = $4; }
-classLines : NEWLINE { }
-           | classLine { $$.push_back($1); }
-	   | classLines NEWLINE { $$ = $1; }
-	   | classLines classLine { $$ = $1; $$.push_back($2); }
+classLines
+ : NEWLINE { }
+ | classLine { $$.push_back($1); }
+ | classLines NEWLINE { $$ = $1; }
+ | classLines classLine { $$ = $1; $$.push_back($2); }
 classLine  : Parameter { $$ = $1; }
 
 // A block for a match body
@@ -125,8 +126,9 @@ matchLines
 	|	matchLine { $$.push_back($1); }
 	|	matchLines matchLine { $$= $1; $$.push_back($2); }
 matchLine
-: IDENTIFIER block { $$ = new MatchCaseTagsExpr(new Var($1), $2); }
-
+ : IDENTIFIER block { $$ = new MatchCaseTagsExpr(new Var($1), $2); }
+ | IDENTIFIER '(' ParameterList_inner ')' block {
+     $$ = new MatchCaseTagsExpr(new MatchEnumCaseExpr($1, $3), $5); }
 // A block defining an enumtype
 enumBlock: ':' NEWLINE INDENT enumLines DEDENT { $$ = $4; }
 enumLines
@@ -223,6 +225,17 @@ TypeList
 
 %%
 
+#include <sstream>
+std::string yy_src = "";
 void yy::parser::error(const yy::location &loc, const std::string& m) {
+  std::stringstream ss(yy_src);
+  std::string line;
+  for(int i=0; i < (int)loc.begin.line - 1; i++) {
+    std::getline(ss, line, '\n');
+  }
+  for(int i=0; i<3; i++) {
+    std::getline(ss, line, '\n');
+    std::cout << line << std::endl;
+  }
   std::cout << '[' << loc << "]: " << m << std::endl;
 }

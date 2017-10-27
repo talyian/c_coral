@@ -4,8 +4,20 @@ type Int64Option:
 
 func show(d: Int64Option):
   match d:
-    None: printf "None "
-    Some(val): printf("%d ", val)
+    None: printf "Int-None "
+    Some(val): printf("Int-%d ", val)
 
 show (Int64Option.None)
-show (Int64Option.Some(31337)
+show (Int64Option.Some(31337))
+
+type Option:
+  | None
+  | Some(T)
+
+func show(d):
+  match d:
+    None: printf "None"
+    Some(x): printf "Some"
+
+show (Option.None)
+show (Option.Some("hi"))

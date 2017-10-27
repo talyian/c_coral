@@ -263,6 +263,15 @@ void coral::TreePrinter::visit(Double * d) { out << IND() << d->value << END(); 
 
 void coral::TreePrinter::visit(AddrOf * d) { out << IND() << "addr " << d->var << END(); }
 
+void coral::TreePrinter::visit(MatchEnumCaseExpr * c) {
+  out << IND();
+  out << c->name;
+  out << "(";
+  foreach(c->defs, it) visit(*it);
+  out << ")";
+  out << END();
+}
+
 std::string coral::TreePrinter::END () {
   if (line_mode) return "";
   return "\n";

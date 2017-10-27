@@ -1,0 +1,12 @@
+# allow blank lines anywhere
+let x = 1
+
+func foo(x):
+  if x:
+
+    print x
+  else:
+
+    print x
+
+  print x

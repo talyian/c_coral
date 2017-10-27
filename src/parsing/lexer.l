@@ -20,8 +20,10 @@ using namespace coral;
 #define YY_NO_UNPUT
 #define YY_NO_INPUT
 
+int last_token_was_newline = 0;
 int lineno = 0, colno = 0;
 void update(yy::location * loc, int len) {
+  last_token_was_newline++;
   loc->begin.line = lineno;
   loc->begin.column = colno;
   loc->end.line = lineno;
@@ -51,7 +53,7 @@ int oper(string val) {
 
 
 std::queue<int> tokenq; // a queue to allow multiple return tokens;
-std::stack<int> indents({ 0 });
+std::vector<int> indents({ 0 });
 %}
 
 int [0-9]+[L]?
@@ -60,7 +62,7 @@ bin 0b[01]+
 hex 0x[0-9a-fA-F]+
 str \"([^\\\"]|\\\\|\\\"|\\n)*\"
 id  [$]?[_a-zA-Z][_a-zA-Z0-9]*
-br  \n[ ]*
+br  (\r?\n[ ]*)+
 op  ([-+*/%!^><=])+
 comment [#].*$
 
@@ -77,10 +79,10 @@ comment [#].*$
 <<EOF>> { // on eof, close all outstanding indent blocks
     if (indents.size() <= 1) return 0;
     while(indents.size() > 2) {
-       indents.pop();
+       indents.pop_back();
        tokenq.push(yy::parser::token::DEDENT);
     }
-    indents.pop();
+    indents.pop_back();
     return yy::parser::token::DEDENT;
 }
 
@@ -108,16 +110,27 @@ pass   { tok(PASS); }
 {id}   { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
 [&]    { tok(ADDR_OF); }
 {br}   {
-  lineno++; colno = yyleng - 1;
-
+  for(int i=0; i<yyleng; i++) {
+    if (yytext[i] == '\n') { lineno++; colno = 0; }
+    else if (yytext[i] == '\r') { colno = 0; }
+    else colno++;
+  }
+  /* if (last_token_was_newline == 1) break; */
+  /* last_token_was_newline = 0; */
   if (indents.empty()) { std::cerr << "mismatched indent/dedent!\n"; }
-  if (indents.top() < colno) { tokenq.push(yy::parser::token::INDENT); indents.push(colno); }
-  else if (indents.top() == colno) { }
-  else while(indents.top() > colno) {
-      indents.pop();
+  if (indents.back() < colno) { tokenq.push(yy::parser::token::INDENT); indents.push_back(colno); }
+  else if (indents.back() == colno) { }
+  else while(indents.back() > colno) {
+      indents.pop_back();
       tokenq.push(yy::parser::token::DEDENT);
       tokenq.push(yy::parser::token::NEWLINE);
     }
+  /* std::cerr << "info: " << lineno << "|" <<  colno << "|" << yyleng << "\n"; */
+  /* std::cerr << "[" << yytext << "]\n"; */
+  /* std::cerr << "newline -- indents[" << indents.size() << "]: "; */
+  /* foreach(indents, it) std::cerr << *it << ", "; */
+  /* std::cerr << std::endl; */
+
   tok(NEWLINE);
 }
 [ \t]  { }
@@ -125,19 +138,30 @@ pass   { tok(PASS); }
 %%
 
 #include "../../core/treeprinter.hh"
+extern std::string yy_src;
 Module * parse(FILE * in, const char * src) {
-  if (!in && !src) {
-      std::cerr << "failed to initialize input\n";
-      return new Module(std::vector<Expr *> { new String("\"parse error 1\"") });
+  if (in) {
+    char * buf = 0;
+    fseek(in, 0, SEEK_END);
+    int len = ftell(in);
+    buf = new char[len];
+    fseek(in, 0, 0);
+    fread(buf, 1, len, in);
+    src = buf;
+    in = 0;
+  } else if (!src) {
+    std::cerr << "failed to initialize input\n";
+    return new Module(std::vector<Expr *> { new String("\"parse error 1\"") });
   }
+  yy_src = src;
   void * scanner = 0;
   Module * module = 0;
   yylex_init(&scanner);
 
   // TODO: make this reentrant;
   while(!tokenq.empty()) tokenq.pop();
-  while(!indents.empty()) indents.pop();
-  indents.push(0);
+  while(!indents.empty()) indents.pop_back();
+  indents.push_back(0);
 
   if (in) yyset_in(in, scanner);
   else if (src) yy_scan_string(src, scanner);
