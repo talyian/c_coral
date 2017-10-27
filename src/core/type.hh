@@ -57,6 +57,7 @@ public:
   int bits;
   IntType(int bits) : bits(bits) { }
   virtual void accept(TypeVisitor * v);
+  virtual std::string toString() { return "Int" + std::to_string(bits); }
 };
 
 class FloatType : public BaseType {
