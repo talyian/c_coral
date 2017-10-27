@@ -124,10 +124,11 @@ pass   { tok(PASS); }
 .      { return *yytext; }
 %%
 
+#include "../../core/treeprinter.hh"
 Module * parse(FILE * in, const char * src) {
   if (!in && !src) {
       std::cerr << "failed to initialize input\n";
-      return new Module(std::vector<Expr *> { new String("\"parse error\"") });
+      return new Module(std::vector<Expr *> { new String("\"parse error 1\"") });
   }
   void * scanner = 0;
   Module * module = 0;
@@ -142,8 +143,8 @@ Module * parse(FILE * in, const char * src) {
   else if (src) yy_scan_string(src, scanner);
 
   yy::parser coralp(module, scanner);
-  coralp.parse();
+  if (coralp.parse()) module = 0;
   yylex_destroy(scanner);
   if (module) return module;
-  return new Module(std::vector<Expr *> { new String("\"parse error\"") });
+  return new Module(std::vector<Expr *> { new String("\"parse error 2\"") });
 }
