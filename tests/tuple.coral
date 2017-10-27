@@ -1,9 +1,21 @@
 let _expected = "4 b 2 b "
-let x = 2
-let y = "a"
-let z = (4, "b")
-let a = (x, y, z)
 
-printf("%d ", z[0])
-printf("%s ", z[1])
-printf("%d %d ", a[0], a[2][1])
+# Assignment
+let X = 2
+let Y = "a"
+let Z = (4, "b")
+let A = (X, Y, Z)
+
+printf("%d ", Z[0])
+printf("%s ", Z[1])
+printf("%d %d ", A[0], A[2][1])
+
+# 0-tuples
+let W = ()
+
+# Destructuring
+let (four, b) = Z
+let (two, a, (four, b)) = A
+let (two, a, B) = A
+let C = A
+let (_, _, B) = A
