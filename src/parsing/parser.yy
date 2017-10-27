@@ -194,7 +194,7 @@ expr
 | MATCH expr matchBlock { $$ = new MatchExpr($2, $3); }
 
 | '[' Tuple_inner ']' { $$ = new Call(new Var("List.create"), $2); }
-| Tuple { $$ = $1; }
+| Tuple { $$ = $1; if ($1->items.size() == 1) $$ = $1->items[0]; }
 
 Tuple
 : '(' ')' { $$ = new Tuple(std::vector<Expr *>()); }

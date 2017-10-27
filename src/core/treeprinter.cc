@@ -14,16 +14,12 @@ void coral::TreePrinter::print() { module->accept(this); }
     out << IND();
     auto lm = line_mode;
     line_mode = 1;
-    if (t->items.size() == 1) {
-      t->items[0]->accept(this);
-    } else {
       out << '(';
       foreach(t->items, it) {
 	if (it != t->items.begin()) out << ", ";
 	(*it)->accept(this);
       }
       out << ')';
-    }
     line_mode = lm;
     out << END();
   }
