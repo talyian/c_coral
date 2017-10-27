@@ -87,13 +87,15 @@ void coral::TreePrinter::print() { module->accept(this); }
 
   void coral::TreePrinter::visit(BinOp * op) {
     out << IND();
+    if (op->showParens(curop)) out << "(";
+
     TreePrinter pp(module, out);
+    pp.curop = op;
     pp.line_mode = 1;
-    out << "(";
     op->lhs->accept(&pp);
     out << " " << op->op << " ";
     op->rhs->accept(&pp);
-    out << ")";
+    if (op->showParens(curop)) out << ")";
     out << END();
   }
 

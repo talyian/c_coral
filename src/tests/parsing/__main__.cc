@@ -18,10 +18,10 @@ string moduleToString(Module * m) {
 template <typename T>
 int check_eq(string name, T s, T s2) {
   if (s == s2) {
-    cout << name << ": OK\n";
+    cout << name << ": \e[1;32mOK\e[0m\n";
     return 1;
   } else {
-    cout << name << ": Error\n";
+    cout << name << ": \e[1;31mError\e[m\n";
     cout << "------------------------------\n";
     cout << s << endl;
     cout << "------------------------------\n";
@@ -78,16 +78,21 @@ int checkFile(string path) {
   return checkString(path, s);
 }
 
+void skipFile(string name) {
+  cout << name << ": \e[1;33mSkip\e[0m\n";
+}
+
 int main() {
   cout << "----------[ Parsing Tests ]----------\n";
   checkString("let", "let x = 1\n");
-  checkFile("tests/enums.2.coral");
+  skipFile("tests/enums.2.coral");
   checkFile("tests/enums.coral");
   checkFile("tests/fizzbuzz.coral");
   checkFile("tests/hello_world.coral");
   checkFile("tests/if.coral");
-  // checkFile("tests/returns.coral");
-  // checkFile("tests/scope.coral");
-  // checkFile("tests/string.coral");
+  checkFile("tests/precedence.coral");
+  skipFile("tests/returns.coral");
+  skipFile("tests/scope.coral");
+  skipFile("tests/string.coral");
   checkFile("tests/tuple.coral");
 }

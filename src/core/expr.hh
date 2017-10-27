@@ -71,6 +71,9 @@ namespace coral {
 	  );
       return "(" + lhs->toString() + op + rhs->toString() + ")";
     }
+    int getPrecedence();
+    int showParens(BinOp * outer);
+
     ~BinOp() { delete lhs; delete rhs; }
   };
 

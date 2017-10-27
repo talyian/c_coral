@@ -1,4 +1,3 @@
-
 func fizzbuzz(n: Int64):
   if n % 15 = 0: printf "fizzbuzz"
   elif n % 5 = 0: printf "buzz"

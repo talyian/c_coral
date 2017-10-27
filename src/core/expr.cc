@@ -84,6 +84,29 @@ std::string BlockExpr::toString() {
     return s;
 }
 
+int BinOp::getPrecedence() {
+  if (op == "=" || op == "!=" || op == "<" || op == ">" || op == "<=" || op == ">=")
+    return 10;
+
+  if (op == "+" || op == "-") return 20;
+
+  if (op == "*" || op == "*" || op == "%") return 30;
+
+  return 0;
+}
+
+int BinOp::showParens(BinOp * outer) {
+  if (!outer) return false;
+  // if the outer precedence is higher, we *must* show parens
+  if (outer->getPrecedence() > getPrecedence()) return true;
+  if (outer->getPrecedence() < getPrecedence()) return false;
+  // if the precedences are equal, then we *must* show parens
+  // to force right-hand-first evaluation
+  if (outer->rhs == this) return true;
+  // return false;
+  return false;
+}
+
 FuncDef* coral::BuildVarFunc(std::string name, Type* return_type, std::vector<Def *> params, Expr * body) {
   return new FuncDef(name, return_type, params, body, true);
 }

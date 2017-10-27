@@ -15,9 +15,15 @@ namespace coral {
   public:
     Module * module;
     std::ostream & out;
+    // current indentation level.
     int indent = 0;
+    // if 1, inline mode (don't indent or newline)
     int line_mode = 0;
+    // stupid hack for render elifs from nested ifs
     int showElif = 0;
+    // stupid hack to detect where to show parens
+    BinOp * curop = 0;
+
     TreePrinter(Module * m, std::ostream & c) : Visitor("treeprint "), module(m), out(c) { }
     void print();
     std::string IND();
