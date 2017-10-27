@@ -81,8 +81,8 @@ int checkFile(string path) {
 int main() {
   cout << "----------[ Parsing Tests ]----------\n";
   checkString("let", "let x = 1\n");
-  // checkFile("tests/enums.2.coral");
-  // checkFile("tests/enums.coral");
+  checkFile("tests/enums.2.coral");
+  checkFile("tests/enums.coral");
   checkFile("tests/fizzbuzz.coral");
   checkFile("tests/hello_world.coral");
   checkFile("tests/if.coral");

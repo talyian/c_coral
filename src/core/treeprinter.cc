@@ -176,7 +176,7 @@ void coral::TreePrinter::print() { module->accept(this); }
   void coral::TreePrinter::visit(EnumCase * e) {
     TreePrinter lp(module, out);
     lp.line_mode = 1;
-    out << IND() << e->name;
+    out << IND() << "| " << e->name;
     if (e->defs.size()) {
       out << "(";
       foreach(e->defs, def) lp.visit(*def);
