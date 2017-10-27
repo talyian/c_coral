@@ -1,34 +1,56 @@
-* Rcoral Features [3/7]
+* Rcoral Features [4/8]
 ** DONE elseif syntax
 ** DONE let syntax
 ** DONE Re-entrant lexer
 ** TODO while loops
-** TODO multiple modules
-   :depends: re-entrant lexer
+** DONE multiple modules
+** TODO re-entrant lexer could be more reentrant -- the indents/tokenq handling should go in yyextra
 ** TODO basic prelude
-   :depends: multiple modules
+   :depends:  multiple modules
 ** TODO declare library references
    I wonder if this is actually needed for now. It should *really* go in a buildfile.
    But perhaps like .fsx files we can have #r and #l.
-* Coral Features [0/2]
-** TODO start working on type inference
-** TODO struct
+* Coral Features [1/6]
+** DONE type inference for function return types
+** TODO type inference for function parameters
+** TODO type inference for call sites
+** TODO tuples
+** TODO structs
 ** TODO classes
-* Implement
-* Implement Features required for Fasta benchmark [1/3]
+* Core Stdlib Features [0/8]
+** TODO CBytes / ZBytes
+** TODO CText / ZText
+** TODO Array [0/3]
+- [ ] Array.length
+- [ ] Array.slice
+- [ ] Array.item
+** TODO Bignum
+** TODO ArrayList
+an autoresizing array, basically
+** TODO List
+a general purpose container - could be arraylist for now
+** TODO HashMap
+** TODO HashSet
+I guess this could just be Built on top of a HashMap
+
+* Implement Features required for Fasta benchmark [1/6]
 ** DONE Test Cases Setup
+** TODO Ignore Whitespace inside of parens and lists
 ** TODO Statically concatenate string literals (operator +)
    let str = ("foo " +
       "bar " +
              "speem")
-** TODO Ignore Whitespace inside of parens and lists
 ** TODO declare tuples
 ** TODO declare lists
 ** TODO declare lists-of-tuples
 
-** Define CString Type
-   let s : Cstring = "asdf"
+** Define CString Type [0/3]
+   let s : CString = "asdf"
    printfn("%d", s.length)
    printfn("%s", s)
    printfn("%d", s.indexOf("df"))
    printfn("%s", s + " qwer")
+*** TODO CString.length
+*** TODO CString.indexOf
+*** TODO CString.slice
+
