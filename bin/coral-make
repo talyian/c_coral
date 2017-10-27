@@ -1,0 +1,18 @@
+#!/bin/bash
+
+NAME=$0
+CMD=$1
+shift 1
+case $CMD in
+    parse)
+	make bin/coral-parse && bin/coral-parse $@
+	;;
+    token)
+	make bin/coral-token && bin/coral-token $@
+	;;
+    test)
+	make bin/test-coral-parse && bin/test-coral-parse
+	;;
+    *)
+	echo "Unknown command $CMD"
+esac
