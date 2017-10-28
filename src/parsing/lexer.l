@@ -20,7 +20,15 @@ using namespace coral;
 #define YY_NO_UNPUT
 #define YY_NO_INPUT
 
-int lineno = 0, colno = 0;
+int lineno = 0, colno = 0, paren_depth = 0;
+
+void push_paren(char c) {
+   paren_depth++;
+}
+void pop_paren(char c) {
+   paren_depth--;
+}
+
 void update(yy::location * loc, int len) {
   loc->begin.line = lineno;
   loc->begin.column = colno;
@@ -46,6 +54,12 @@ int oper(string val) {
     if(val == "<=") tok(OP_LTE);
     if(val == ">=") tok(OP_GTE);
     if(val == "!=") tok(OP_NE);
+
+    if (val == "+=") tok(OP_ADDEQ);
+    if (val == "-=") tok(OP_SUBEQ);
+    if (val == "*=") tok(OP_MULEQ);
+    if (val == "/=") tok(OP_DIVEQ);
+    if (val == "%=") tok(OP_MODEQ);
     tok(OP_OPERATOR);
 }
 
@@ -58,7 +72,7 @@ int [0-9]+[L]?
 num [0-9]+[.][0-9]+
 bin 0b[01]+
 hex 0x[0-9a-fA-F]+
-str \"([^\\\"]|\\\\|\\\"|\\n)*\"
+str \"([^\\\"]|\\\\|\\\"|\\[a-z])*\"
 id  [$]?[_a-zA-Z][_a-zA-Z0-9]*
 br  (\r?\n[ ]*)+
 op  ([-+*/%!^><=])+
@@ -105,14 +119,21 @@ pass   { tok(PASS); }
 {int}  { yylval->build(std::stoll(yytext)); tok(INTEGER); }
 {num}  { yylval->build(std::stod(yytext)); tok(FLOAT); }
 {str}  { yylval->build(string(yytext, yyleng)); tok(STRING); }
+'([^'])' { yylval->build(string(yytext, yyleng)); tok(STRING); }
 {id}   { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
 [&]    { tok(ADDR_OF); }
+\[     { push_paren('['); return '['; }
+\]     { pop_paren(']'); return ']'; }
+\(     { push_paren('('); return '('; }
+\)     { pop_paren(')'); return ')'; }
 {br}   {
   for(int i=0; i<yyleng; i++) {
     if (yytext[i] == '\n') { lineno++; colno = 0; }
     else if (yytext[i] == '\r') { colno = 0; }
     else colno++;
   }
+
+  if (paren_depth) break;
   /* if (last_token_was_newline == 1) break; */
   /* last_token_was_newline = 0; */
   if (indents.empty()) { std::cerr << "mismatched indent/dedent!\n"; }
@@ -162,6 +183,7 @@ Module * parse(FILE * in, const char * src) {
   indents.push_back(0);
   lineno = 0;
   colno = 0;
+  paren_depth = 0;
 
   if (in) yyset_in(in, scanner);
   else if (src) yy_scan_string(src, scanner);

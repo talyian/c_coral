@@ -7,9 +7,12 @@ type DayOfWeek:
 
 func show(d : DayOfWeek):
   match d:
-    Friday: printf "Friday\n"
-    Saturday: printf "Saturday\n"
-    Other: printf "Sadderday\n"
+    Friday:
+      printf "Friday\n"
+    Saturday:
+      printf "Saturday\n"
+    Other:
+      printf "Sadderday\n"
 
 let x = DayOfWeek.Friday
 let y = DayOfWeek.Saturday
