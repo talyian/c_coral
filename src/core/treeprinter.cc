@@ -229,11 +229,8 @@ void coral::TreePrinter::visit(ImplClassFor * a) {
 void coral::TreePrinter::visit(Extern * e) {
   out << IND() << "extern " << e->name << " : " << e->type << END();
 }
-void coral::TreePrinter::visit(Def * d) {
-  out << IND() << d->name;
-  if (d->type && getTypeName(d->type) != "Unknown")
-    out << " : " << d->type->toString();
-  out << END();
+void coral::TreePrinter::visit(BaseDef * d) {
+  out << IND() << d->toString() << END(); return;
 }
 
 void coral::TreePrinter::visit(Cast * c) {
@@ -245,7 +242,15 @@ void coral::TreePrinter::visit(Let * d) {
   TreePrinter lp(module, out);
   lp.line_mode = 1;
   out << IND() << "let ";
-  lp.visit(d->var);
+  if (d->tuplevar.size()) {
+    out << "(";
+    foreach(d->tuplevar, it) {
+      if (it != d->tuplevar.begin()) out << ", ";
+      lp.visit(*it);
+    }
+    out << ")";
+  } else
+    lp.visit(d->var);
   out << " = ";
   d->value->accept(&lp);
   out << END();

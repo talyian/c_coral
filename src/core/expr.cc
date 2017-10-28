@@ -70,7 +70,7 @@ std::string Cast::toString() {
   return expr->toString() + " as " + to_type->toString();
 }
 std::string Let::toString() {
-  return var->name + ":=" + value->toString();
+  return var->toString() + ":=" + value->toString();
 }
 std::string AddrOf::toString() {
   return "&" + var;
@@ -107,10 +107,10 @@ int BinOp::showParens(BinOp * outer) {
   return false;
 }
 
-FuncDef* coral::BuildVarFunc(std::string name, Type* return_type, std::vector<Def *> params, Expr * body) {
+FuncDef* coral::BuildVarFunc(std::string name, Type* return_type, std::vector<BaseDef *> params, Expr * body) {
   return new FuncDef(name, return_type, params, body, true);
 }
-FuncDef* coral::BuildFunc(std::string name, Type* return_type, std::vector<Def *> params, Expr * body) {
+FuncDef* coral::BuildFunc(std::string name, Type* return_type, std::vector<BaseDef *> params, Expr * body) {
   return new FuncDef(name, return_type, params, body, false);
 }
 

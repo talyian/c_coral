@@ -30,7 +30,7 @@ namespace coral {
     std::string END();
 
 #define VISIT_DEF(EXPR) void visit(EXPR * e);
-    void visit(Def * d);
+    void visit(BaseDef * d);
     EXPR_NODE_LIST(VISIT_DEF)
 #undef VISIT_DEF
   };

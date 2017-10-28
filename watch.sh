@@ -1,4 +1,6 @@
 #!/bin/bash
+# watch.sh uses inotify to trigger re-makes.
+# I guess this basically is a basic version of nodemon
 SRCFILE=${1:-"samples/types/enum.coral"}
 debounce() {
     LAST=0
@@ -22,7 +24,7 @@ debounce() {
 	SRCFILE="$dir$file"
     fi
     echo "-- [$file] -----($SRCFILE)-------------------------------"
-    # make -s test
-    make -s bin/coral && bin/coral parse ${SRCFILE} && bin/coral jit ${SRCFILE}
+    make -s test
+    # make -s bin/coral && bin/coral parse ${SRCFILE} && bin/coral jit ${SRCFILE}
     # make -s bin/infer && bin/infer
 done

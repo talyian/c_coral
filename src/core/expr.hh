@@ -1,10 +1,15 @@
+/*
+  core/expr contains all nodes of the syntax tree.
+  depends on core/type because expressions have types
+ */
 #pragma once
 
+#include "type.hh"
+#include "utils.hh"
 #include <vector>
 #include <memory>
 #include <string>
 #include <iostream>
-#include "type.hh"
 
 namespace coral {
   class Expr {
@@ -141,23 +146,41 @@ namespace coral {
     ~BlockExpr() { for(auto i = lines.begin(), e = lines.end(); i != e; i++) delete *i; }
   };
 
-  class Def {
+  class BaseDef {
+  public:
+    virtual ~BaseDef() { }
+    virtual std::string toString() = 0;
+  };
+
+  class Def : public BaseDef {
   public:
     std::string name;
     Type * type;
     Def(std::string name, Type * t) : name(name), type(t) { }
     ~Def() { delete type; }
+    virtual std::string toString() {
+      return (type && getTypeKind(type) != UnknownTypeKind ? name + ": " + type->toString() : name); }
+  };
+
+  class TupleDef : public BaseDef {
+  public:
+    std::vector<BaseDef *> items;
+    TupleDef(std::vector<BaseDef *> items) : items(items) { }
+    ~TupleDef() { foreach(items, it) if (*it) delete *it; }
+    virtual std::string toString() {
+      return "(" + join<BaseDef *>(", ", items, [] (BaseDef * d) { return d->toString(); }) + ")";
+    }
   };
 
   class FuncDef : public Expr {
   public:
     std::string name;
     Type * rettype;
-    std::vector<Def *> args;
+    std::vector<BaseDef *> args;
     Expr * body;
     bool multi;
     FuncDef(std::string name, Type * rettype,
-	    std::vector<Def *> args,
+	    std::vector<BaseDef *> args,
 	    Expr * body,
 	    bool multi) :
       name(name), rettype(rettype), args(args), body(body), multi(multi) { }
@@ -193,9 +216,9 @@ namespace coral {
 
   class For : public Expr {
   public:
-    std::vector<Def *> var;
+    std::vector<BaseDef *> var;
     Expr *source, *body;
-    For(std::vector<Def *> var, Expr * source, Expr * body) : var(var), source(source), body(body) { }
+    For(std::vector<BaseDef *> var, Expr * source, Expr * body) : var(var), source(source), body(body) { }
     virtual void accept(class Visitor * v);
     virtual std::string toString() { return "for"; }
     ~For() { delete source; delete body; }
@@ -203,9 +226,13 @@ namespace coral {
 
   class Let : public Expr {
   public:
-    Def * var;
+    BaseDef * var;
+    std::vector<BaseDef *> tuplevar;
     Expr * value;
-    Let(Def * var, Expr * value) : var(var), value(value) { }
+    Let(std::vector<BaseDef *> tuplevar, Expr * value) : var(0), tuplevar(tuplevar), value(value) {
+      var = tuplevar[0];
+    }
+    Let(BaseDef * var, Expr * value) : var(var), value(value) { }
     virtual void accept(class Visitor * v);
     virtual std::string toString();
     ~Let() { delete var; delete value; }
@@ -256,9 +283,9 @@ namespace coral {
   class EnumCase : public Expr {
   public:
     std::string name;
-    std::vector<Def *> defs;
+    std::vector<BaseDef *> defs;
     EnumCase(std::string name) : name(name) { }
-    EnumCase(std::string name, std::vector<Def *> defs)
+    EnumCase(std::string name, std::vector<BaseDef *> defs)
       :name(name), defs(defs) { }
     virtual void accept(class Visitor * v);
     virtual std::string toString() { return "enum-case"; }
@@ -277,7 +304,7 @@ namespace coral {
   class MatchEnumCaseExpr : public EnumCase {
   public:
     MatchEnumCaseExpr(std::string name) : EnumCase(name) { }
-    MatchEnumCaseExpr(std::string name, std::vector<Def *> defs)
+    MatchEnumCaseExpr(std::string name, std::vector<BaseDef *> defs)
       : EnumCase(name, defs) { }
     virtual void accept(class Visitor * v);
     virtual std::string toString() { return "match-enum-case"; }
@@ -425,8 +452,8 @@ namespace coral {
 
   std::string getName(Expr * e);
 
-  FuncDef* BuildFunc(std::string name, Type* functype, std::vector<Def *> params, Expr * body);
+  FuncDef* BuildFunc(std::string name, Type* functype, std::vector<BaseDef *> params, Expr * body);
 
-  FuncDef* BuildVarFunc(std::string name, Type* functype, std::vector<Def *> params, Expr * body);
+  FuncDef* BuildVarFunc(std::string name, Type* functype, std::vector<BaseDef *> params, Expr * body);
 
 }

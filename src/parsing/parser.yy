@@ -67,8 +67,10 @@
 %type <Tuple *> Tuple
 %type <Type *> typesig
 %type <std::vector<Type *>> TypeList
-%type <Def *> Parameter classLine
-%type <std::vector<Def *>> ParameterList_inner ParameterList classLines classBlock
+%type <Def *> classLine
+%type <std::vector<Def *>> classLines classBlock
+%type <BaseDef *> Parameter
+%type <std::vector<BaseDef *>> ParameterList_inner ParameterList
 %type <BlockExpr *> block
 %{
 #include "../../core/expr.hh"
@@ -104,11 +106,13 @@ line
 | IMPL IDENTIFIER block { $$ = new ImplType($2, $3); }
 | IMPL IDENTIFIER FOR IDENTIFIER block { $$ = new ImplClassFor($2, $4, $5); }
 | LET Parameter OP_EQ expr { $$ = new Let($2, $4); }
+| LET '(' ParameterList_inner ')' OP_EQ expr { $$ = new Let($3, $6); }
 | RETURN expr { $$ = new Return($2); }
 | PASS { $$ = new VoidExpr(); }
 | expr { $$ = $1; }
 | FOR ParameterList_inner IN expr block { $$ = new For($2, $4, $5); }
 | IfExpr { $$ = $1; }
+
 
 classBlock : ':' NEWLINE INDENT classLines DEDENT { $$ = $4; }
 classLines
@@ -116,7 +120,7 @@ classLines
  | classLine { $$.push_back($1); }
  | classLines NEWLINE { $$ = $1; }
  | classLines classLine { $$ = $1; $$.push_back($2); }
-classLine  : Parameter { $$ = $1; }
+classLine  : Parameter { $$ = (Def *)$1; /* TODO */ }
 
 // A block for a match body
 matchBlock :  ':' NEWLINE INDENT matchLines DEDENT { $$ = $4; }
@@ -145,10 +149,13 @@ block
 : ':' NEWLINE INDENT lines DEDENT { $$ = new BlockExpr($4); }
 | ':' line { $$ = new BlockExpr(std::vector<Expr *>()); $$->lines.push_back($2); }
 
+
+// P A R A M E T E R S --------------------
 Parameter
 : IDENTIFIER { $$ = new Def($1, new UnknownType()); }
 | IDENTIFIER ':' typesig { $$ = new Def($1, $3); }
-| IDENTIFIER '.' IDENTIFIER ':' typesig { $$ = new Def($3, $5); }
+| '(' ParameterList_inner ')' { $$ = new TupleDef($2); }
+// | IDENTIFIER '.' IDENTIFIER ':' typesig { $$ = new Def($3, $5); }
 ParameterList_inner
 : Parameter { $$.push_back($1); }
 | ParameterList_inner ',' Parameter { $$ = $1; $$.push_back($3); }
