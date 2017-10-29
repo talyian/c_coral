@@ -12,16 +12,23 @@
 #include <iostream>
 
 namespace coral {
+#define EXPR_NODE_LIST(M) /*
+ */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member)
+ ;
+
+  enum ExprType {
+#define TYPEDEC(EXPR) EXPR##Kind,
+    EXPR_NODE_LIST(TYPEDEC)
+#undef TYPEDEC
+  };
+
   class Expr {
   public:
     virtual std::string toString() { return "[expr]"; }
     virtual void accept(class Visitor * v);
     virtual ~Expr() { }
+    ExprType getType();
   };
-
-#define EXPR_NODE_LIST(M) /*
- */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr)
- ;
 
   class Call : public Expr {
   public:
@@ -41,6 +48,16 @@ namespace coral {
       return v;
     }
     ~Call() { } //for(auto i = arguments.begin(); i < arguments.end(); i++) { delete *i; }  }
+  };
+
+  class Member : public Expr {
+  public:
+    Expr * base;
+    std::string memberName;
+    Member(Expr * base, std::string memberName)
+      : base(base), memberName(memberName) { }
+    virtual void accept(class Visitor * v);
+    virtual std::string toString() { return base->toString() + "." + memberName; }
   };
 
   class Index : public Expr {
@@ -427,11 +444,6 @@ namespace coral {
 #undef VISIT
   };
 
-  enum ExprType {
-#define TYPEDEC(EXPR) EXPR##Kind,
-    EXPR_NODE_LIST(TYPEDEC)
-#undef TYPEDEC
-  };
 #define EXPRTYPE(t) ExprTypeVisitor(t).out
   class ExprTypeVisitor : public Visitor {
   public:

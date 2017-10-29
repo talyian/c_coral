@@ -18,7 +18,8 @@ let sapiens = [
 
 let col = 0
 func putc(c):
-  match "col++" % 60:
+  set col += 1
+  match col % 60:
     zero: printf "\n%c" c
     n: printf "%c" c
 
@@ -30,17 +31,15 @@ func repeatFasta(header, n, seq):
   print header
   let l = len seq
   for i in range(n):
-    # putc $ (get_char @ table) $ seq[i % l]
-    0
+    putc $ (get_char @ table) $ seq[i % l]
 
 func randomFasta(header, n, probs):
   func nextRand(s): ((s * 3877 + 20573) % 139968, float s / 139968.0f)
   let rand = iter (unfold 43439i nextRand)
-  let table = reduce ((s, (a, c)) = ((a, s + c), s + c), 0, probs)
+  let table = reduce ((s, (a, c)) => ((a, s + c), s + c), 0, probs)
   print header
   for i in range(n):
-    # putc $ (get_char @ table) $ next rand
-    0
+    putc $ (get_char @ table) $ next rand
 
 let n = int32 args[0]
 repeatFasta(">ONE Homo sapiens alu", 2 * n, alu)

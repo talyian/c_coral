@@ -189,6 +189,18 @@ void coral::TreePrinter::visit(Call * c) {
   out << IND();
   TreePrinter lp(module, out);
   lp.line_mode = 1;
+  if (c->callee->getType() == VarKind) {
+    auto vv = (Var *)c->callee.get();
+    if (vv->value == "_list") {
+      out << '[';
+      foreach(c->arguments, it) {
+	if (it != c->arguments.begin())	out << ", ";
+	(*it)->accept(&lp);
+      }
+      out << ']' << END();
+      return;
+    }
+  }
   c->callee->accept(&lp);
   if (c->arguments.size() == 0) out << "()";
   else if (c->arguments.size() == 1) {
@@ -274,6 +286,13 @@ void coral::TreePrinter::visit(MatchEnumCaseExpr * c) {
   out << "(";
   foreach(c->defs, it) visit(*it);
   out << ")";
+  out << END();
+}
+
+void coral::TreePrinter::visit(Member * c) {
+  out << IND();
+  c->base->accept(this);
+  out << "." << c->memberName;
   out << END();
 }
 

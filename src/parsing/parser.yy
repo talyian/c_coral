@@ -191,10 +191,10 @@ expr
 | expr OP_BIND expr { $$ = new BinOp("@", $1, $3); }
 | expr OP_ARROW expr { $$ = new BinOp("=>", $1, $3); }
 
-| expr '.' IDENTIFIER { $$ = new Call(new Var($3), std::vector<Expr*>{ $1 }); }
-| expr '.' IDENTIFIER '(' ArgumentList ')' {
-     $5.insert($5.begin(), $1);
-     $$ = new Call(new Var($3), $5); }
+| expr '.' IDENTIFIER { $$ = new Member($1, $3); }
+// | expr '.' IDENTIFIER '(' ArgumentList ')' {
+//      $5.insert($5.begin(), $1);
+//      $$ = new Call(new Var($3), $5); }
 | expr '[' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3 }); }
 | expr '[' expr ',' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3, $5 }); }
 | expr ArgumentList { $$ = new Call($1, $2); }

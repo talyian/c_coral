@@ -1,23 +1,23 @@
 import gmp.bigint
 
-let (acc, num, den, t1, t2) = map(bigint, (0, 1, 1, 0, 0))
+let (acc, num, den, t1, t2) = (0, 1, 1, 0, 0).map bigint
 
 func extract(n):
-  t1 = (num * n)
-  t2 = (t1 + acc)
-  t1 = (t2 / den)
+  t1 = num * n
+  t2 = t1 + acc
+  t1 = t2 / den
   int32 t1
 
 func next(k):
   addmul(acc, num, 2)
-  acc = acc * (2 * k + 1)
-  den = den * (2 * k + 1)
-  num = num * k
+  acc *= 2 * k + 1
+  den *= 2 * k + 1
+  num *= k
 
 func eliminate(d):
   submul(acc, den, d)
-  acc = acc * 10
-  num = num * 10
+  acc *= 10
+  num *= 10
 
 func pi():
   for k in range(1, inf):
@@ -30,7 +30,7 @@ func pi():
 
 let n = int32 argv[0]
 let digits = array(pi().take(n))
-for i in range(0-((0-n) / 10 * 10)):
+for i in range(-(-n/10*10)):
   if i < n:
     print digits[i]
   else:

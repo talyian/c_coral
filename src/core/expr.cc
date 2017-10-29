@@ -119,3 +119,5 @@ std::string getName(Expr * e) {
   e->accept(&ng);
   return ng.out;
 }
+
+ExprType Expr::getType() { return ExprTypeVisitor(this).out; }

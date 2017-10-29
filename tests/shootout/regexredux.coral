@@ -1,9 +1,9 @@
 open regex
 open threads.map
-""
-let input = stdin_bytes_read ()
-let text = regex_replace(">.*\n|\n", "", input)
-""
+
+let input = stdin.bytes.read()
+let text = regex.replace(">.*\n|\n", "", input)
+
 let q = [
   "agggtaaa|tttaccct",
   "[cgt]gggtaaa|tttaccc[acg]",
@@ -14,17 +14,17 @@ let q = [
   "agggt[cgt]aa|tt[acg]accct",
   "agggta[cgt]a|t[acg]taccct",
   "agggtaa[cgt]|[acg]ttaccct"]
-""
-func run(r): format("%s %i", r, regex_count_matches(r, text))
-let out = threads_map(q, run)
-""
+
+func run(r): format("%s %i", r, regex.count_matches(r, text))
+let out = threads.map(q, run)
+
 let q = [
   ("tHa[Nt]","<4>"),
   ("aND|caN|Ha[DS]|WaS","<3>"),
   ("a[NSt]|BY","<2>"),
   ("<[^>]*>","|"),
   ("\\|[^|][^|]*\\|","-")]
-""
-# out.add $ q.reduce(text, regex.replace . (flip tconcat))
-""
+
+out.add $ q.reduce(text, regex.replace . (flip tconcat))
+
 printf("\n%d\n%d\n%d\n", input.length, text.length, final.length)
