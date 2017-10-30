@@ -1,0 +1,39 @@
+module stdio
+
+module platform:
+  extern "C" read : Fn[Int32, Ptr[Int8], IntNative]
+
+type FdByteReader:
+  val fd: Int32
+  func read(n):
+    # TODO buffer input
+    let buf = Array[Int8].create n
+    let m = platform.read(fd, buf, intNative n)
+    ByteString.new(buf, m)
+
+type FdByteWriter:
+  val fd: Int32
+  func write(bs: ByteString):
+    platform.write(fd, bs.buf, bs.length)
+
+type StringFromByteReader(ByteReaderT):
+  val bytes: ByteReaderT
+  func new(fd):
+    set bytes = ByteReaderT(fd)
+  func new(bytes):
+    set this.bytes = reader
+  func read(n):
+    TextString.new(bytes.read(n))
+
+type FdStringReader = StringFromByteReader(FdByteReader)
+type FdStringWriter = StringFromByteWriter(FdByteWriter)
+
+_stdin = FdByteReader(0)
+_stdout = FdByteWriter(1)
+_stderr = FdByteWriter(2)
+stdin = FdStringReader(_stdin)
+stdout = FdStringWriter(_stdout)
+stderr = FdStringWriter(_stderr)
+
+stdout.write("[test]\n")
+stderr.write("[foobar]\n")

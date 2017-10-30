@@ -1,5 +1,5 @@
-open regex
-open threads.map
+import regex
+import threads.map
 
 let input = stdin.bytes.read()
 let text = regex.replace(">.*\n|\n", "", input)

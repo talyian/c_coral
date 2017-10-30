@@ -122,27 +122,27 @@ int checkFile(string path) {
 
 void runParsingTests() {
   cout << "----------[ Parsing Tests ]----------\n";
+  // checkString("let", "let x = 1\n");
+  // checkString("tuple-destructuring-1", "let (a, b) = x\n");
+  // checkString("tuple-destructuring-2", "let a, b = x\n", "\"parse error 2\"\n");
+  // checkString("tuple-destructuring-3", "let a = x, y\n", "\"parse error 2\"\n");
+  // checkString("tuple-destructuring-4", "let a = (x, y)\n");
 
-  checkString("let", "let x = 1\n");
-  checkString("tuple-destructuring-1", "let (a, b) = x\n");
-  checkString("tuple-destructuring-2", "let a, b = x\n", "\"parse error 2\"\n");
-  checkString("tuple-destructuring-3", "let a = x, y\n", "\"parse error 2\"\n");
-  checkString("tuple-destructuring-4", "let a = (x, y)\n");
-
-  checkFile("core/enums.2.coral");
-  checkFile("core/enums.coral");
-  checkFile("core/fizzbuzz.coral");
-  checkFile("core/hello_world.coral");
-  checkFile("core/if.coral");
-  checkFile("core/newlines.coral");
-  checkFile("core/precedence.coral");
-  checkFile("core/returns.coral");
-  checkFile("core/scope.coral");
-  checkFile("core/string.coral");
-  checkFile("core/tuple.coral");
-  checkFile("shootout/fasta.coral");
-  checkFile("shootout/knucleotide.coral");
-  checkFile("shootout/pidigits.coral");
-  checkFile("shootout/regexredux.coral");
+  // checkFile("core/enums.2.coral");
+  // checkFile("core/enums.coral");
+  // checkFile("core/fizzbuzz.coral");
+  // checkFile("core/hello_world.coral");
+  // checkFile("core/if.coral");
+  // checkFile("core/newlines.coral");
+  // checkFile("core/precedence.coral");
+  // checkFile("core/returns.coral");
+  // checkFile("core/scope.coral");
+  // checkFile("core/string.coral");
+  // checkFile("core/tuple.coral");
+  // checkFile("shootout/fasta.coral");
+  // checkFile("shootout/knucleotide.coral");
+  // checkFile("shootout/pidigits.coral");
+  // checkFile("shootout/regexredux.coral");
+  checkFile("libs/stdio.coral");
   cout << "----------[ "<< passed <<" / "<< total <<" ]----------\n";
 }
