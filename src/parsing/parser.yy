@@ -57,13 +57,14 @@
 %left OP_MUL OP_DIV
 %precedence OP_NOT
 
+%type <std::string> OP_OPERATOR
 
 %type <std::vector<Expr *>> lines ArgumentList
 %type <std::vector<Expr *>> enumBlock matchBlock
 %type <std::vector<Expr *>> enumLines matchLines
 %type <std::vector<Expr *>> Tuple_inner
 %type <Expr *> enumLine matchLine
-%type <Expr *> line expr IfExpr ElseSequence
+%type <Expr *> line expr IfExpr ElseSequence UnaryExpr NonUnaryExpr BinaryExpr Atom
 %type <Tuple *> Tuple
 %type <Type *> typesig
 %type <std::vector<Type *>> TypeList
@@ -163,47 +164,59 @@ ParameterList
 : '(' ')' { }
 | '(' ParameterList_inner ')' { $$ = $2; }
 
-ArgumentList : expr  { $$.push_back($1); }
+ArgumentList : NonUnaryExpr  { $$.push_back($1); }
 	     | Tuple { $$ = $1->items; }
 
-expr
-: STRING { $$ = new String($1); }
-| INTEGER { $$ = new Long($1); }
-| FLOAT { $$ = new Double($1); }
-| IDENTIFIER { $$ = new Var($1); }
 
-| expr OP_ADD expr { $$ = new BinOp("+", $1, $3); }
-| expr OP_SUB expr { $$ = new BinOp("-", $1, $3); }
-| expr OP_MUL expr { $$ = new BinOp("*", $1, $3); }
-| expr OP_DIV expr { $$ = new BinOp("/", $1, $3); }
-| expr OP_MOD expr { $$ = new BinOp("%", $1, $3); }
-| expr OP_LT expr { $$ = new BinOp("<", $1, $3); }
-| expr OP_GT expr { $$ = new BinOp(">", $1, $3); }
-| expr OP_EQ expr { $$ = new BinOp("=", $1, $3); }
-| expr OP_LTE expr { $$ = new BinOp("<=", $1, $3); }
-| expr OP_GTE expr { $$ = new BinOp(">=", $1, $3); }
-| expr OP_NE expr { $$ = new BinOp("!=", $1, $3); }
-| expr OP_ADDEQ expr { $$ = new BinOp("+=", $1, $3); }
-| expr OP_MULEQ expr { $$ = new BinOp("*=", $1, $3); }
-| expr OP_SUBEQ expr { $$ = new BinOp("-=", $1, $3); }
-| expr OP_DIVEQ expr { $$ = new BinOp("/=", $1, $3); }
-| expr OP_MODEQ expr { $$ = new BinOp("%=", $1, $3); }
-| expr OP_BIND expr { $$ = new BinOp("@", $1, $3); }
-| expr OP_ARROW expr { $$ = new BinOp("=>", $1, $3); }
+expr : UnaryExpr { $$ = $1; }
+     | Atom { $$ = $1; }
+     | BinaryExpr { $$ = $1; }
 
-| expr '.' IDENTIFIER { $$ = new Member($1, $3); }
-// | expr '.' IDENTIFIER '(' ArgumentList ')' {
-//      $5.insert($5.begin(), $1);
-//      $$ = new Call(new Var($3), $5); }
-| expr '[' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3 }); }
-| expr '[' expr ',' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3, $5 }); }
-| expr ArgumentList { $$ = new Call($1, $2); }
-| expr AS typesig { $$ = new Cast($1, $3); }
-| ADDR_OF IDENTIFIER { $$ = new AddrOf($2); }
-| MATCH expr matchBlock { $$ = new MatchExpr($2, $3); }
 
-| '[' Tuple_inner ']' { $$ = new Call(new Var("_list"), $2); }
-| Tuple { $$ = $1; if ($1->items.size() == 1) $$ = $1->items[0]; }
+UnaryExpr
+	: OP_SUB Atom { $$ = new Call(new Var("negate"), std::vector<Expr *>{$2}); }
+
+NonUnaryExpr
+     : Atom { $$ = $1; }
+     | BinaryExpr { $$ = $1; }
+
+Atom
+	: STRING { $$ = new String($1); }
+	| INTEGER { $$ = new Long($1); }
+	| FLOAT { $$ = new Double($1); }
+	| IDENTIFIER { $$ = new Var($1); }
+	| Tuple { $$ = $1; if ($1->items.size() == 1) $$ = $1->items[0]; }
+
+BinaryExpr
+	: expr OP_ADD expr { $$ = new BinOp("+", $1, $3); }
+	| expr OP_SUB expr { $$ = new BinOp("-", $1, $3); }
+	| expr OP_MUL expr { $$ = new BinOp("*", $1, $3); }
+	| expr OP_DIV expr { $$ = new BinOp("/", $1, $3); }
+	| expr OP_MOD expr { $$ = new BinOp("%", $1, $3); }
+	| expr OP_LT expr { $$ = new BinOp("<", $1, $3); }
+	| expr OP_GT expr { $$ = new BinOp(">", $1, $3); }
+	| expr OP_EQ expr { $$ = new BinOp("=", $1, $3); }
+	| expr OP_LTE expr { $$ = new BinOp("<=", $1, $3); }
+	| expr OP_GTE expr { $$ = new BinOp(">=", $1, $3); }
+	| expr OP_NE expr { $$ = new BinOp("!=", $1, $3); }
+	| expr OP_ADDEQ expr { $$ = new BinOp("+=", $1, $3); }
+	| expr OP_MULEQ expr { $$ = new BinOp("*=", $1, $3); }
+	| expr OP_SUBEQ expr { $$ = new BinOp("-=", $1, $3); }
+	| expr OP_DIVEQ expr { $$ = new BinOp("/=", $1, $3); }
+	| expr OP_MODEQ expr { $$ = new BinOp("%=", $1, $3); }
+	| expr OP_BIND expr { $$ = new BinOp("@", $1, $3); }
+	| expr OP_ARROW expr { $$ = new BinOp("=>", $1, $3); }
+	| expr OP_OPERATOR expr { $$ = new BinOp($2, $1, $3); }
+
+	| expr '.' IDENTIFIER { $$ = new Member($1, $3); }
+	| expr '[' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3 }); }
+	| expr '[' expr ',' expr ']' { $$ = new Index($1, std::vector<Expr *>{ $3, $5 }); }
+	| expr ArgumentList { $$ = new Call($1, $2); }
+	| expr AS typesig { $$ = new Cast($1, $3); }
+	| ADDR_OF IDENTIFIER { $$ = new AddrOf($2); }
+	| MATCH expr matchBlock { $$ = new MatchExpr($2, $3); }
+	| '[' Tuple_inner ']' { $$ = new Call(new Var("_list"), $2); }
+
 
 Tuple
 : '(' ')' { $$ = new Tuple(std::vector<Expr *>()); }

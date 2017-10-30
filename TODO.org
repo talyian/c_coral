@@ -54,4 +54,3 @@ I guess this could just be Built on top of a HashMap
 *** TODO CString.length
 *** TODO CString.indexOf
 *** TODO CString.slice
-

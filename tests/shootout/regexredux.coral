@@ -25,6 +25,6 @@ let q = [
   ("<[^>]*>","|"),
   ("\\|[^|][^|]*\\|","-")]
 
-out.add $ q.reduce(text, regex.replace . (flip tconcat))
+out.add $ q.reduce(text, regex.replace >> (flip tconcat))
 
 printf("\n%d\n%d\n%d\n", input.length, text.length, final.length)

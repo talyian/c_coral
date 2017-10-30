@@ -75,7 +75,7 @@ hex 0x[0-9a-fA-F]+
 str \"([^\\\"]|\\\\|\\\"|\\[a-z])*\"
 id  [$]?[_a-zA-Z][_a-zA-Z0-9]*
 br  (\r?\n[ ]*)+
-op  ([-+*/%!^><=])+
+op  ([-+*/%!^><=@$!&?])+
 comment [#].*$
 
 %%
@@ -98,35 +98,35 @@ comment [#].*$
     return yy::parser::token::DEDENT;
 }
 
-impl   { tok(IMPL); }
-for    { tok(FOR); }
-in     { tok(IN); }
-class  { tok(CLASS); }
-match  { tok(MATCH); }
-type   { tok(TYPE); }
-module { tok(MODULE); }
-let    { tok(LET); }
-as     { tok(AS); }
-return { tok(RETURN); }
-extern { tok(EXTERN); }
-func   { tok(FUNC); }
-if     { tok(IF); }
-else   { tok(ELSE); }
-elif   { tok(ELIF); }
-pass   { tok(PASS); }
-{op}   { return oper(string(yytext, yyleng)); }
+impl     { tok(IMPL); }
+for      { tok(FOR); }
+in       { tok(IN); }
+class    { tok(CLASS); }
+match    { tok(MATCH); }
+type     { tok(TYPE); }
+module   { tok(MODULE); }
+let      { tok(LET); }
+as       { tok(AS); }
+return   { tok(RETURN); }
+extern   { tok(EXTERN); }
+func     { tok(FUNC); }
+if       { tok(IF); }
+else     { tok(ELSE); }
+elif     { tok(ELIF); }
+pass     { tok(PASS); }
+{op}     { string val(yytext, yyleng); yylval->build(val); return oper(val); }
 {comment} { }
-{int}  { yylval->build(std::stoll(yytext)); tok(INTEGER); }
-{num}  { yylval->build(std::stod(yytext)); tok(FLOAT); }
-{str}  { yylval->build(string(yytext, yyleng)); tok(STRING); }
+{int}    { yylval->build(std::stoll(yytext)); tok(INTEGER); }
+{num}    { yylval->build(std::stod(yytext)); tok(FLOAT); }
+{str}    { yylval->build(string(yytext, yyleng)); tok(STRING); }
 '([^'])' { yylval->build(string(yytext, yyleng)); tok(STRING); }
-{id}   { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
-[&]    { tok(ADDR_OF); }
-\[     { push_paren('['); return '['; }
-\]     { pop_paren(']'); return ']'; }
-\(     { push_paren('('); return '('; }
-\)     { pop_paren(')'); return ')'; }
-{br}   {
+{id}     { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
+[&]      { tok(ADDR_OF); }
+\[       { push_paren('['); return '['; }
+\]       { pop_paren(']'); return ']'; }
+\(       { push_paren('('); return '('; }
+\)       { pop_paren(')'); return ')'; }
+{br}     {
   for(int i=0; i<yyleng; i++) {
     if (yytext[i] == '\n') { lineno++; colno = 0; }
     else if (yytext[i] == '\r') { colno = 0; }

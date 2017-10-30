@@ -1,0 +1,14 @@
+print(1 + 2 * 3)
+print((1 + 2) * 3)
+print(1 + (2 * 3))
+
+print(-1 + -2 * -3)
+print((-1 + -2) * -3)
+print(-1 + (-2 * -3))
+
+let x = -1
+print x
+print - 1
+print - x
+print(1 - 2)
+print(-(-n / 10))

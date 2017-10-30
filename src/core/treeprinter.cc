@@ -199,6 +199,14 @@ void coral::TreePrinter::visit(Call * c) {
       }
       out << ']' << END();
       return;
+    } else if (vv->value == "negate") {
+      out << "-(";
+      foreach(c->arguments, it) {
+	if (it != c->arguments.begin())	out << ", ";
+	(*it)->accept(&lp);
+      }
+      out << ")" << END();
+      return;
     }
   }
   c->callee->accept(&lp);
