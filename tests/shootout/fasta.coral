@@ -31,15 +31,15 @@ func repeatFasta(header, n, seq):
   print header
   let l = len seq
   for i in range(n):
-    putc $ (get_char @ table) $ seq[i % l]
+    putc(get_char(table, seq[i % l]))
 
 func randomFasta(header, n, probs):
   func nextRand(s): ((s * 3877 + 20573) % 139968, float s / 139968.0f)
-  let rand = iter (unfold 43439i nextRand)
-  let table = reduce ((s, (a, c)) => ((a, s + c), s + c), 0, probs)
+  let rand = unfold(43439i, nextRand).iterator()
+  let table = scan ((s, (a, c)) => ((a, s + c), s + c), 0, probs)
   print header
   for i in range(n):
-    putc $ (get_char @ table) $ next rand
+    putc(get_char(table, rand.next()))
 
 let n = int32 args[0]
 repeatFasta(">ONE Homo sapiens alu", 2 * n, alu)

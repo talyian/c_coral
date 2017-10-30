@@ -28,7 +28,7 @@ PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o
 bin/coral-token: ${COREFILES} ${PARSERFILES} obj/parsing/__main_token.o
 	${LINK} -o $@ $^
 
-bin/test-coral-parse: ${COREFILES} ${PARSERFILES} obj/tests/parsing/parser.o obj/tests/parsing/__main__.o
+bin/test-coral-parse: ${COREFILES} ${PARSERFILES} obj/tests/parsing/test_parser.o obj/tests/parsing/__main__.o
 	${LINK} -o $@ $^
 
 test: bin/test-coral-parse

@@ -1,4 +1,3 @@
-
 #include "../../parsing/lexer.hh"
 #include "../../core/treeprinter.hh"
 
@@ -35,11 +34,11 @@ int check_eq(string name, T s, T s2) {
       if (*z1 == '\n') j = i;
       i++; z1++; z2++;
     }
-    cout << i << ", " << j <<  "v-----------------------------";
+    cout << i << ", " << j <<  "v-----------------------------\n";
     cout << z1 + (j - i) << endl;
-    cout << "------------------------------";
+    cout << "------------------------------\n";
     cout << z2 + (j - i) << endl;
-    cout << "^-----------------------------";
+    cout << "^-----------------------------\n";
     return 0;
   }
 }
@@ -130,20 +129,20 @@ void runParsingTests() {
   checkString("tuple-destructuring-3", "let a = x, y\n", "\"parse error 2\"\n");
   checkString("tuple-destructuring-4", "let a = (x, y)\n");
 
-  checkFile("core/enums.coral");
   checkFile("core/enums.2.coral");
+  checkFile("core/enums.coral");
+  checkFile("core/fizzbuzz.coral");
   checkFile("core/hello_world.coral");
   checkFile("core/if.coral");
-  checkFile("core/fizzbuzz.coral");
+  checkFile("core/newlines.coral");
   checkFile("core/precedence.coral");
   checkFile("core/returns.coral");
-  checkFile("core/newlines.coral");
   checkFile("core/scope.coral");
   checkFile("core/string.coral");
   checkFile("core/tuple.coral");
-  checkFile("shootout/knucleotide.coral");
-  checkFile("shootout/regexredux.coral");
-  checkFile("shootout/pidigits.coral");
   checkFile("shootout/fasta.coral");
+  checkFile("shootout/knucleotide.coral");
+  checkFile("shootout/pidigits.coral");
+  checkFile("shootout/regexredux.coral");
   cout << "----------[ "<< passed <<" / "<< total <<" ]----------\n";
 }
