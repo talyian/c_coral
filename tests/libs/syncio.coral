@@ -1,7 +1,22 @@
-module stdio
+# This is the synchronous input / output module
+# We should really be using async for everything in the long run though,
+# especially in core so we're not wasting thread time
 
-module platform:
-  extern "C" read : Fn[Int32, Ptr[Int8], IntNative]
+module syncio (
+  stdin,
+  stdout,
+  stderr,
+  stdnull,
+  FileReader,
+  FileWriter,
+  FdByteReader,
+  FdByteWriter,
+  FdStringReader,
+  FdStringWriter,
+)
+
+type platform:
+ extern "C" read : Fn[Int32, Ptr[Int8], IntNative]
 
 type FdByteReader:
   val fd: Int32

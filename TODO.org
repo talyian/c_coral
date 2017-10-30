@@ -1,10 +1,20 @@
 #+STARTUP: showall
-* Rcoral Features [4/8]
+* Milestones [0/5]
+** TODO Implement syncio library 
+** TODO Implement ByteString
+** TODO Implement TextString
+** TODO Implement regex library
+** TODO Implement bignum library
+
+* Rcoral Features [4/11]
 ** DONE elseif syntax
 ** DONE let syntax
 ** DONE Re-entrant lexer
-** TODO while loops
 ** DONE multiple modules
+** TODO name mangler for modules, classes, nested classes, functions, and type overloads
+** TODO import extern from not-global namespace
+** TODO module declarations and exports
+** TODO basic struct types
 ** TODO re-entrant lexer could be more reentrant -- the indents/tokenq handling should go in yyextra
 ** TODO basic prelude
    :depends:  multiple modules
@@ -19,6 +29,7 @@
 ** TODO structs
 ** TODO classes
 * Core Stdlib Features [0/8]
+** TODO stdio
 ** TODO CBytes / ZBytes
 ** TODO CText / ZText
 ** TODO Array [0/3]
