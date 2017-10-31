@@ -15,6 +15,9 @@ core: bin/coral-core
 
 parsing: bin/coral-parse
 
+test: bin/test-coral-parse
+	$<
+
 # Core includes code that other submodules are allowed to depend on
 COREFILES=obj/core/expr.o obj/core/type.o obj/core/treeprinter.o
 bin/coral-core: ${COREFILES} obj/core/__main__.o
@@ -26,13 +29,16 @@ bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main_parse.o
 	${LINK} -o $@ $^
 bin/coral-token: ${COREFILES} ${PARSERFILES} obj/parsing/__main_token.o
 	${LINK} -o $@ $^
-bin/test-coral-parse: ${COREFILES} ${PARSERFILES} obj/tests/parsing/test_parser.o obj/tests/parsing/__main__.o
+bin/test-coral-parse: ${COREFILES} ${PARSERFILES} \
+  obj/tests/parsing/test_parser.o obj/tests/parsing/__main__.o
 	${LINK} -o $@ $^
 
-test: bin/test-coral-parse
+codegen-test: bin/test-coral-codegen
 	$<
 
 # Codegen includes all the parts involved in compiling the coral AST
+bin/test-coral-codegen: ${COREFILES} obj/codegen/codegen.o obj/codegen/codegenExpr.o obj/codegen/__main__.o
+	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
 
@@ -69,14 +75,29 @@ DEPFILES=$(shell find obj -name '*.o.d')
 ## Whenever a cc file is updated, its deps are updated
 obj/%.o.d: src/%.cc
 	@mkdir -p $(shell dirname $@)
-	@set -e; \
+	set -e; \
 	set -o pipefail; \
-	OUT=$$(${MM} || exit 1); \
-	echo $$(dirname $@)/"$${OUT}" > $@; \
-	echo $$'\t' '$(value COMPILE)' >> $@; \
-	exit 0
+	OUT=$$(${MM}); \
+	echo -n $$(dirname $@)/ > $@ && echo "$${OUT}" >> $@ && \
+	echo $$'\t' '$(value COMPILE)' >> $@
 
 ## If we build a .o, we need its .d
 ## If the .cc was updated, we re-generate the .d and then rebuild
 obj/%.o: obj/%.o.d
-	@CC=${CC} ${MAKE} --no-print-directory -r $@
+	CC=${CC} ${MAKE} --no-print-directory -r $@
+
+# There's probably a better way to do this
+# we're saying everything in /codegen requires llvm-flags for compiling
+obj/codegen/%.o: obj/codegen/%.o.d
+	echo '*codegen ***************************************'
+	CC="${CC} $(shell llvm-config-5.0 --cxxflags)"  ${MAKE} --no-print-directory -r $@
+
+obj/codegen/%.o.d: src/codegen/%.cc
+	@mkdir -p $(shell dirname $@)
+	@echo ---------------------------------------- making $@
+	@set -e; \
+	set -o pipefail; \
+	 OUT=$$(${MM} $$(llvm-config-5.0 --cxxflags)); \
+	 echo -n $$(dirname $@)/ > $@; \
+	 echo "$${OUT}" >> $@ && \
+	 echo $$'\t' '$(value COMPILE) $(shell llvm-config-5.0 --cxxflags)' >> $@

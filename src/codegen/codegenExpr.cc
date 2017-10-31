@@ -1,26 +1,36 @@
 #include "codegen.hh"
+#include <algorithm>
+
+using namespace std;
+using namespace coral;
 
 void ExprValue::visit(String * s) {
   output =  LLVMBuildGlobalStringPtr(mb->builder, s->toString().c_str(), "");
 }
+
 void ExprValue::visit(Long * s) { output = LLVMConstInt(LLVMInt64TypeInContext(mb->context), s->value, false); }
+
 void ExprValue::visit(Double * s)  { output = LLVMConstReal(LLVMDoubleTypeInContext(mb->context), s->value); }
+
 void ExprValue::visit(Cast * s)  {
   output = LLVMBuildTrunc(mb->builder, VAL(s->expr), LTYPE(s->to_type), "");
 }
+
 void ExprValue::visit(Call * c)  {
   output = 0;
   // auto bb = LLVMGetInsertBlock(mb->builder);
   // auto curfunc = LLVMGetBasicBlockParent(bb);
   // auto module = LLVMGetGlobalParent(curfunc);
 
-  LLVMValueRef func = VAL(c->callee);
+  // LLVMValueRef func = VAL(c->callee);
+  LLVMValueRef func = 0;
+
   if (LLVMGetTypeKind(LLVMTypeOf(func)) == LLVMPointerTypeKind &&
       LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(func))) == LLVMFunctionTypeKind) {
     vector<LLVMValueRef> args(c->arguments.size());
-    std::transform(
-      c->arguments.begin(), c->arguments.end(), args.begin(),
-      [this] (Expr * arg) { return VAL(arg); });
+    // std::transform(
+    //   c->arguments.begin(), c->arguments.end(), args.begin(),
+    //   [this] (Expr * arg) { return VAL(arg); });
     output = LLVMBuildCall(mb->builder, func, &args[0], args.size(), "");
   } else {
     cerr << "no func " << LLVMPrintTypeToString(LLVMTypeOf(func)) << endl;
@@ -116,6 +126,16 @@ void ExprValue::visit(BinOp * c) {
   else if (c->op == "=") { output = LLVMBuildICmp(mb->builder, LLVMIntEQ, lval, rval, ""); }
   else if (c->op == "!=") { output = LLVMBuildICmp(mb->builder, LLVMIntNE, lval, rval, ""); }
   else cerr << "unknown operation " << c->op << endl;
+}
+
+void ExprValue::visit(Index * index) {
+  auto base = index->base;
+  auto indices = index->indices;
+  // TODO: lookup type of expression
+}
+
+void ExprValue::visit(Tuple * t) {
+
 }
 
 void BinaryValue::visitLong()  {
