@@ -104,8 +104,8 @@ in       { tok(IN); }
 class    { tok(CLASS); }
 match    { tok(MATCH); }
 type     { tok(TYPE); }
-module   { tok(MODULE); }
 let      { tok(LET); }
+set      { tok(SET); }
 as       { tok(AS); }
 return   { tok(RETURN); }
 extern   { tok(EXTERN); }

@@ -1,25 +1,12 @@
 # This is the synchronous input / output module
 # We should really be using async for everything in the long run though,
 # especially in core so we're not wasting thread time
-
-module syncio (
-  stdin,
-  stdout,
-  stderr,
-  stdnull,
-  FileReader,
-  FileWriter,
-  FdByteReader,
-  FdByteWriter,
-  FdStringReader,
-  FdStringWriter,
-)
-
 type platform:
- extern "C" read : Fn[Int32, Ptr[Int8], IntNative]
+ extern "C" read  : Fn[Int32, Ptr[Int8], Int32]
+ extern "C" write : Fn[Int32, Ptr[Int8], Int32]
 
 type FdByteReader:
-  val fd: Int32
+  let fd: Int32
   func read(n):
     # TODO buffer input
     let buf = Array[Int8].create n
@@ -27,16 +14,16 @@ type FdByteReader:
     ByteString.new(buf, m)
 
 type FdByteWriter:
-  val fd: Int32
+  let fd: Int32
   func write(bs: ByteString):
     platform.write(fd, bs.buf, bs.length)
 
 type StringFromByteReader(ByteReaderT):
-  val bytes: ByteReaderT
+  let bytes: ByteReaderT
   func new(fd):
     set bytes = ByteReaderT(fd)
-  func new(bytes):
-    set this.bytes = reader
+  func new(readbytes):
+    set bytes = readbytes
   func read(n):
     TextString.new(bytes.read(n))
 

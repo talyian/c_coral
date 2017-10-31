@@ -18,3 +18,6 @@ std::string join(const char * sep, std::vector<T> items, std::string (*f)(T t)) 
   }
   return s;
 }
+
+template <typename T>
+T id(T val) { return val; }

@@ -24,10 +24,10 @@
 %token IMPL
 %token CLASS
 %token MATCH
-%token MODULE
 %token TYPE
 %token ADDR_OF
 %token LET
+%token SET
 %token AS
 %token EXTERN
 %token FUNC
@@ -63,7 +63,8 @@
 %type <std::vector<Expr *>> enumBlock matchBlock
 %type <std::vector<Expr *>> enumLines matchLines
 %type <std::vector<Expr *>> Tuple_inner
-%type <Expr *> enumLine matchLine
+%type <Extern *> ExternLine
+%type <Expr *> enumLine matchLine TypeDeclLine FuncDefLine LetDeclLine
 %type <Expr *> line expr IfExpr ElseSequence UnaryExpr NonUnaryExpr BinaryExpr Atom
 %type <Tuple *> Tuple
 %type <Type *> typesig
@@ -73,6 +74,10 @@
 %type <BaseDef *> Parameter
 %type <std::vector<BaseDef *>> ParameterList_inner ParameterList
 %type <BlockExpr *> block
+
+%type <Expr *> StructLine
+%type <std::vector<Expr *>> StructLines
+
 %{
 #include "../../core/expr.hh"
 using namespace coral;
@@ -86,69 +91,98 @@ int yylex(yy::parser::semantic_type * pp, yy::location * loc, void * yyscanner);
 program : lines { module = new Module($1); }
 
 lines
-:       NEWLINE { }
-| 	lines NEWLINE { $$ = $1; }
-| 	line { $$.push_back($1); }
-| 	lines line { $$ = $1; $$.push_back($2); }
+	: NEWLINE { }
+	| lines NEWLINE { $$ = $1; }
+	| line { $$.push_back($1); }
+	| lines line { $$ = $1; $$.push_back($2); }
+
+ExternLine
+	: EXTERN STRING IDENTIFIER { $$ = new Extern($2, $3, new UnknownType()); }
+	| EXTERN STRING IDENTIFIER ':' typesig { $$ = new Extern($2, $3, $5); }
+
+TypeDeclLine
+	// Type Alias
+	: TYPE IDENTIFIER OP_EQ typesig { $$ = new DeclTypeAlias($2, $4); }
+	// Enum Type
+	| TYPE IDENTIFIER enumBlock { $$ = new DeclTypeEnum($2, "??", $3); }
+	// Class Type
+	| TYPE IDENTIFIER ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
+	    $$ = new Struct($2, std::vector<std::string> { } , $6); }
+	| TYPE IDENTIFIER '(' IDENTIFIER ')' ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
+	    $$ = new Struct($2, std::vector<std::string> { $4 } , $9); }
+
+StructLines
+	: NEWLINE { }
+	| StructLine { $$.push_back($1); }
+	| StructLines NEWLINE { $$ = $1; }
+	| StructLines StructLine { $$ = $1; $$.push_back($2); }
+StructLine
+	: IDENTIFIER IDENTIFIER ':' typesig { $$ = new Let(new Def($2, $4), 0); }
+	| FuncDefLine { $$ = $1; }
+	| ExternLine { $$ = $1; }
+	| LetDeclLine { $$ = $1; }
+
+FuncDefLine
+	: FUNC IDENTIFIER ParameterList block { $$ = BuildFunc($2, 0, $3, $4); }
+	| FUNC IDENTIFIER ':' typesig ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
+
+LetDeclLine
+	: LET Parameter { $$ = new Let($2, 0); }
+	| LET Parameter OP_EQ expr { $$ = new Let($2, $4); }
+	| LET '(' ParameterList_inner ')' OP_EQ expr { $$ = new Let($3, $6); }
 
 line
-: EXTERN STRING IDENTIFIER { $$ = new Extern($2, $3, new UnknownType()); }
-| EXTERN STRING IDENTIFIER ':' typesig { $$ = new Extern($2, $3, $5); }
-| FUNC IDENTIFIER ParameterList block { $$ = BuildFunc($2, 0, $3, $4); }
-| FUNC IDENTIFIER ':' typesig ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
-| FUNC '[' ']' IDENTIFIER ':' typesig ParameterList block { $$ = BuildVarFunc($4, $6, $7, $8); }
-| MODULE IDENTIFIER { $$ = new Expr(); }
-| MODULE IDENTIFIER '.' IDENTIFIER { $$ = new Expr(); }
-| TYPE IDENTIFIER OP_EQ typesig { $$ = new DeclTypeAlias($2, $4); }
-| TYPE IDENTIFIER enumBlock { $$ = new DeclTypeEnum($2, "??", $3); }
-| TYPE IDENTIFIER ':' IDENTIFIER enumBlock { $$ = new DeclTypeEnum($2, $4, $5); }
-| CLASS IDENTIFIER classBlock { $$ = new DeclClass($2, $3); }
-| CLASS IDENTIFIER FOR IDENTIFIER classBlock { $$ = new DeclClass($2, $5); }
-| IMPL IDENTIFIER block { $$ = new ImplType($2, $3); }
-| IMPL IDENTIFIER FOR IDENTIFIER block { $$ = new ImplClassFor($2, $4, $5); }
-| LET Parameter OP_EQ expr { $$ = new Let($2, $4); }
-| LET '(' ParameterList_inner ')' OP_EQ expr { $$ = new Let($3, $6); }
-| RETURN expr { $$ = new Return($2); }
-| PASS { $$ = new VoidExpr(); }
-| expr { $$ = $1; }
-| FOR ParameterList_inner IN expr block { $$ = new For($2, $4, $5); }
-| IfExpr { $$ = $1; }
+	: ExternLine { $$ = (Expr *)$1; }
+	| TypeDeclLine { $$ = $1; }
+	| FuncDefLine { $$ = $1; }
+	| LetDeclLine { $$ = $1; }
+	| CLASS IDENTIFIER classBlock { $$ = new DeclClass($2, $3); }
+	| CLASS IDENTIFIER FOR IDENTIFIER classBlock { $$ = new DeclClass($2, $5); }
+	| IMPL IDENTIFIER block { $$ = new ImplType($2, $3); }
+	| IMPL IDENTIFIER FOR IDENTIFIER block { $$ = new ImplClassFor($2, $4, $5); }
+	| SET Parameter OP_EQ expr { $$ = new Set($2, $4); }
+	| SET '(' ParameterList_inner ')' OP_EQ expr { $$ = new Set($3, $6); }
+	| RETURN expr { $$ = new Return($2); }
+	| PASS { $$ = new VoidExpr(); }
+	| expr { $$ = $1; }
+	| FOR ParameterList_inner IN expr block { $$ = new For($2, $4, $5); }
+	| IfExpr { $$ = $1; }
 
 
 classBlock : ':' NEWLINE INDENT classLines DEDENT { $$ = $4; }
 classLines
- : NEWLINE { }
- | classLine { $$.push_back($1); }
- | classLines NEWLINE { $$ = $1; }
- | classLines classLine { $$ = $1; $$.push_back($2); }
+	: NEWLINE { }
+	| classLine { $$.push_back($1); }
+	| classLines NEWLINE { $$ = $1; }
+	| classLines classLine { $$ = $1; $$.push_back($2); }
 classLine  : Parameter { $$ = (Def *)$1; /* TODO */ }
 
 // A block for a match body
 matchBlock :  ':' NEWLINE INDENT matchLines DEDENT { $$ = $4; }
 matchLines
-        : NEWLINE { }
+	: NEWLINE { }
 	|	matchLines NEWLINE { $$ = $1; }
 	|	matchLine { $$.push_back($1); }
 	|	matchLines matchLine { $$= $1; $$.push_back($2); }
 matchLine
- : IDENTIFIER block { $$ = new MatchCaseTagsExpr(new Var($1), $2); }
- | IDENTIFIER '(' ParameterList_inner ')' block {
-     $$ = new MatchCaseTagsExpr(new MatchEnumCaseExpr($1, $3), $5); }
+	: IDENTIFIER block { $$ = new MatchCaseTagsExpr(new Var($1), $2); }
+	| IDENTIFIER '(' ParameterList_inner ')' block {
+	  $$ = new MatchCaseTagsExpr(new MatchEnumCaseExpr($1, $3), $5); }
 // A block defining an enumtype
 enumBlock: ':' NEWLINE INDENT enumLines DEDENT { $$ = $4; }
 enumLines
-  : NEWLINE { }
-  | enumLines NEWLINE { $$ = $1; }
-  | enumLine { $$.push_back($1); }
-  | enumLines enumLine { $$ = $1; $$.push_back($2); }
+	: NEWLINE { }
+	| enumLines NEWLINE { $$ = $1; }
+	| enumLine { $$.push_back($1); }
+	| enumLines enumLine { $$ = $1; $$.push_back($2); }
 enumLine
-  : '|' IDENTIFIER { $$ = new EnumCase($2); }
-  | '|' IDENTIFIER '(' ParameterList_inner ')' { $$ = new EnumCase($2, $4); }
-  | '|' IDENTIFIER OP_EQ expr { $$ = new EnumCase($2); }
+	: '|' IDENTIFIER { $$ = new EnumCase($2); }
+	| '|' IDENTIFIER '(' ParameterList_inner ')' { $$ = new EnumCase($2, $4); }
+	| '|' IDENTIFIER OP_EQ expr { $$ = new EnumCase($2); }
 
 block
-: ':' NEWLINE INDENT lines DEDENT { $$ = new BlockExpr($4); }
-| ':' line { $$ = new BlockExpr(std::vector<Expr *>()); $$->lines.push_back($2); }
+	: ':' NEWLINE INDENT lines DEDENT { $$ = new BlockExpr($4); }
+	| ':' line { $$ = new BlockExpr(std::vector<Expr *>()); $$->lines.push_back($2); }
 
 
 // P A R A M E T E R S --------------------
@@ -239,6 +273,8 @@ typesig
 : IDENTIFIER { $$ = BuildType($1); }
 | '.' '.' '.' { $$ = BuildType("..."); }
 | IDENTIFIER '[' TypeList ']' { $$ = BuildType($1, $3); }
+| IDENTIFIER '(' TypeList ')' { $$ = BuildType($1, $3); }
+
 TypeList
 : typesig { $$.push_back($1); }
 | TypeList ',' typesig { $$ = $1; $$.push_back($3); }

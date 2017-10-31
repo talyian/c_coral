@@ -13,7 +13,7 @@
 
 namespace coral {
 #define EXPR_NODE_LIST(M) /*
- */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member)
+ */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member) /* */ M(Struct) /* */ M(Set)
  ;
 
   enum ExprType {
@@ -28,6 +28,20 @@ namespace coral {
     virtual void accept(class Visitor * v);
     virtual ~Expr() { }
     ExprType getType();
+  };
+
+  class Struct : public Expr {
+  public:
+	std::string name;
+	std::vector<std::string> classParams;
+	std::vector<Expr *> fields;
+	std::vector<Expr *> methods;
+	Struct(
+	  std::string name,
+	  std::vector<std::string> classParams,
+	  std::vector<Expr *> lines);
+    virtual std::string toString() { return "[expr]"; }
+    virtual void accept(class Visitor * v);
   };
 
   class Call : public Expr {
@@ -253,6 +267,20 @@ namespace coral {
     virtual void accept(class Visitor * v);
     virtual std::string toString();
     ~Let() { delete var; delete value; }
+  };
+
+  class Set : public Expr {
+  public:
+    BaseDef * var;
+    std::vector<BaseDef *> tuplevar;
+    Expr * value;
+    Set(std::vector<BaseDef *> tuplevar, Expr * value) : var(0), tuplevar(tuplevar), value(value) {
+      var = tuplevar[0];
+    }
+    Set(BaseDef * var, Expr * value) : var(var), value(value) { }
+    virtual void accept(class Visitor * v);
+    virtual std::string toString();
+    ~Set() { delete var; delete value; }
   };
 
   class AddrOf : public Expr {

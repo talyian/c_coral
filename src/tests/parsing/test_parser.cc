@@ -143,6 +143,6 @@ void runParsingTests() {
   // checkFile("shootout/knucleotide.coral");
   // checkFile("shootout/pidigits.coral");
   // checkFile("shootout/regexredux.coral");
-  checkFile("libs/stdio.coral");
+  checkFile("libs/syncio.coral");
   cout << "----------[ "<< passed <<" / "<< total <<" ]----------\n";
 }

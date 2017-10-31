@@ -42,8 +42,14 @@ typedef BaseType Type;
 class UserType : public BaseType {
 public:
   std::string name;
-  UserType(std::string name) : name(name) { }
-  virtual std::string toString() { return name; }
+  std::vector<BaseType *> params;
+  UserType(std::string name, std::vector<BaseType *> params) : name(name), params(params) { }
+  virtual std::string toString() {
+	if (params.empty()) return name;
+	return name + "(" + join<BaseType*>(
+	  ", ", params,
+	  [](BaseType * t) { return t->toString(); }) + ")";
+  }
   virtual void accept(TypeVisitor * v);
 };
 
@@ -76,7 +82,10 @@ public:
     : ret(ret), args(args), variadic(variadic) {
   }
   virtual void accept(TypeVisitor * v);
-  virtual std::string toString() { return "Func[" + ret->toString() + "]"; }
+  virtual std::string toString() { return "Func[" +
+	  join<BaseType *>(", ", args, [] (BaseType * a) { return a->toString(); })
+	  + ", " +
+	  ret->toString() + "]"; }
 };
 
 class UnknownType : public BaseType {
@@ -92,6 +101,7 @@ public:
   BaseType * inner;
   PtrType(BaseType * inner) : inner(inner) { }
   virtual void accept(TypeVisitor * v);
+  virtual std::string toString() { return "Ptr[" + (inner->toString()) + "]"; }
 };
 
 class ArrType : public BaseType {

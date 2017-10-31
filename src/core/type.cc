@@ -26,13 +26,12 @@ namespace coral {
     if (name == "Int64") return new IntType(64);
     if (name == "...") return new VariadicTypeInfo();
     if (name == "Void") return new VoidType();
-    // std::cerr << "Unknown type: " << name << std::endl;
-    return new UnknownType(name);
+	return new UserType(name, std::vector<BaseType *>{ });
   }
   Type * BuildType(std::string name, std::vector<Type *> typeparams) {
     // std::cerr << "buildling type " << name << std::endl;
     if (name == "Ptr") return new PtrType(typeparams[0]);
-    if (name == "Fn") {
+    if (name == "Fn" || name == "Func") {
       auto returnType = typeparams[typeparams.size()-1];
       auto params = std::vector<Type *>();
       for(int i=0; i<typeparams.size() - 1; i++)
@@ -40,6 +39,7 @@ namespace coral {
 	else delete typeparams[i];
       return new FuncType(returnType, params, params.size() + 1 < typeparams.size());
     }
+	return new UserType(name, typeparams);
     std::cerr << "Unknown type: " << name << std::endl;
     return 0;
   }

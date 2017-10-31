@@ -247,7 +247,7 @@ void coral::TreePrinter::visit(ImplClassFor * a) {
 }
 
 void coral::TreePrinter::visit(Extern * e) {
-  out << IND() << "extern " << e->name << " : " << e->type << END();
+  out << IND() << "extern " << e->linkage << " " << e->name << " : " << e->type << END();
 }
 void coral::TreePrinter::visit(BaseDef * d) {
   out << IND() << d->toString() << END(); return;
@@ -271,8 +271,30 @@ void coral::TreePrinter::visit(Let * d) {
     out << ")";
   } else
     lp.visit(d->var);
-  out << " = ";
-  d->value->accept(&lp);
+  if (d->value) {
+	out << " = ";
+	d->value->accept(&lp);
+  }
+  out << END();
+}
+
+void coral::TreePrinter::visit(Set * d) {
+  TreePrinter lp(module, out);
+  lp.line_mode = 1;
+  out << IND() << "set ";
+  if (d->tuplevar.size()) {
+    out << "(";
+    foreach(d->tuplevar, it) {
+      if (it != d->tuplevar.begin()) out << ", ";
+      lp.visit(*it);
+    }
+    out << ")";
+  } else
+    lp.visit(d->var);
+  if (d->value) {
+	out << " = ";
+	d->value->accept(&lp);
+  }
   out << END();
 }
 
@@ -301,6 +323,22 @@ void coral::TreePrinter::visit(Member * c) {
   out << IND();
   c->base->accept(this);
   out << "." << c->memberName;
+  out << END();
+}
+
+void coral::TreePrinter::visit(Struct * t) {
+  out << IND();
+  out << "type " << t->name;
+  if (!t->classParams.empty()) {
+	out << '(';
+	out << join<std::string>(", ", t->classParams, id);
+	out << ')';
+  }
+  out << ":\n";
+  indent++;
+  foreach(t->fields, f) (*f)->accept(this);
+  foreach(t->methods, m) (*m)->accept(this);
+  indent--;
   out << END();
 }
 
