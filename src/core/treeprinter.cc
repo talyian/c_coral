@@ -61,11 +61,23 @@ void coral::TreePrinter::visit(Module * m) {
   }
 }
 
+// function return types must be atom-types because otherwise
+// the trailing Paren gets confused for the opening parenthesis
+// for the parameter list.
+std::string printFuncRetType(coral::BaseType * ret) {
+  if (getTypeKind(ret) == coral::UserTypeKind) {
+	auto u = (coral::UserType *) ret;
+	if (u->params.size())
+	  return "(" + u->toString() + ")";
+  }
+  return ret->toString();
+}
+
 void coral::TreePrinter::visit(FuncDef * m) {
   TreePrinter pp(module, out);
   pp.line_mode = 1;
   if (m->rettype != 0)
-    out << IND() << "func " << m->name << " : " << m->rettype->toString();
+    out << IND() << "func " << m->name << " : " << printFuncRetType(m->rettype);
   else
     out << IND() << "func " << m->name;
   out << "(";

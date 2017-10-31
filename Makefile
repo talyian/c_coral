@@ -21,13 +21,11 @@ bin/coral-core: ${COREFILES} obj/core/__main__.o
 	${LINK} -o $@ $^
 
 # Parsing includes all code involved in turning text into an AST
-PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o
+PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o obj/parsing/parse.o
 bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main_parse.o
 	${LINK} -o $@ $^
-PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o
 bin/coral-token: ${COREFILES} ${PARSERFILES} obj/parsing/__main_token.o
 	${LINK} -o $@ $^
-
 bin/test-coral-parse: ${COREFILES} ${PARSERFILES} obj/tests/parsing/test_parser.o obj/tests/parsing/__main__.o
 	${LINK} -o $@ $^
 
@@ -81,4 +79,4 @@ obj/%.o.d: src/%.cc
 ## If we build a .o, we need its .d
 ## If the .cc was updated, we re-generate the .d and then rebuild
 obj/%.o: obj/%.o.d
-	@CC=${CC} ${MAKE} --no-print-directory -r -f $<
+	@CC=${CC} ${MAKE} --no-print-directory -r $@

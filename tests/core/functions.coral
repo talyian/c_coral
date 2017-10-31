@@ -1,0 +1,10 @@
+
+func foo (): 1
+func foo (a): 1
+func foo (a, b: Int32): 1
+func foo (a : Int32, b: Int32): 1
+func foo : Void () : 1
+func foo : Void (a) : 1
+func foo : Void (a: Void) : 1
+func foo : Void (a: Void, b) : 1
+func foo : (List(Int32)) (): 1

@@ -67,7 +67,7 @@
 %type <Expr *> enumLine matchLine TypeDeclLine FuncDefLine LetDeclLine
 %type <Expr *> line expr IfExpr ElseSequence UnaryExpr NonUnaryExpr BinaryExpr Atom
 %type <Tuple *> Tuple
-%type <Type *> typesig
+%type <Type *> typesig AtomType ComplexType TypeParam
 %type <std::vector<Type *>> TypeList
 %type <Def *> classLine
 %type <std::vector<Def *>> classLines classBlock
@@ -124,7 +124,7 @@ StructLine
 
 FuncDefLine
 	: FUNC IDENTIFIER ParameterList block { $$ = BuildFunc($2, 0, $3, $4); }
-	| FUNC IDENTIFIER ':' typesig ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
+	| FUNC IDENTIFIER ':' AtomType ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
 
 LetDeclLine
 	: LET Parameter { $$ = new Let($2, 0); }
@@ -147,7 +147,6 @@ line
 	| expr { $$ = $1; }
 	| FOR ParameterList_inner IN expr block { $$ = new For($2, $4, $5); }
 	| IfExpr { $$ = $1; }
-
 
 classBlock : ':' NEWLINE INDENT classLines DEDENT { $$ = $4; }
 classLines
@@ -187,17 +186,19 @@ block
 
 // P A R A M E T E R S --------------------
 Parameter
-: IDENTIFIER { $$ = new Def($1, new UnknownType()); }
-| IDENTIFIER ':' typesig { $$ = new Def($1, $3); }
-| '(' ParameterList_inner ')' { $$ = new TupleDef($2); }
-// | IDENTIFIER '.' IDENTIFIER ':' typesig { $$ = new Def($3, $5); }
-ParameterList_inner
-: Parameter { $$.push_back($1); }
-| ParameterList_inner ',' Parameter { $$ = $1; $$.push_back($3); }
-ParameterList
-: '(' ')' { }
-| '(' ParameterList_inner ')' { $$ = $2; }
+	: IDENTIFIER { $$ = new Def($1, new UnknownType()); }
+	| IDENTIFIER ':' typesig { $$ = new Def($1, $3); }
+	| '(' ParameterList_inner ')' { $$ = new TupleDef($2); }
 
+ParameterList_inner
+	: Parameter { $$.push_back($1); }
+	| ParameterList_inner ',' Parameter { $$ = $1; $$.push_back($3); }
+
+ParameterList
+	: '(' ')' { }
+	| '(' ParameterList_inner ')' { $$ = $2; }
+
+// A R G U M E N T S --------------------
 ArgumentList : NonUnaryExpr  { $$.push_back($1); }
 	     | Tuple { $$ = $1->items; }
 
@@ -269,29 +270,24 @@ ElseSequence
 | ELIF expr block NEWLINE ElseSequence { $$ = new BlockExpr(std::vector<Expr*>{new If($2, $3, $5)}); }
 | ELSE block { $$ = $2; }
 
+// T Y P E S
 typesig
-: IDENTIFIER { $$ = BuildType($1); }
-| '.' '.' '.' { $$ = BuildType("..."); }
-| IDENTIFIER '[' TypeList ']' { $$ = BuildType($1, $3); }
-| IDENTIFIER '(' TypeList ')' { $$ = BuildType($1, $3); }
+	: AtomType { $$ = $1; }
+	| ComplexType { $$ = $1; }
+
+AtomType
+	: IDENTIFIER { $$ = BuildType($1); }
+	| '(' ComplexType ')' { $$ = $2; }
+
+ComplexType
+	: IDENTIFIER '[' TypeList ']' { $$ = BuildType($1, $3); }
+	| IDENTIFIER '(' TypeList ')' { $$ = BuildType($1, $3); }
+
+TypeParam
+	: AtomType { $$ = $1; }
+	| ComplexType { $$ = $1; }
+	| '.' '.' '.' { $$ = BuildType("..."); }
 
 TypeList
-: typesig { $$.push_back($1); }
-| TypeList ',' typesig { $$ = $1; $$.push_back($3); }
-
-%%
-
-#include <sstream>
-std::string yy_src = "";
-void yy::parser::error(const yy::location &loc, const std::string& m) {
-  std::stringstream ss(yy_src);
-  std::string line;
-  for(int i=0; i < (int)loc.begin.line - 1; i++) {
-    std::getline(ss, line, '\n');
-  }
-  for(int i=0; i<3; i++) {
-    std::getline(ss, line, '\n');
-    std::cerr << line << std::endl;
-  }
-  std::cerr << '[' << loc.begin << '-' << loc.end << "]: " << m << std::endl;
-}
+	: TypeParam { $$.push_back($1); }
+	| TypeList ',' TypeParam { $$ = $1; $$.push_back($3); }
