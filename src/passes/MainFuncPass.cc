@@ -1,4 +1,8 @@
-// Main Function extraction pass
+// Main Function creation pass --------------------
+// If a module does not have a main function defined,
+// we add all the little bits of code in the module root
+// into a main function
+
 #include "core/expr.hh"
 #include "core/treeprinter.hh"
 #include "parsing/lexer.hh"

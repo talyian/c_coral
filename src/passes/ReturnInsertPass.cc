@@ -1,4 +1,9 @@
-// Main Function extraction pass
+// Return Insertion
+// In Coral, functions do not call "return" explicitly --
+// Instead the last value in the function is implicitly the return
+// This requires inserting "ret" calls at some point. It's easier to do that
+// as a self-contained step than in codegen since it has to be propagated
+// into if / match and loops correctly.
 #include "core/expr.hh"
 #include "core/treeprinter.hh"
 #include "parsing/lexer.hh"
