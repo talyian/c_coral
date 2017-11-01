@@ -6,7 +6,7 @@ LINK=${CC}
 
 .PHONY: build test clean
 
-default: bin/coral-core bin/coral-parse bin/coral-token
+default: bin/coral-core bin/coral-parse bin/coral-token bin/test-coral-codegen
 
 ## sub-projects
 .PHONY: core parsing
@@ -16,6 +16,8 @@ core: bin/coral-core
 parsing: bin/coral-parse
 
 test: bin/test-coral-parse
+	$<
+scope: bin/test-coral-infer
 	$<
 
 # Core includes code that other submodules are allowed to depend on
@@ -41,6 +43,8 @@ bin/test-coral-codegen: ${COREFILES} obj/codegen/codegen.o obj/codegen/codegenEx
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
+bin/test-coral-infer: ${COREFILES} ${PARSERFILES} obj/infer.o
+	${LINK} -o $@ $^
 
 # Main includes the primary facade for Coral
 
