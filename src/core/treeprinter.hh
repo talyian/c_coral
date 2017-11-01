@@ -13,7 +13,7 @@ namespace coral {
   /// module == parse(printTree(module))
   class TreePrinter : public Visitor {
   public:
-    Module * module;
+    Expr * module;
     std::ostream & out;
     // current indentation level.
     int indent = 0;
@@ -24,7 +24,7 @@ namespace coral {
     // stupid hack to detect where to show parens
     BinOp * curop = 0;
 
-    TreePrinter(Module * m, std::ostream & c) : Visitor("treeprint "), module(m), out(c) { }
+    TreePrinter(Expr * m, std::ostream & c) : Visitor("treeprint "), module(m), out(c) { }
     void print();
     std::string IND();
     std::string END();

@@ -55,10 +55,9 @@ void coral::TreePrinter::visit(For * f) {
   f->body->accept(this);
   indent--;
 }
+
 void coral::TreePrinter::visit(Module * m) {
-  foreach (module->lines, line) {
-    (*line)->accept(this);
-  }
+  foreach (m->lines, line) (*line)->accept(this);
 }
 
 // function return types must be atom-types because otherwise

@@ -40,7 +40,7 @@ namespace coral {
 	  std::string name,
 	  std::vector<std::string> classParams,
 	  std::vector<Expr *> lines);
-    virtual std::string toString() { return "[expr]"; }
+    virtual std::string toString() { return "[struct]"; }
     virtual void accept(class Visitor * v);
   };
 

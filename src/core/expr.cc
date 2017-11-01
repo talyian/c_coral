@@ -131,10 +131,10 @@ FuncDef* coral::BuildFunc(std::string name, Type* return_type, std::vector<BaseD
   return new FuncDef(name, return_type, params, body, false);
 }
 
-std::string getName(Expr * e) {
+std::string coral::getName(Expr * e) {
   NameGetter ng;
   e->accept(&ng);
   return ng.out;
 }
 
-ExprType Expr::getType() { return ExprTypeVisitor(this).out; }
+ExprType coral::Expr::getType() { return ExprTypeVisitor(this).out; }

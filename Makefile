@@ -17,7 +17,9 @@ parsing: bin/coral-parse
 
 test: bin/test-coral-parse
 	$<
-scope: bin/test-coral-infer
+scope: bin/test-coral-treecompare
+	$<
+codegen-test: bin/test-coral-codegen
 	$<
 
 # Core includes code that other submodules are allowed to depend on
@@ -35,15 +37,14 @@ bin/test-coral-parse: ${COREFILES} ${PARSERFILES} \
   obj/tests/parsing/test_parser.o obj/tests/parsing/__main__.o
 	${LINK} -o $@ $^
 
-codegen-test: bin/test-coral-codegen
-	$<
-
 # Codegen includes all the parts involved in compiling the coral AST
 bin/test-coral-codegen: ${COREFILES} obj/codegen/codegen.o obj/codegen/codegenExpr.o obj/codegen/__main__.o
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
 bin/test-coral-infer: ${COREFILES} ${PARSERFILES} obj/infer.o
+	${LINK} -o $@ $^
+bin/test-coral-treecompare: ${COREFILES} ${PARSERFILES} obj/core/treecompare.o
 	${LINK} -o $@ $^
 
 # Main includes the primary facade for Coral

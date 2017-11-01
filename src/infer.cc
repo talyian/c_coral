@@ -12,22 +12,59 @@ using namespace coral;
 class Scope {
 public:
   Scope * parent = 0;
-  map<string, Type *> data;
-  vector<string> rules;
+  map<string, Type *> types;
+  map<string, Expr *> expr;
   map<string, Scope *> children;
+  vector<string> rules;
+  string name;
 
   Scope * nested(string name) {
 	auto s = new Scope();
 	s->parent = this;
+	s->name = name;
 	children[name] = s;
 	return children[name];
   }
+  string get(string name) {
+	if (types.find(name) != types.end())
+	  return types[name]->toString();
+	if (expr.find(name) != expr.end())
+	  return ExprNameVisitor(expr[name]).out;
+	return "";
+  }
+  string get(string ns, string name) {
+	if (children.find(name) != children.end())
+	  return children[name]->get(name);
+	return "";
+  }
 
-  void add(string name, Type * t) { data[name] = t; }
+  void add(string name, Expr * t) {
+	if (expr.find(name) != expr.end()) {
+	  // cerr << "Warning: overwriting name :" << name << endl;
+	  for(auto it = expr.begin(); it != expr.end();) {
+		auto sname = it->first;
+		if (!sname.compare(0, name.length() + 2, name + "::"))
+		  it = expr.erase(it);
+		else
+		  it++;
+	  }
+	}
+	expr[name] = t;
+  }
+  void publish(string name, Expr * t) {
+	add(name, t);
+	if (parent) parent->publish(this->name + "::" + name, t);
+  }
+
+  void add(string name, Type * t) { types[name] = t; }
   void addRule(string rule) { rules.push_back(rule); }
-  void showData(string ctx, int indent) {
-    foreach(data, it) cout << "$ " << ctx << it->first << ": " << it->second << endl;
-	foreach(children, it) it->second->showData(ctx + it->first + ".", indent + 1);
+  void showTypes(string ctx, int indent) {
+    foreach(types, it) cout << "$ " << ctx << it->first << ": " << it->second << endl;
+	foreach(children, it) it->second->showTypes(ctx + it->first + ".", indent + 1);
+  }
+  void showExpr(string ctx, int indent) {
+    foreach(expr, it) cout << "#$$$ " << it->first << ": " << ExprNameVisitor(it->second).out << endl;
+	// foreach(children, it) it->second->showExpr(ctx + it->first + ".", indent + 1);
   }
   void showInfo(string ctx, int indent) {
 	foreach(rules, it) cout << "#$ " << ctx << *it << endl;
@@ -35,8 +72,8 @@ public:
   }
   void show() { show("", 0); }
   void show(string ctx, int indent) {
-	showInfo(ctx, indent);
-    // foreach(data, it) cout << string(indent + 2, '*') << ctx << '.' << it->first << ": " << it->second << endl;
+	showExpr(ctx, indent);
+    // foreach(types, it) cout << string(indent + 2, '*') << ctx << '.' << it->first << ": " << it->second << endl;
 	// cout << endl;
 	// foreach(rules, it) cout << string(indent * 2 + 1, "$"[0]) << " (" << ctx << ") "<< *it << endl;
 	// foreach(children, it) {
@@ -45,80 +82,83 @@ public:
   }
 };
 
-class ExtraVisitor : public Visitor {
-public:
-  Visitor * inner = 0;
-  ExtraVisitor(string name, Visitor * inner) : Visitor(name), inner(inner) { }
-  void visit(Module * m) {
-	cout << inner << endl;
-	inner->visit(m);
-	foreach(m->lines, it) (*it)->accept(this);
-  }
-};
-
 class ScopeVisitor : public Visitor {
 public:
-  ScopeVisitor * parent = 0;
-  Module * module = 0;
-  Scope scope;
-  string scopeStack = "";
-
-  ScopeVisitor(Module * m, Scope s) : Visitor("scoper "), module(m), scope(s) {
-	m->accept(this);
+  Expr * expr;
+  Scope * scope;
+  ScopeVisitor(Expr * e, Scope * s) : Visitor("scope "), expr(e), scope(s) { if (e) e->accept(this); }
+  ScopeVisitor * nested(string name) {
+	return new ScopeVisitor(0, scope->nested(name));
   }
-
-  ScopeVisitor(ScopeVisitor * parent, string name) : Visitor("scoper "), parent(parent) {
-
+  void visit(Module * m) { foreach(m->lines, it) (*it)->accept(this); }
+  void visit(Struct * e) {
+	scope->publish(e->name, e);
+	ScopeVisitor * n = nested(e->name);
+	foreach(e->fields, it) (*it)->accept(n);
+	foreach(e->methods, it) (*it)->accept(n);
   }
-
-  string scoped(string name) {
-	return scopeStack + "." + name;
-  }
-
-
-  void visit(Module * m) {
-	foreach(m->lines, it) (*it)->accept(this);
-  }
-
-  void visit(Struct * s) {
-	scope.addRule(s->name + " = Type(Struct)");
-	scope.add(s->name, new BaseType());
-	ScopeVisitor v2(this, "test");
-	v2.parent = this;
-	v2.module = module;
-	foreach(s->fields, f) (*f)->accept(&v2);
-	scope.children[s->name] = new Scope(v2.scope);
-  }
-
-  void visit(DeclTypeEnum * d) {
-	scope.add(d->name, new BaseType());
-  }
-
-  void visit(DeclTypeAlias * d) {
-	scope.addRule(d->name + " = " + d->wrapped->toString());
-	scope.add(d->name, d->wrapped);
-  }
-
-
-  void visit(Extern * e) {
-	scope.addRule(e->name + " :: " + e->type->toString());
-	scope.add(e->name, e->type);
-  }
-
   void visit(Let * e) {
-	if (e->var)
-	  scope.addRule(e->var->toString() + " :: ");
+	scope->publish(e->var->toString(), e);
   }
 };
 
+void massert(string name, bool cond, string msg) {
+  printf("%-20s: ", name.c_str());
+  if (cond)
+	cout << "\e[1;32m" << "OK" << "\e[0m ";
+  else
+	cout << "\e[1;31m" << "ERROR" << "\e[0m ";
+  cout << msg << "\n";
+}
+void massert(bool cond) { return massert("(test)", cond, ""); }
+
+
+void test0() {
+  auto module = parse( 0,
+					   "type container:\n"
+					   "  let A = 1\n"
+					   "  let B = 2\n");
+  ScopeVisitor scopevisitor(module, new Scope());
+  massert(
+	"0: container",
+	"" != scopevisitor.scope->get("container"),
+	scopevisitor.scope->get("container"));
+  massert(
+	"0: container::A",
+	"" != scopevisitor.scope->get("container::A"),
+	scopevisitor.scope->get("container::A"));
+}
+
+void test1() {
+  auto module = parse(
+	0,
+	"let A = 0\n"
+	"type container:\n"
+	"  let containerA = 1\n"
+	"  let B = 2\n"
+    "let B = 3\n"
+	"let containerA = 3\n"
+	"let container = \"c\"\n");
+
+  ScopeVisitor scopevisitor(module, new Scope());
+  massert(
+	"1: container",
+	"" != scopevisitor.scope->get("container"),
+	scopevisitor.scope->get("container"));
+  massert(
+	"1: container::A",
+	"" == scopevisitor.scope->get("container::A"),
+	"container::A is overwritten");
+  massert(
+	"1: containerA",
+	"" != scopevisitor.scope->get("containerA"),
+	"containerA not is overwritten");
+}
+
 int main() {
-  auto module = parse(fopen("tests/libs/syncio.coral", "r"), 0);
   // TreePrinter(module, cout).print();
-  Scope s;
-  ScopeVisitor scopev(module, s);
-  // s.add("a", new IntType(32));
-  // s.add("frob", new UnknownType());
-  // s.add("printf", new FuncType(new VoidType(), vec(new PtrType(new PtrType(new IntType(8)))), true));
-  // cout << "\x1B[2J\x1B[H";
-  scopev.scope.show();
+  // ScopeVisitor scopevisitor(module, new Scope());
+  // scopevisitor.scope->show();
+  test0();
+  test1();
 }
