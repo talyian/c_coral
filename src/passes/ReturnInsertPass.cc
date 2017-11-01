@@ -1,13 +1,19 @@
 // Main Function extraction pass
-#include "ast.hh"
+#include "core/expr.hh"
+#include "core/treeprinter.hh"
+#include "parsing/lexer.hh"
 #include <iostream>
 #include <map>
 #include <algorithm>
 
+using namespace coral;
 using std::map;
+using std::cout;
+using std::cerr;
+using std::endl;
 using std::string;
 
-#define RETURN(expr) InstructionHandler(expr).out
+#define RETURN(exprp) InstructionHandler(exprp).out
 class InstructionHandler : public Visitor {
 public:
   Expr *out;
@@ -23,9 +29,10 @@ public:
     a->lines.back() = RETURN(a->lines.back());
   }
 
-  void visit(Call * b) {
-    out = new Return(b);
-  }
+  void visit(Var * l) { out = new Return(l); }
+  void visit(String * b) { out = new Return(b); }
+  void visit(Long * l) { out = new Return(l); }
+  void visit(Call * b) { out = new Return(b); }
   void visit(BinOp * b) {
     out = new Return(b);
   }
@@ -40,11 +47,11 @@ public:
   }
 };
 
-class ReturnInsBuilder : public Visitor {
-  Module * module;
+class ReturnInsertPass : public Visitor {
   FuncDef * func;
 public:
-  ReturnInsBuilder(Module * m) : Visitor("retins "), module(m), func(0) {
+  Module * out;
+  ReturnInsertPass(Module * m) : Visitor("retins "), out(m), func(0) {
     foreach(m->lines, it) (*it)->accept(this);
   }
   void visit(Let * a) { }
@@ -56,7 +63,7 @@ public:
       getTypeName(a->rettype) == "Void"
     ) return;
     this->func = a;
-    a->body->accept(this);
+    a->body = RETURN(a->body);
   }
   void visit(Call * a) { }
   void visit(BlockExpr * a) {
@@ -69,7 +76,4 @@ public:
   void visit(Extern * a) { }
 };
 
-Module * insertReturns(Module * m) {
-  ReturnInsBuilder bb(m);
-  return m;
-}
+Module * doReturnInsertPass(Module * m) { return ReturnInsertPass(m).out; }

@@ -1,19 +1,26 @@
 // Main Function extraction pass
-#include "ast.hh"
+#include "core/expr.hh"
+#include "core/treeprinter.hh"
+#include "parsing/lexer.hh"
 #include <iostream>
 #include <map>
 #include <algorithm>
 
+using namespace coral;
 using std::map;
+using std::cout;
+using std::cerr;
+using std::endl;
 using std::string;
 
-class MainFuncBuilder : public Visitor {
+class MainFuncPass : public Visitor {
   map<string, Expr *> decls;
-  Module * module;
   std::vector<Expr *> mainLines;
 public:
-  MainFuncBuilder(Module * m) : Visitor("mainfunc "), module(m) {
+  Module * out;
+  MainFuncPass(Module * m) : Visitor("mainfunc "), out(m) {
     foreach(m->lines, it) (*it)->accept(this);
+	finalize();
   }
   void visit(Extern * e) { decls[e->name] = e; }
   void visit(If * e) { mainLines.push_back(e); }
@@ -27,26 +34,23 @@ public:
     auto main = decls["main"];
     if (!main) {
       std::vector<Expr *> lines;
-      for(auto it = module->lines.begin(); it != module->lines.end();) {
-	if (std::find(mainLines.begin(), mainLines.end(), *it) != mainLines.end()) {
-	  lines.push_back(*it);
-	  module->lines.erase(it);
-	}
-	else it++;
+      for(auto it = out->lines.begin(); it != out->lines.end();) {
+		if (std::find(mainLines.begin(), mainLines.end(), *it) != mainLines.end()) {
+		  lines.push_back(*it);
+		  out->lines.erase(it);
+		}
+		else it++;
       }
+	  if (lines.empty()) lines.push_back(new Return(new Long(0)));
       FuncDef * func = new FuncDef(
-	"main",
-	new IntType(32),
-	std::vector<Def *>(),
-	new BlockExpr(lines),
-	false);
-      module->lines.push_back(func);
+		"main",
+		new IntType(32),
+		std::vector<BaseDef *>(),
+		new BlockExpr(lines),
+		false);
+      out->lines.push_back(func);
     }
   }
 };
 
-Module * buildMainFunction(Module * m) {
-  MainFuncBuilder bb(m);
-  bb.finalize();
-  return m;
-}
+Module * doMainFuncPass(Module * m) { return MainFuncPass(m).out; }

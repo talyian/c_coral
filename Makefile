@@ -1,7 +1,7 @@
 CC=clang++-5.0
 SHELL:=/bin/bash
-COMPILE=${CC} -Wall -std=c++11 -g -c -o $@ $<
-MM=${CC} -Wall -std=c++11 -MM $<
+COMPILE=${CC} -Wall -std=c++11 -Isrc -g -c -o $@ $<
+MM=${CC} -Wall -std=c++11 -Isrc -MM $<
 LINK=${CC}
 
 .PHONY: build test clean
@@ -17,9 +17,8 @@ parsing: bin/coral-parse
 
 test: bin/test-coral-parse
 	$<
-scope: bin/test-coral-treecompare
-	$<
-codegen-test: bin/test-coral-codegen
+
+scope: bin/temp
 	$<
 
 # Core includes code that other submodules are allowed to depend on
@@ -45,6 +44,10 @@ bin/test-coral-codegen: ${COREFILES} obj/codegen/codegen.o obj/codegen/codegenEx
 bin/test-coral-infer: ${COREFILES} ${PARSERFILES} obj/infer.o
 	${LINK} -o $@ $^
 bin/test-coral-treecompare: ${COREFILES} ${PARSERFILES} obj/core/treecompare.o
+	${LINK} -o $@ $^
+bin/MainFuncPass: ${COREFILES} ${PARSERFILES} obj/passes/MainFuncPass.o
+	${LINK} -o $@ $^
+bin/%: ${COREFILES} ${PARSERFILES} obj/passes/%.o
 	${LINK} -o $@ $^
 
 # Main includes the primary facade for Coral
