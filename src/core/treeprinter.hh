@@ -28,7 +28,7 @@ namespace coral {
     void print();
     std::string IND();
     std::string END();
-
+	void print_notes(Expr * e);
 #define VISIT_DEF(EXPR) void visit(EXPR * e);
     void visit(BaseDef * d);
     EXPR_NODE_LIST(VISIT_DEF)

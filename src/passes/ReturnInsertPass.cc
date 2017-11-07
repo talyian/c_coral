@@ -18,11 +18,11 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-#define RETURN(exprp) InstructionHandler(exprp).out
-class InstructionHandler : public Visitor {
+#define RETURN(exprp) ReplaceReturn(exprp).out
+class ReplaceReturn : public Visitor {
 public:
   Expr *out;
-  InstructionHandler(Expr * e) : Visitor("retins-instr "), out(e) { e->accept(this); }
+  ReplaceReturn(Expr * e) : Visitor("retins-instr "), out(e) { e->accept(this); }
 
   void visit(If * a) {
     a->ifbody = (BlockExpr *)RETURN(a->ifbody);
@@ -52,11 +52,12 @@ public:
   }
 };
 
+// Find all FuncDefs, and call ReplaceReturn on them
 class ReturnInsertPass : public Visitor {
   FuncDef * func;
 public:
   Module * out;
-  ReturnInsertPass(Module * m) : Visitor("retins "), out(m), func(0) {
+  ReturnInsertPass(Module * m) : Visitor("retins "), func(0), out(m) {
     foreach(m->lines, it) (*it)->accept(this);
   }
   void visit(Let * a) { }

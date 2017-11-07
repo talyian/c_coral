@@ -1,5 +1,11 @@
 #include "treeprinter.hh"
 
+void coral::TreePrinter::print_notes(coral::Expr * e) {
+  // out << "\e[38;5;147m";
+  // foreach(e->notes.messages, msg) out << IND() << *msg << END();
+  // out << "\e[0m";
+}
+
 void coral::TreePrinter::print() {
   if (module == 0) out << "empty module\n";
   else module->accept(this);
@@ -27,6 +33,7 @@ void coral::TreePrinter::visit(Tuple * t) {
   out << END();
 }
 void coral::TreePrinter::visit(Expr * e) { out << IND() << "# expr: " << EXPRNAME(e) << END(); }
+
 void coral::TreePrinter::visit(Index * i) {
   out << IND();
   auto t = line_mode;
@@ -57,6 +64,7 @@ void coral::TreePrinter::visit(For * f) {
 }
 
 void coral::TreePrinter::visit(Module * m) {
+  print_notes(m);
   foreach (m->lines, line) (*line)->accept(this);
 }
 
@@ -73,6 +81,8 @@ std::string printFuncRetType(coral::BaseType * ret) {
 }
 
 void coral::TreePrinter::visit(FuncDef * m) {
+  print_notes(m);
+  foreach(m->args, it) print_notes(*it);
   TreePrinter pp(module, out);
   pp.line_mode = 1;
   if (m->rettype != 0)
@@ -197,6 +207,7 @@ void coral::TreePrinter::visit(EnumCase * e) {
   out << END();
 }
 void coral::TreePrinter::visit(Call * c) {
+  print_notes(c);
   out << IND();
   TreePrinter lp(module, out);
   lp.line_mode = 1;
@@ -237,7 +248,7 @@ void coral::TreePrinter::visit(Call * c) {
   out << END();
 }
 void coral::TreePrinter::visit(VoidExpr * e) {
-  out << IND() << "()" << END();
+  out << IND() << e->toString() << END();
 }
 
 void coral::TreePrinter::visit(ImplType * a) {
@@ -258,6 +269,7 @@ void coral::TreePrinter::visit(ImplClassFor * a) {
 }
 
 void coral::TreePrinter::visit(Extern * e) {
+  print_notes(e);
   out << IND() << "extern " << e->linkage << " " << e->name << " : " << e->type << END();
 }
 void coral::TreePrinter::visit(BaseDef * d) {
@@ -270,6 +282,7 @@ void coral::TreePrinter::visit(Cast * c) {
   out << " as " << c->to_type << ")" << END();
 }
 void coral::TreePrinter::visit(Let * d) {
+  print_notes(d);
   TreePrinter lp(module, out);
   lp.line_mode = 1;
   out << IND() << "let ";

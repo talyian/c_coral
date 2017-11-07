@@ -43,6 +43,7 @@ class UserType : public BaseType {
 public:
   std::string name;
   std::vector<BaseType *> params;
+  UserType(std::string name) : name(name) { }
   UserType(std::string name, std::vector<BaseType *> params) : name(name), params(params) { }
   virtual std::string toString() {
 	if (params.empty()) return name;
@@ -82,10 +83,7 @@ public:
     : ret(ret), args(args), variadic(variadic) {
   }
   virtual void accept(TypeVisitor * v);
-  virtual std::string toString() { return "Func[" +
-	  join<BaseType *>(", ", args, [] (BaseType * a) { return a->toString(); })
-	  + ", " +
-	  ret->toString() + "]"; }
+  virtual std::string toString();
 };
 
 class UnknownType : public BaseType {
@@ -117,6 +115,7 @@ public:
   std::vector<BaseType *> inner;
   TupleType(std::vector<BaseType *> inner) : inner(inner) { }
   virtual void accept(TypeVisitor * v);
+  virtual std::string toString();
 };
 
 class VariadicTypeInfo : public BaseType {

@@ -37,7 +37,7 @@ bin/test-coral-parse: ${COREFILES} ${PARSERFILES} \
 	${LINK} -o $@ $^
 
 # Codegen includes all the parts involved in compiling the coral AST
-bin/test-coral-codegen: ${COREFILES} obj/codegen/codegen.o obj/codegen/codegenExpr.o obj/codegen/__main__.o
+bin/test-coral-codegen: ${COREFILES} ${PARSERFILES} obj/codegen/codegen.o obj/codegen/codegenExpr.o obj/codegen/__main__.o
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen

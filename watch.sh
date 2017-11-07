@@ -24,7 +24,7 @@ debounce() {
 	SRCFILE="$dir$file"
     fi
     echo "-- [$file] -----($SRCFILE)-------------------------------"
-    make -s scope
+	make -s bin/InferTypesPass && bin/InferTypesPass
     # make -s bin/coral && bin/coral parse ${SRCFILE} && bin/coral jit ${SRCFILE}
     # make -s bin/infer && bin/infer
 done

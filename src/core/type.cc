@@ -13,9 +13,22 @@ namespace coral {
 
   std::string BaseType::toString() { return TypeNameVisitor(this).out; }
 
+
 #define ACCEPT(TYPE) void TYPE##Type::accept(TypeVisitor * t) { t->visit(this); }
   TYPE_LOOP(ACCEPT);
 #undef ACCEPT
+
+  std::string TupleType::toString() {
+	auto x = inner;
+	if (x.empty()) return "Void";
+	return "Tuple[" + join<BaseType *>(", ", x, [] (BaseType * a) { return (a ? a : new UnknownType())->toString(); }) + "]";
+  }
+
+  std::string FuncType::toString() {
+	auto x = args;
+	x.push_back(ret);
+	return "Func[" + join<BaseType *>(", ", x, [] (BaseType * a) { return (a ? a : new UnknownType())->toString(); }) + "]";
+  }
 
   Type * BuildType(std::string name) {
     // std::cerr << "buildling type " << name << std::endl;

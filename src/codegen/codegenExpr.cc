@@ -22,15 +22,13 @@ void ExprValue::visit(Call * c)  {
   // auto curfunc = LLVMGetBasicBlockParent(bb);
   // auto module = LLVMGetGlobalParent(curfunc);
 
-  // LLVMValueRef func = VAL(c->callee);
-  LLVMValueRef func = 0;
-
+  LLVMValueRef func = VAL(c->callee.get());
   if (LLVMGetTypeKind(LLVMTypeOf(func)) == LLVMPointerTypeKind &&
       LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(func))) == LLVMFunctionTypeKind) {
     vector<LLVMValueRef> args(c->arguments.size());
-    // std::transform(
-    //   c->arguments.begin(), c->arguments.end(), args.begin(),
-    //   [this] (Expr * arg) { return VAL(arg); });
+    std::transform(
+      c->arguments.begin(), c->arguments.end(), args.begin(),
+      [this] (unique_ptr<Expr> &arg) { return VAL(arg.get()); });
     output = LLVMBuildCall(mb->builder, func, &args[0], args.size(), "");
   } else {
     cerr << "no func " << LLVMPrintTypeToString(LLVMTypeOf(func)) << endl;

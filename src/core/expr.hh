@@ -22,8 +22,27 @@ namespace coral {
 #undef TYPEDEC
   };
 
+  class ExprNotes {
+  public:
+	std::vector<std::string> messages;
+	std::vector<Type *> types;
+	Type* getBestType();
+
+	void add(std::string msg);
+	void isType(std::string type);
+	void isType(Type * t);
+	void returns(std::string type);
+	void returns(Type * t);
+	void isTypeOf(std::string expr);
+	void isTypeOf(class Expr * e);
+	void isNamed(std::string name);
+	void merge(ExprNotes & o);
+	void mergeReturn(ExprNotes & o);
+  };
+
   class Expr {
   public:
+	ExprNotes notes;
     virtual std::string toString() { return "[expr]"; }
     virtual void accept(class Visitor * v);
     virtual ~Expr() { }
@@ -177,8 +196,10 @@ namespace coral {
     ~BlockExpr() { for(auto i = lines.begin(), e = lines.end(); i != e; i++) delete *i; }
   };
 
-  class BaseDef {
+  enum DefKindEnum { DefKind, TupleDefKind };
+  class BaseDef : public Expr {
   public:
+	DefKindEnum kind;
     virtual ~BaseDef() { }
     virtual std::string toString() = 0;
   };
@@ -187,7 +208,7 @@ namespace coral {
   public:
     std::string name;
     Type * type;
-    Def(std::string name, Type * t) : name(name), type(t) { }
+    Def(std::string name, Type * t) : name(name), type(t) { kind = DefKind; }
     ~Def() { delete type; }
     virtual std::string toString() {
       return (type && getTypeKind(type) != UnknownTypeKind ? name + ": " + type->toString() : name); }
@@ -196,7 +217,7 @@ namespace coral {
   class TupleDef : public BaseDef {
   public:
     std::vector<BaseDef *> items;
-    TupleDef(std::vector<BaseDef *> items) : items(items) { }
+    TupleDef(std::vector<BaseDef *> items) : items(items) { kind = TupleDefKind; }
     ~TupleDef() { foreach(items, it) if (*it) delete *it; }
     virtual std::string toString() {
       return "(" + join<BaseDef *>(", ", items, [] (BaseDef * d) { return d->toString(); }) + ")";
@@ -317,7 +338,7 @@ namespace coral {
     std::vector<Expr *> body;
     DeclTypeEnum(
       std::string name,
-      std::string unused,
+	  __attribute__((unused)) std::string unused,
       std::vector<Expr *> body
       ) : name(name), body(body) { }
     virtual void accept(class Visitor * v);
@@ -425,7 +446,7 @@ namespace coral {
   public:
     std::string visitorName;
     Visitor(std::string name) : visitorName(name) { }
-#define VISIT(NODE) virtual void visit(NODE * c) { std::cerr << visitorName << "visit: " << #NODE << std::endl; }
+#define VISIT(NODE) virtual void visit(__attribute__((unused)) NODE * c) { std::cerr << visitorName << "visit: " << #NODE << std::endl; }
     EXPR_NODE_LIST(VISIT)
 #undef VISIT
     virtual ~Visitor () { }
@@ -487,7 +508,7 @@ namespace coral {
     std::string out;
     NameGetter() : Visitor("nameget ") { }
     void visit(Var * v) { out = v->value; }
-    void visit(Expr * e) { out = ""; }
+    void visit(__attribute__((unused)) Expr * e) { out = ""; }
   };
 
   std::string getName(Expr * e);
