@@ -18,13 +18,16 @@ debounce() {
     if [[ $SRCFILE == "test" ]]; then
 	make -s test
 	continue
-    elif [[ "$file" == "watch.sh" ]]; then
-	exec /bin/bash watch.sh $SRCFILE
+    elif [[ "$dir" == "watch.sh" ]]; then
+		exec /bin/bash watch.sh $SRCFILE
+		break
     elif [[ "$file" == *.coral ]]; then
-	SRCFILE="$dir$file"
+		SRCFILE="$dir$file"
     fi
     echo "-- [$file] -----($SRCFILE)-------------------------------"
-	make -s bin/InferTypesPass && bin/InferTypesPass
+	make bin/test-coral-codegen && bin/test-coral-codegen
+	if [[ $? != 0 ]]; then echo returned $?; fi
+	# make -s bin/InferTypesPass && bin/InferTypesPass
     # make -s bin/coral && bin/coral parse ${SRCFILE} && bin/coral jit ${SRCFILE}
     # make -s bin/infer && bin/infer
 done

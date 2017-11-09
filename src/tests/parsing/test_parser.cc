@@ -145,5 +145,6 @@ void runParsingTests() {
   checkFile("shootout/pidigits.coral");
   checkFile("shootout/regexredux.coral");
   checkFile("libs/syncio.coral");
+  checkFile("libs/array.coral");
   cout << "----------[ "<< passed <<" / "<< total <<" ]----------\n";
 }

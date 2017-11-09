@@ -110,7 +110,8 @@ TypeDeclLine
 	    $$ = new Struct($2, std::vector<std::string> { } , $6); }
 	| TYPE IDENTIFIER '(' IDENTIFIER ')' ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
 	    $$ = new Struct($2, std::vector<std::string> { $4 } , $9); }
-
+	| TYPE IDENTIFIER '[' IDENTIFIER ']' ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
+	    $$ = new Struct($2, std::vector<std::string> { $4 } , $9); }
 StructLines
 	: NEWLINE { }
 	| StructLine { $$.push_back($1); }
@@ -118,6 +119,7 @@ StructLines
 	| StructLines StructLine { $$ = $1; $$.push_back($2); }
 StructLine
 	: IDENTIFIER IDENTIFIER ':' typesig { $$ = new Let(new Def($2, $4), 0); }
+	| IDENTIFIER ':' typesig { $$ = new Let(new Def($1, $3), 0); }
 	| FuncDefLine { $$ = $1; }
 	| ExternLine { $$ = $1; }
 	| LetDeclLine { $$ = $1; }

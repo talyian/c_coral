@@ -11,9 +11,9 @@ using std::endl;
 namespace coral {
   /// TreePrinter should return a round-trippable source string from a module
   /// module == parse(printTree(module))
-  class TreePrinter : public Visitor {
+  class TreePrinter : public AbstractVisitor {
   public:
-    Expr * module;
+    Expr * module = 0;
     std::ostream & out;
     // current indentation level.
     int indent = 0;
@@ -23,8 +23,10 @@ namespace coral {
     int showElif = 0;
     // stupid hack to detect where to show parens
     BinOp * curop = 0;
+	// show compiler metadata -- this messes up roundtripping though
+	int show_notes = 0;
 
-    TreePrinter(Expr * m, std::ostream & c) : Visitor("treeprint "), module(m), out(c) { }
+    TreePrinter(Expr * m, std::ostream & c) : module(m), out(c) { }
     void print();
     std::string IND();
     std::string END();

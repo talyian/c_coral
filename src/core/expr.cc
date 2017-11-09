@@ -3,7 +3,7 @@
 
 using namespace coral;
 
-#define ACCEPT_MACRO(NODE) void NODE::accept(Visitor * v) { v->visit(this); }
+#define ACCEPT_MACRO(NODE) void NODE::accept(AbstractVisitor * v) { v->visit(this); }
 EXPR_NODE_LIST(ACCEPT_MACRO)
 #undef ACCEPT_MACRO
 
@@ -67,7 +67,7 @@ std::string Double::toString() {
   return std::to_string(value);
 }
 std::string Var::toString() {
-  return value;
+  return name;
 }
 std::string If::toString() {
   return "(" + cond->toString() + "?" + ifbody->toString() + ":" + elsebody->toString() + ")";

@@ -29,3 +29,8 @@ std::vector<U> vmap(std::vector<T> in, U (*f)(T t)) {
   std::transform(in.begin(), in.end(), res.begin(), f);
   return res;
 }
+
+template<typename T>
+void vec_erase(std::vector<T> &vec, T val) {
+  vec.erase(std::remove(vec.begin(), vec.end(), val), vec.end());
+}

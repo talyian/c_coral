@@ -44,7 +44,7 @@ namespace coral {
   public:
 	ExprNotes notes;
     virtual std::string toString() { return "[expr]"; }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual ~Expr() { }
     ExprType getType();
   };
@@ -60,7 +60,7 @@ namespace coral {
 	  std::vector<std::string> classParams,
 	  std::vector<Expr *> lines);
     virtual std::string toString() { return "[struct]"; }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
   };
 
   class Call : public Expr {
@@ -70,7 +70,7 @@ namespace coral {
     Call(Expr * a, std::vector<Expr *> b) : callee(a) {
       foreach(b, it) arguments.push_back(std::unique_ptr<Expr>(*it));
     }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() {
       auto v = callee->toString() + "(";
       for(auto i = arguments.begin(); i != arguments.end(); i++) {
@@ -89,8 +89,9 @@ namespace coral {
     std::string memberName;
     Member(Expr * base, std::string memberName)
       : base(base), memberName(memberName) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return base->toString() + "." + memberName; }
+	~Member() { }
   };
 
   class Index : public Expr {
@@ -98,7 +99,7 @@ namespace coral {
     Expr *base;
     std::vector <Expr *> indices;
     Index(Expr * base, std::vector<Expr *> indices) : base(base), indices(indices) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() {
       auto v = base->toString() + "[";
       for(auto i = indices.begin(); i != indices.end(); i++) {
@@ -116,7 +117,7 @@ namespace coral {
     std::string op;
     Expr * lhs, *rhs;
     BinOp(std::string oper, Expr * a, Expr * b) : op(oper), lhs(a), rhs(b) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() {
       if (!lhs || !rhs)
 	return (
@@ -139,7 +140,7 @@ namespace coral {
     Type *type;
     Extern(std::string a, std::string b, Type * type) :
       linkage(a), name(b), type(type) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "extern " + linkage + " " + name; }
     ~Extern() { delete type; }
   };
@@ -148,15 +149,17 @@ namespace coral {
   public :
     std::string value;
     String(std::string a) : value(a) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
   };
 
   class Var : public Expr {
   public :
-    std::string value;
-    Var(std::string a) : value(a) { }
-    virtual void accept(class Visitor * v);
+    std::string name;
+	// ref is the FuncDef/Let/Def/Extern that initially declared the var.
+	Expr * ref = 0;
+    Var(std::string a) : name(a) { }
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
   };
 
@@ -164,7 +167,7 @@ namespace coral {
   public :
     double value;
     Double(double a) : value(a) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
   };
 
@@ -172,7 +175,7 @@ namespace coral {
   public :
     int64_t value;
     Long(int64_t a) : value(a) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
   };
 
@@ -181,7 +184,7 @@ namespace coral {
     std::string name;
     std::vector<Expr *> lines;
     Module(std::vector<Expr *> a) : name("module"), lines(a) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~Module() {
       for(auto i = lines.begin(), e = lines.end(); i != e; i++) delete *i; }
@@ -191,7 +194,7 @@ namespace coral {
   public:
     std::vector<Expr *>lines;
     BlockExpr(std::vector<Expr *>lines) : lines(lines) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~BlockExpr() { for(auto i = lines.begin(), e = lines.end(); i != e; i++) delete *i; }
   };
@@ -201,7 +204,9 @@ namespace coral {
   public:
 	DefKindEnum kind;
     virtual ~BaseDef() { }
-    virtual std::string toString() = 0;
+    virtual std::string toString() {
+	  return "oops";
+	}
   };
 
   class Def : public BaseDef {
@@ -211,7 +216,8 @@ namespace coral {
     Def(std::string name, Type * t) : name(name), type(t) { kind = DefKind; }
     ~Def() { delete type; }
     virtual std::string toString() {
-      return (type && getTypeKind(type) != UnknownTypeKind ? name + ": " + type->toString() : name); }
+      return ((type && getTypeKind(type) != UnknownTypeKind) ? name + ": " + type->toString() : name);
+	}
   };
 
   class TupleDef : public BaseDef {
@@ -236,7 +242,7 @@ namespace coral {
 	    Expr * body,
 	    bool multi) :
       name(name), rettype(rettype), args(args), body(body), multi(multi) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~FuncDef() {
       if (body) { delete body; }
@@ -250,7 +256,7 @@ namespace coral {
     Expr * expr;
     Type * to_type;
     Cast(Expr * expr, Type * to_type) : expr(expr), to_type(to_type) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~Cast() { delete expr; delete to_type; }
   };
@@ -261,7 +267,7 @@ namespace coral {
     BlockExpr *ifbody, *elsebody;
     If(Expr * cond, Expr * ifbody, Expr * elsebody) :
       cond(cond), ifbody((BlockExpr *)ifbody), elsebody((BlockExpr *)elsebody) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~If() { delete cond; delete ifbody; delete elsebody; }
   };
@@ -271,7 +277,7 @@ namespace coral {
     std::vector<BaseDef *> var;
     Expr *source, *body;
     For(std::vector<BaseDef *> var, Expr * source, Expr * body) : var(var), source(source), body(body) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "for"; }
     ~For() { delete source; delete body; }
   };
@@ -285,7 +291,7 @@ namespace coral {
       var = tuplevar[0];
     }
     Let(BaseDef * var, Expr * value) : var(var), value(value) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~Let() { delete var; delete value; }
   };
@@ -299,7 +305,7 @@ namespace coral {
       var = tuplevar[0];
     }
     Set(BaseDef * var, Expr * value) : var(var), value(value) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~Set() { delete var; delete value; }
   };
@@ -308,7 +314,7 @@ namespace coral {
   public:
     std::string var;
     AddrOf(std::string var) : var(var) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
   };
 
@@ -316,7 +322,7 @@ namespace coral {
   public:
     Expr * value;
     Return(Expr * value) : value(value) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~Return() { delete value; }
   };
@@ -327,7 +333,7 @@ namespace coral {
     Type * wrapped;
     DeclTypeAlias(std::string name, Type * wrapped)
       : name(name), wrapped(wrapped) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "type-alias"; }
     ~DeclTypeAlias() { delete wrapped; }
   };
@@ -341,7 +347,7 @@ namespace coral {
 	  __attribute__((unused)) std::string unused,
       std::vector<Expr *> body
       ) : name(name), body(body) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "type-enum"; }
     ~DeclTypeEnum() { }
   };
@@ -353,7 +359,7 @@ namespace coral {
     EnumCase(std::string name) : name(name) { }
     EnumCase(std::string name, std::vector<BaseDef *> defs)
       :name(name), defs(defs) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "enum-case"; }
   };
 
@@ -363,7 +369,7 @@ namespace coral {
     std::vector<Expr *> cases;
     MatchExpr(Expr * cond, std::vector<Expr *> cases)
       : cond(cond), cases(cases) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "enum-case"; }
   };
 
@@ -372,7 +378,7 @@ namespace coral {
     MatchEnumCaseExpr(std::string name) : EnumCase(name) { }
     MatchEnumCaseExpr(std::string name, std::vector<BaseDef *> defs)
       : EnumCase(name, defs) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "match-enum-case"; }
   };
 
@@ -382,7 +388,7 @@ namespace coral {
     Expr * body;
     MatchCaseTagsExpr(Expr * label, Expr * body)
       : label(label), body(body) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "match-case"; }
     ~MatchCaseTagsExpr() { delete label; delete body; }
   };
@@ -393,7 +399,7 @@ namespace coral {
     std::vector<Def *> lines;
     DeclClass(std::string name, std::vector<Def *> lines)
       : name(name), lines(lines) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "class-def-" + name; }
   };
 
@@ -407,7 +413,7 @@ namespace coral {
       std::string name,
       Expr * body)
       : type_name(name), class_name(classname), body(body) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() {
       return "impl-class-for-" + type_name + "-" + class_name; }
   };
@@ -418,31 +424,41 @@ namespace coral {
     Expr * body;
     ImplType(std::string name, Expr * body)
       : name(name), body(body) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "impl-" + name; }
   };
 
   class VoidExpr : public Expr {
   public:
     VoidExpr() { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
   };
 
   class BoolExpr : public Expr {
   public:
     bool value;
     BoolExpr(bool value) : value(value) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
   };
 
   class Tuple : public Expr {
   public:
     std::vector<Expr *> items;
     Tuple(std::vector<Expr *> items) : items(items) { }
-    virtual void accept(class Visitor * v);
+    virtual void accept(class AbstractVisitor * v);
   };
 
-  class Visitor {
+  // the base visitor. By Default all visits just write to stderr.
+  class AbstractVisitor {
+  public:
+#define VISIT(NODE) virtual void visit(NODE * c) = 0;
+    EXPR_NODE_LIST(VISIT)
+#undef VISIT
+    virtual ~AbstractVisitor () { }
+  };
+
+  // By Default all visits just write to stderr.
+  class Visitor : public AbstractVisitor {
   public:
     std::string visitorName;
     Visitor(std::string name) : visitorName(name) { }
@@ -452,37 +468,8 @@ namespace coral {
     virtual ~Visitor () { }
   };
 
-  template <typename T> Expr * mapExpr(Expr * e);
-  class FunctorVisitor : public Visitor {
-  public:
-    Expr * out = 0;
-    FunctorVisitor(std::string name, Expr * e) : Visitor(name), out(e) { e->accept(this); }
-#define VISIT(EXPR) virtual void visit(EXPR * n) { out = n; }
-    EXPR_NODE_LIST(VISIT)
-#undef VISIT
-  };
-
-  class Traverser : public FunctorVisitor {
-  public:
-    Traverser(std::string name, Expr * e) : FunctorVisitor(name, e) { e->accept(this); }
-#define VISIT(EXPR)				\
-    virtual void handle(EXPR * n) { out = n; }
-    EXPR_NODE_LIST(VISIT)
-#undef VISIT
-    void visit(Expr * a) { handle(a); }
-    void visit(Module * a) { foreach(a->lines, it) (*it)->accept(this); handle(a); }
-    void visit(FuncDef * a) { a->body->accept(this); handle(a); }
-    void visit(Extern *a ) { handle(a); }
-    void visit(Return * a) { handle(a); }
-    void visit(BinOp * a) { a->lhs->accept(this); a->rhs->accept(this); handle(a); }
-    void visit(Call * a) { a->callee->accept(this); foreach(a->arguments, it) (*it)->accept(this); handle(a); }
-    void visit(Index * a) { a->base->accept(this); foreach(a->indices, it) (*it)->accept(this); handle(a); }
-    void visit(BlockExpr * a) { foreach(a->lines, it) (*it)->accept(this); handle(a); }
-    void visit(If * a) { a->cond->accept(this); a->ifbody->accept(this); a->elsebody->accept(this); handle(a); }
-
-  };
-
 // useful visitors go here
+
 #define EXPRNAME(t) ExprNameVisitor(t).out
   class ExprNameVisitor : public Visitor {
   public:
@@ -503,11 +490,12 @@ namespace coral {
 #undef VISIT
   };
 
+
   class NameGetter : public Visitor {
   public:
     std::string out;
     NameGetter() : Visitor("nameget ") { }
-    void visit(Var * v) { out = v->value; }
+    void visit(Var * v) { out = v->name; }
     void visit(__attribute__((unused)) Expr * e) { out = ""; }
   };
 

@@ -1,9 +1,14 @@
 #include "treeprinter.hh"
 
 void coral::TreePrinter::print_notes(coral::Expr * e) {
-  // out << "\e[38;5;147m";
-  // foreach(e->notes.messages, msg) out << IND() << *msg << END();
-  // out << "\e[0m";
+  if (1) {
+	foreach(e->notes.messages, msg) {
+		out << IND()
+			<< "# \033[38;5;147m"
+			<< *msg << END()
+			<< "\033[0m";
+	}
+  }
 }
 
 void coral::TreePrinter::print() {
@@ -32,7 +37,13 @@ void coral::TreePrinter::visit(Tuple * t) {
   line_mode = lm;
   out << END();
 }
-void coral::TreePrinter::visit(Expr * e) { out << IND() << "# expr: " << EXPRNAME(e) << END(); }
+void coral::TreePrinter::visit(Expr * e) {
+  if (e == 0) {
+	out << IND() << "# something bad happend here" << END();
+	return;
+  }
+  out << IND() << "# expr: " << EXPRNAME(e) << END();
+}
 
 void coral::TreePrinter::visit(Index * i) {
   out << IND();
@@ -213,7 +224,7 @@ void coral::TreePrinter::visit(Call * c) {
   lp.line_mode = 1;
   if (c->callee->getType() == VarKind) {
     auto vv = (Var *)c->callee.get();
-    if (vv->value == "_list") {
+    if (vv->name == "_list") {
       out << '[';
       foreach(c->arguments, it) {
 	if (it != c->arguments.begin())	out << ", ";
@@ -221,7 +232,7 @@ void coral::TreePrinter::visit(Call * c) {
       }
       out << ']' << END();
       return;
-    } else if (vv->value == "negate") {
+    } else if (vv->name == "negate") {
       out << "-(";
       foreach(c->arguments, it) {
 	if (it != c->arguments.begin())	out << ", ";
@@ -273,7 +284,12 @@ void coral::TreePrinter::visit(Extern * e) {
   out << IND() << "extern " << e->linkage << " " << e->name << " : " << e->type << END();
 }
 void coral::TreePrinter::visit(BaseDef * d) {
-  out << IND() << d->toString() << END(); return;
+  if (d->kind == DefKind) {
+	auto def = (Def *)d;
+	out << IND() << def->toString() << END();
+  } else {
+	out << IND() << "somethingoddhere_BaseDef" << END();
+  }
 }
 
 void coral::TreePrinter::visit(Cast * c) {
@@ -326,7 +342,7 @@ void coral::TreePrinter::visit(Long * d) { out << IND() << d->value << END(); }
 
 void coral::TreePrinter::visit(String * d) { out << IND() << d->value << END(); }
 
-void coral::TreePrinter::visit(Var * d) {  out << IND() << d->value << END(); }
+void coral::TreePrinter::visit(Var * d) {  out << IND() << d->name << END(); }
 
 void coral::TreePrinter::visit(BoolExpr * d) { out << IND() << d->value << END(); }
 

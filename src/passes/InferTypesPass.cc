@@ -10,20 +10,7 @@
 using namespace std;
 using namespace coral;
 
-Type * coral::ExprNotes::getBestType() { return types.empty() ? new UnknownType() : types[0]; }
-void coral::ExprNotes::add(std::string msg) { messages.push_back(msg); }
-void coral::ExprNotes::isType(std::string msg) { messages.push_back(" :: " + msg); }
-void coral::ExprNotes::isType(Type * t) { messages.push_back(" :: " + t->toString()); }
-void coral::ExprNotes::isTypeOf(std::string msg) { messages.push_back(" :: typeof(" + msg + ")"); }
-void coral::ExprNotes::isTypeOf(Expr * e) { messages.push_back(" :: typeof(" + e->toString() + ")"); }
-void coral::ExprNotes::returns(std::string msg) { messages.push_back(" :: returns(" + msg + ")"); }
-void coral::ExprNotes::merge(coral::ExprNotes & e) {
-  foreach(e.messages, it) messages.push_back(*it);
-}
-void coral::ExprNotes::mergeReturn(coral::ExprNotes & e) {
-  std::string s;
-  foreach(e.messages, it) messages.push_back(" :: Func[..., " + (*it) + "]");
-}
+void coral::ExprNotes::isType(Type * t) { messages.push_back(" :: " + (t ? t->toString() : "unknown")); }
 
 class ScopeInfo {
 public:
@@ -34,22 +21,38 @@ public:
 };
 
 class Scope {
+public:
   map<Expr *, unique_ptr<ScopeInfo>> info;
   map<std::string, Expr *> names;
+  map<std::string, Scope *> children;
   Scope * parent;
-public:
+
   Scope(Scope * parent) : parent(parent) { }
   Scope() : parent(0) { }
 
-  void show(std::ostream & out) {
-	out << "----------------------------------------\n";
-	for(auto & it : info) {
-	  auto expr = it.first;
-	  auto ptr = it.second.get();
-	  out << "show " << expr->toString()
+  void show(std::ostream & out) {  show(out, ""); }
+  void show(std::ostream & out, string prefix) {
+	for(auto & it : names) {
+	  auto name = it.first;
+	  auto expr = it.second;
+	  auto ptr = info[it.second].get();
+	  out << "\033[1;36m[show] " << prefix << name
 		  << " :: " << ptr->type->toString()
-		  << "\n";
+		  << "\n\033[0m";
 	}
+	for(auto & it : children) {
+	  auto name = it.first;
+	  auto child = it.second;
+	  child->show(out, prefix + name + ".");
+	}
+  }
+
+  string getName (Expr * e) {
+	for(auto pair : names) {
+	  if (pair.second == e)
+		return pair.first;
+	}
+	return "";
   }
 
   ScopeInfo * getByName(string name) {
@@ -94,6 +97,12 @@ public:
   Scope * nested() {
 	return new Scope(this);
   }
+
+  Scope * nested(string name) {
+	auto child = new Scope(this);
+	this->children[name] = child;
+	return child;
+  }
 };
 
 
@@ -111,22 +120,34 @@ public:
 	scope->name(e, e->name);
   }
 
+  void visit(Let * e) {
+	if (e->value) e->value->accept(this);
+	cerr << "let :: " << e->var->toString() << endl;
+	if (e->var->kind == TupleDefKind) {
+	  // TODO
+	  cerr << "TODO\n";
+	} else {
+	  auto var = (Def *)e->var;
+	  auto name = var->name;
+	  out = var->type;
+	  scope->put(e)->setType(out);
+	  scope->name(e, name);
+	}
+  }
+
   void visit(Var * e) {
-	if (!scope) {
-	  cerr << "no scope!??\n";
+	cerr << "[Var] : " << e->name << "\n";
+	auto scopeinfo = scope->getByName(e->name);
+	if (!scopeinfo) {
+	  cerr << "not found: " << e->name << "\n";
 	}
 	else {
-	  auto scopeinfo = scope->getByName(e->value);
-	  if (!scopeinfo) {
-		cerr << "not found: " << e->value << "\n";
-	  }
-	  else {
-		out = scopeinfo->type;
-		if (getTypeKind(out) == UnknownTypeKind && getTypeKind(in) != UnknownTypeKind) {
-		  // cerr << "writing argument type " << e->value << " :: " << in->toString() << "\n";
-		  out = in;
-		  scopeinfo->setType(in);
-		}
+	  e->ref = scope->names[e->name];
+	  out = scopeinfo->type;
+	  if (getTypeKind(out) == UnknownTypeKind && getTypeKind(in) != UnknownTypeKind) {
+		// cerr << "writing argument type " << e->value << " :: " << in->toString() << "\n";
+		out = in;
+		scopeinfo->setType(in);
 	  }
 	}
   }
@@ -139,6 +160,35 @@ public:
 	out = new PtrType(new IntType(8));
   }
 
+  void visit(Member * e) {
+	// this is going to be quite similar to the Call logic.
+	auto base = e->base;
+	auto member = e->memberName;
+	cerr << "member : " << base << ".." << member << endl;
+	base->accept(this);
+	auto basetype = out;
+	cerr << "basetype : " << basetype << endl;
+	// TODO: mess
+	if (getTypeKind(basetype) == UserTypeKind) {
+	  auto userType = (UserType *)basetype;
+	  auto c = scope->children.find(userType->name);
+	  if (c != scope->children.end()) {
+		auto info = c->second->getByName(member);
+		out = info->type;
+		return;
+	  } else {
+		cerr << "not found " << userType->name << " :: " << member << "\n";
+	  }
+	  return;
+	}
+	auto info = scope->get(base);
+	if (info) {
+	  cerr << "scopeInfo: " << info << endl;
+	} else {
+	  cerr << "no info\n";
+	}
+  }
+
   void visit(Call * e) {
 	// if the calleetype is a functype,
 	// the type of the call is the calleetype->ret;
@@ -146,7 +196,9 @@ public:
 	auto calleeType = out;
 	if (calleeType && getTypeKind(calleeType) == FuncTypeKind) {
 	  auto ftype = (FuncType *)calleeType;
+	  cerr << "Known Callee: " << calleeType << "\n";
 	  if (ftype->args.size() != e->arguments.size()) {
+
 		// TODO: handle variadics or raise error
 	  } else for(int i=0; i<ftype->args.size(); i++)  {
 		  auto argExpr = e->arguments[i].get();
@@ -157,8 +209,10 @@ public:
         // auto argtype = ExprToType(e->arguments[i].get(), scope, ftype->args[i]).out;
       }
 	  out = ftype->ret;
-	} else
+	} else {
+	  cerr << "Unknown Callee: " << calleeType << "\n";
 	  out = new UnknownType();
+	}
   }
 
   void visit(BlockExpr * e) {
@@ -226,6 +280,24 @@ public:
 	out = new TupleType(types);
   }
 
+  void visit(Struct * s) {
+	ExprToType nested(0, scope->nested(s->name));
+	for(auto & f : s->fields) {
+	  f->accept(&nested);
+	}
+	for(auto & m : s->methods) {
+	  m->accept(&nested);
+	}
+	// for(auto & it : nested.scope->names) {
+	//   auto name = it.first;
+	//   auto expr = it.second;
+	//   scope->put(expr)->setType(nested.scope->get(expr)->type);
+	//   scope->name(expr, s->name + "." + name);
+	// }
+	scope->name(s, s->name);
+	scope->put(s)->setType(new UserType(s->name));
+	scope->show(cerr);
+  }
 };
 
 class InferTypesPass : public Visitor {
@@ -239,7 +311,7 @@ public:
   }
 
   void visit(Module * m) {
-	foreach(m->lines, it) (*it)->accept(this);
+	foreach(m->lines, it) { (*it)->accept(this); }
 	out = m;
   }
 
@@ -258,13 +330,12 @@ public:
 	e->notes.isType(ftype);
   }
 
-  void visit(BlockExpr * e) {
-	e->notes.isType(new UnknownType());
-  }
+  void visit(BlockExpr * e) { e->notes.isType(new UnknownType());  }
 
-  void visit(Call * c) {
-	c->notes.isType(ExprToType(c, scope).out);
-  }
+  void visit(Call * c) { c->notes.isType(ExprToType(c, scope).out); }
+
+  void visit(Struct * s) { s->notes.isType(ExprToType(s, scope).out); }
+
 };
 
 
@@ -319,8 +390,28 @@ func h(a):
 g(3, 4)
 )RRR");
 
+  module = parse(0, R"CORAL(
+type io:
+  extern "C" printf : Func[Ptr[Int8],..., Void]
+  extern "C" open : Func[Ptr[Int8], Int32, Ptr[Int8]]
+
+type FdByteReader:
+  let fd: Int32
+  func read(n):
+    # TODO buffer input
+    let buf = Array[Int8].create n
+    let m = platform.read(fd, buf, intNative n)
+    ByteString.new(buf, m)
+
+io.printf "Hello "
+
+io.printf("%s!\n", "World")
+
+io.open("foobar.coral", 0)
+
+)CORAL");
   TreePrinter(module, cout).print();
   module = (Module *)InferTypesPass(module).out;
-  cout << "\n\n\n";
+  cout << " [ Inferred ] ----------------------------------------\n";
   TreePrinter(module, cout).print();
 }

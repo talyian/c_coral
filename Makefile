@@ -78,7 +78,7 @@ DEPFILES=$(shell find obj -name '*.o.d')
 
 -include ${DEPFILES}
 
-.PRECIOUS: obj/%.o.d
+.PRECIOUS: obj/%.o.d obj/codegen/%.o.d
 
 ## Whenever a cc file is updated, its deps are updated
 obj/%.o.d: src/%.cc
