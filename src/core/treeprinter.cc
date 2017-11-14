@@ -287,6 +287,14 @@ void coral::TreePrinter::visit(BaseDef * d) {
   if (d->kind == DefKind) {
 	auto def = (Def *)d;
 	out << IND() << def->toString() << END();
+  } else if (d->kind == TupleDefKind) {
+	auto def = (TupleDef *)d;
+	out << IND() << "(";
+	for(auto &x : def->items) {
+	  if (x != def->items[0]) out << ", ";
+	  this->visit(x);
+	}
+	out << ")" << END();
   } else {
 	out << IND() << "somethingoddhere_BaseDef" << END();
   }
@@ -302,15 +310,7 @@ void coral::TreePrinter::visit(Let * d) {
   TreePrinter lp(module, out);
   lp.line_mode = 1;
   out << IND() << "let ";
-  if (d->tuplevar.size()) {
-    out << "(";
-    foreach(d->tuplevar, it) {
-      if (it != d->tuplevar.begin()) out << ", ";
-      lp.visit(*it);
-    }
-    out << ")";
-  } else
-    lp.visit(d->var);
+  lp.visit(d->var);
   if (d->value) {
 	out << " = ";
 	d->value->accept(&lp);
@@ -318,6 +318,18 @@ void coral::TreePrinter::visit(Let * d) {
   out << END();
 }
 
+void coral::TreePrinter::visit(MultiLet * d) {
+  TreePrinter lp(module, out);
+  lp.line_mode = 1;
+  out << IND() << "let ";
+  lp.visit(d->var);
+  if (d->val) {
+	out << " = ";
+	d->val->accept(&lp);
+  }
+  out << END();
+
+}
 void coral::TreePrinter::visit(Set * d) {
   TreePrinter lp(module, out);
   lp.line_mode = 1;

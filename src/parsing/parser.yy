@@ -72,6 +72,7 @@
 %type <Def *> classLine
 %type <std::vector<Def *>> classLines classBlock
 %type <BaseDef *> Parameter
+%type <Def *> SingleParameter
 %type <std::vector<BaseDef *>> ParameterList_inner ParameterList
 %type <BlockExpr *> block
 
@@ -129,9 +130,9 @@ FuncDefLine
 	| FUNC IDENTIFIER ':' AtomType ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
 
 LetDeclLine
-	: LET Parameter { $$ = new Let($2, 0); }
-	| LET Parameter OP_EQ expr { $$ = new Let($2, $4); }
-	| LET '(' ParameterList_inner ')' OP_EQ expr { $$ = new Let($3, $6); }
+	: LET SingleParameter { $$ = new Let($2, 0); }
+	| LET SingleParameter OP_EQ expr { $$ = new Let($2, $4); }
+	| LET '(' ParameterList_inner ')' OP_EQ expr { $$ = new MultiLet(new TupleDef($3), $6); }
 
 line
 	: ExternLine { $$ = (Expr *)$1; }
@@ -187,9 +188,12 @@ block
 
 
 // P A R A M E T E R S --------------------
-Parameter
+SingleParameter
 	: IDENTIFIER { $$ = new Def($1, new UnknownType()); }
 	| IDENTIFIER ':' typesig { $$ = new Def($1, $3); }
+
+Parameter
+	: SingleParameter { $$ = $1; }
 	| '(' ParameterList_inner ')' { $$ = new TupleDef($2); }
 
 ParameterList_inner

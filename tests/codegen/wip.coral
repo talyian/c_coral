@@ -3,6 +3,6 @@ extern "C" open : Fn[..., Ptr[Int8]]
 extern "C" write : Fn[..., Void]
 
 
-func main ():
+func main : Void ():
   let buf = "foobar barbar"
   printf ("Hello, %s!\n", buf)

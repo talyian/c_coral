@@ -6,6 +6,7 @@
 #define lookup(scope, name) mb->load(mb->builder, scope, name)
 
 namespace coral {
+
 // Compile a coral file
   class ModuleBuilder : public Visitor {
   public:

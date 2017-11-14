@@ -37,7 +37,7 @@ bin/test-coral-parse: ${COREFILES} ${PARSERFILES} \
 	${LINK} -o $@ $^
 
 # Codegen includes all the parts involved in compiling the coral AST
-bin/test-coral-codegen: ${COREFILES} ${PARSERFILES} obj/codegen/codegen.o obj/codegen/codegenExpr.o obj/codegen/jitEngine.o obj/codegen/__main__.o
+bin/test-coral-codegen: ${COREFILES} ${PARSERFILES} obj/codegen/codegen.o obj/codegen/codegenExpr.o obj/codegen/jitEngine.o obj/codegen/moduleCompiler.o obj/codegen/__main__.o
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
@@ -86,7 +86,8 @@ obj/%.o.d: src/%.cc
 	set -e; \
 	set -o pipefail; \
 	OUT=$$(${MM}); \
-	echo -n $$(dirname $@)/ > $@ && echo "$${OUT}" >> $@ && \
+	echo -n $$(dirname $@)/ > $@;\
+	echo "$${OUT}" >> $@ ;\
 	echo $$'\t' '$(value COMPILE)' >> $@
 
 ## If we build a .o, we need its .d
@@ -97,15 +98,16 @@ obj/%.o: obj/%.o.d
 # There's probably a better way to do this
 # we're saying everything in /codegen requires llvm-flags for compiling
 obj/codegen/%.o: obj/codegen/%.o.d
-	echo '*codegen ***************************************'
-	CC="${CC} $(shell llvm-config-5.0 --cxxflags)"  ${MAKE} --no-print-directory -r $@
+	@echo '*codegen ***************************************'
+	@${MAKE} --no-print-directory -r -f $<
 
 obj/codegen/%.o.d: src/codegen/%.cc
 	@mkdir -p $(shell dirname $@)
 	@echo ---------------------------------------- making $@
-	@set -e; \
+	oset -e; \
 	set -o pipefail; \
-	 OUT=$$(${MM} $$(llvm-config-5.0 --cxxflags)); \
+	 OUT=$$(${MM} $(shell llvm-config-5.0 --cxxflags)); \
+     rm -f$@; \
 	 echo -n $$(dirname $@)/ > $@; \
-	 echo "$${OUT}" >> $@ && \
+	 echo "$${OUT}" >> $@; \
 	 echo $$'\t' '$(value COMPILE) $(shell llvm-config-5.0 --cxxflags)' >> $@

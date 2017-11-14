@@ -12,8 +12,9 @@
 #include <iostream>
 
 namespace coral {
+
 #define EXPR_NODE_LIST(M) /*
- */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member) /* */ M(Struct) /* */ M(Set)
+						   */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member) /* */ M(Struct) /* */ M(Set) /* */ M(MultiLet)
  ;
 
   enum ExprType {
@@ -209,6 +210,13 @@ namespace coral {
 	}
   };
 
+  class Tuple : public Expr {
+  public:
+    std::vector<Expr *> items;
+    Tuple(std::vector<Expr *> items) : items(items) { }
+    virtual void accept(class AbstractVisitor * v);
+  };
+
   class Def : public BaseDef {
   public:
     std::string name;
@@ -282,15 +290,22 @@ namespace coral {
     ~For() { delete source; delete body; }
   };
 
+  class MultiLet : public Expr {
+  public:
+	TupleDef * var;
+	// While we should be able to destructure tuples at compile time,
+    // this isn't a Tuple * because we can destructure lists, arrays, etc. at runtime
+	Expr * val;
+	MultiLet(TupleDef * var, Expr * val) : var(var), val(val) { }
+    virtual void accept(class AbstractVisitor * v);
+    ~MultiLet() { if (var) delete var; if (val) delete val; }
+  };
+
   class Let : public Expr {
   public:
-    BaseDef * var;
-    std::vector<BaseDef *> tuplevar;
+    Def * var;
     Expr * value;
-    Let(std::vector<BaseDef *> tuplevar, Expr * value) : var(0), tuplevar(tuplevar), value(value) {
-      var = tuplevar[0];
-    }
-    Let(BaseDef * var, Expr * value) : var(var), value(value) { }
+    Let(Def * var, Expr * value) : var(var), value(value) { }
     virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~Let() { delete var; delete value; }
@@ -438,13 +453,6 @@ namespace coral {
   public:
     bool value;
     BoolExpr(bool value) : value(value) { }
-    virtual void accept(class AbstractVisitor * v);
-  };
-
-  class Tuple : public Expr {
-  public:
-    std::vector<Expr *> items;
-    Tuple(std::vector<Expr *> items) : items(items) { }
     virtual void accept(class AbstractVisitor * v);
   };
 

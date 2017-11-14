@@ -4,12 +4,12 @@
 
 #include "../parsing/lexer.hh"
 #include "../core/treeprinter.hh"
-#include "../codegen/codegen.hh"
+#include "../codegen/moduleCompiler.hh"
 
-#include "../passes/InferTypesPass.cc"
-#include "../passes/ReturnInsertPass.cc"
-#include "../passes/UnclassifyPass.cc"
-#include "../passes/MainFuncPass.cc"
+// #include "../passes/InferTypesPass.cc"
+// #include "../passes/ReturnInsertPass.cc"
+// #include "../passes/UnclassifyPass.cc"
+// #include "../passes/MainFuncPass.cc"
 
 using namespace coral;
 using namespace std;
@@ -86,7 +86,10 @@ void jit_modules(std::vector<Module *> modules);
 
 int main() {
   auto m = parse(fopen("tests/codegen/wip.coral", "r"), 0);
-  jit_modules(std::vector<Module *> { m });
+  coral::ModuleCompiler mc (m);
+  cout << "++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+  cout << mc.getIR();
+  // jit_modules(std::vector<Module *> { m });
   // auto m = parse(fopen("tests/libs/array.coral", "r"), 0);
   // m = UnclassifyPass(m).module;
   // TreePrinter(m, cout).print();
