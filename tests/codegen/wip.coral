@@ -1,0 +1,8 @@
+extern "C" printf : Fn[... , Void]
+extern "C" open : Fn[..., Ptr[Int8]]
+extern "C" write : Fn[..., Void]
+
+
+func main ():
+  let buf = "foobar barbar"
+  printf ("Hello, %s!\n", buf)

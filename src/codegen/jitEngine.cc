@@ -1,3 +1,9 @@
+#include "../core/expr.hh"
+#include "../codegen/codegen.hh"
+#include <vector>
+#include <llvm-c/ExecutionEngine.h>
+
+using namespace coral;
 
 void jit_modules(std::vector<Module *> modules) {
   LLVMLinkInMCJIT();
@@ -33,6 +39,6 @@ void jit_modules(std::vector<Module *> modules) {
 	if (!LLVMFindFunction(engine, "main", &fn))
 	  LLVMRunFunction(engine, fn, 0, 0);
 	else
-	  cerr << "No main function found\n";
+	  std::cerr << "No main function found\n";
   }
 }

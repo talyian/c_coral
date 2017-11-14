@@ -82,8 +82,13 @@ void testInferTypes();
 //   cout << ModuleBuilder(m).finalize();
 // }
 
+void jit_modules(std::vector<Module *> modules);
+
 int main() {
-  auto m = parse(fopen("tests/libs/array.coral", "r"), 0);
-  m = UnclassifyPass(m).module;
-  TreePrinter(m, cout).print();
+  auto m = parse(fopen("tests/codegen/wip.coral", "r"), 0);
+  jit_modules(std::vector<Module *> { m });
+  // auto m = parse(fopen("tests/libs/array.coral", "r"), 0);
+  // m = UnclassifyPass(m).module;
+  // TreePrinter(m, cout).print();
+
 }
