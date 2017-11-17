@@ -6,7 +6,7 @@ LINK=${CC}
 
 .PHONY: build test clean
 
-default: bin/coral-core bin/coral-parse bin/coral-token bin/test-coral-codegen
+default: bin/coral-core bin/coral-parse bin/coral-token bin/coral-codegen
 
 ## sub-projects
 .PHONY: core parsing
@@ -15,7 +15,7 @@ core: bin/coral-core
 
 parsing: bin/coral-parse
 
-test: bin/test-coral-parse
+test: bin/test-coral-codegen
 	$<
 
 scope: bin/temp
@@ -37,7 +37,10 @@ bin/test-coral-parse: ${COREFILES} ${PARSERFILES} \
 	${LINK} -o $@ $^
 
 # Codegen includes all the parts involved in compiling the coral AST
-bin/test-coral-codegen: ${COREFILES} ${PARSERFILES} obj/codegen/codegen.o obj/codegen/codegenExpr.o obj/codegen/jitEngine.o obj/codegen/moduleCompiler.o obj/codegen/__main__.o
+CODEGENFILES=${COREFILES} obj/codegen/jitEngine.o obj/codegen/moduleCompiler.o
+bin/test-coral-codegen: ${PARSERFILES} ${CODEGENFILES} obj/tests/codegen/test_codegen.o
+	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
+bin/coral-codegen: ${PARSERFILES} ${CODEGENFILES} obj/codegen/__main__.o
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
@@ -86,9 +89,9 @@ obj/%.o.d: src/%.cc
 	set -e; \
 	set -o pipefail; \
 	OUT=$$(${MM}); \
-	echo -n $$(dirname $@)/ > $@;\
-	echo "$${OUT}" >> $@ ;\
-	echo $$'\t' '$(value COMPILE)' >> $@
+	(echo -n $$(dirname $@)/; \
+	 echo "$${OUT}"; \
+     echo $$'\t' '$(value COMPILE)') > $@
 
 ## If we build a .o, we need its .d
 ## If the .cc was updated, we re-generate the .d and then rebuild
@@ -107,7 +110,6 @@ obj/codegen/%.o.d: src/codegen/%.cc
 	oset -e; \
 	set -o pipefail; \
 	 OUT=$$(${MM} $(shell llvm-config-5.0 --cxxflags)); \
-     rm -f$@; \
-	 echo -n $$(dirname $@)/ > $@; \
-	 echo "$${OUT}" >> $@; \
-	 echo $$'\t' '$(value COMPILE) $(shell llvm-config-5.0 --cxxflags)' >> $@
+	 (echo -n $$(dirname $@)/; \
+	  echo "$${OUT}"; \
+      echo $$'\t' '$(value COMPILE) $(shell llvm-config-5.0 --cxxflags)') > $@

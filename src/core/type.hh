@@ -131,7 +131,7 @@ TYPE_LOOP(DEFKIND)
 
 class TypeVisitor {
 public:
-#define VISITDEF(TYPE) virtual void visit(__attribute__((unused)) TYPE##Type * t) { }
+#define VISITDEF(TYPE) virtual void visit(__attribute__((unused)) TYPE##Type * t) { std::cerr << " visit: " << #TYPE << "\n";}
   TYPE_LOOP(VISITDEF)
 #undef VISITDEF
 };

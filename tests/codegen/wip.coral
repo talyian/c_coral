@@ -1,8 +1,29 @@
+# extern "C" open : Fn[..., Ptr[Int8]]
+# extern "C" write : Fn[..., Void]
+# extern "C" read : Fn[Ptr[Int8], Ptr[Int8], Int64, Int64]
 extern "C" printf : Fn[... , Void]
-extern "C" open : Fn[..., Ptr[Int8]]
-extern "C" write : Fn[..., Void]
+extern "C" malloc : Fn[Int64, Ptr[Int8]]
+# extern "C" free :   Fn[Ptr[Int8], Void]
 
+type FdReader:
+  val fd : Int32
+  func new(n: Int32):
+    set this.fd = n
 
-func main : Void ():
-  let buf = "foobar barbar"
-  printf ("Hello, %s!\n", buf)
+func test(n: Int32):
+  set n = 0
+
+func test(n: Int32):
+  n = 0
+
+# let O_RDONLY = 0
+# let O_WRONLY = 1
+# let O_RDWR = O_RDONLY + O_WRONLY
+
+# let f = "/proc/self/cmdline"
+# let buf = malloc(1024)
+# let x = open(f, O_RDONLY)
+# let n = read(x, buf, 1024)
+# printf("File Name: %s\n", f)
+# printf("File Length: %d\n", n)
+# printf("Content:\n%s\n", buf)

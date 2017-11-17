@@ -67,7 +67,7 @@
 %type <Expr *> enumLine matchLine TypeDeclLine FuncDefLine LetDeclLine
 %type <Expr *> line expr IfExpr ElseSequence UnaryExpr NonUnaryExpr BinaryExpr Atom
 %type <Tuple *> Tuple
-%type <Type *> typesig AtomType ComplexType TypeParam
+%type <Type *> typesig AtomType ComplexType TypeParam FuncSigType
 %type <std::vector<Type *>> TypeList
 %type <Def *> classLine
 %type <std::vector<Def *>> classLines classBlock
@@ -127,7 +127,7 @@ StructLine
 
 FuncDefLine
 	: FUNC IDENTIFIER ParameterList block { $$ = BuildFunc($2, 0, $3, $4); }
-	| FUNC IDENTIFIER ':' AtomType ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
+	| FUNC IDENTIFIER ':' FuncSigType ParameterList block { $$ = BuildFunc($2, $4, $5, $6); }
 
 LetDeclLine
 	: LET SingleParameter { $$ = new Let($2, 0); }
@@ -143,8 +143,9 @@ line
 	| CLASS IDENTIFIER FOR IDENTIFIER classBlock { $$ = new DeclClass($2, $5); }
 	| IMPL IDENTIFIER block { $$ = new ImplType($2, $3); }
 	| IMPL IDENTIFIER FOR IDENTIFIER block { $$ = new ImplClassFor($2, $4, $5); }
-	| SET Parameter OP_EQ expr { $$ = new Set($2, $4); }
-	| SET '(' ParameterList_inner ')' OP_EQ expr { $$ = new Set($3, $6); }
+	| SET SingleParameter OP_EQ expr { $$ = new Set(new Var($2->name), $4); }
+	| SET expr '.' IDENTIFIER OP_EQ expr { $$ = new Set(new Member($2, $4), $6); }
+	| SET '(' ParameterList_inner ')' OP_EQ expr { $$ = new Set(new Var("TODO"), $6); }
 	| RETURN expr { $$ = new Return($2); }
 	| PASS { $$ = new VoidExpr(); }
 	| expr { $$ = $1; }
@@ -280,6 +281,10 @@ ElseSequence
 typesig
 	: AtomType { $$ = $1; }
 	| ComplexType { $$ = $1; }
+
+FuncSigType
+	: AtomType  { $$ = $1; }
+	| IDENTIFIER '[' TypeList ']' { $$ = BuildType($1, $3); }
 
 AtomType
 	: IDENTIFIER { $$ = BuildType($1); }

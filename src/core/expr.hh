@@ -149,7 +149,7 @@ namespace coral {
   class String : public Expr {
   public :
     std::string value;
-    String(std::string a) : value(a) { }
+    String(std::string a);
     virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
   };
@@ -271,6 +271,8 @@ namespace coral {
 
   class If : public Expr {
   public:
+	bool ifterminated = 0;
+	bool elseterminated = 0;
     Expr * cond;
     BlockExpr *ifbody, *elsebody;
     If(Expr * cond, Expr * ifbody, Expr * elsebody) :
@@ -313,13 +315,11 @@ namespace coral {
 
   class Set : public Expr {
   public:
-    BaseDef * var;
     std::vector<BaseDef *> tuplevar;
     Expr * value;
-    Set(std::vector<BaseDef *> tuplevar, Expr * value) : var(0), tuplevar(tuplevar), value(value) {
-      var = tuplevar[0];
-    }
-    Set(BaseDef * var, Expr * value) : var(var), value(value) { }
+	Expr * var = 0;
+    Set(Var * var, Expr * value) : value(value), var(var) { }
+	Set(Member * var, Expr * value) : value(value), var(var) { }
     virtual void accept(class AbstractVisitor * v);
     virtual std::string toString();
     ~Set() { delete var; delete value; }
@@ -470,7 +470,7 @@ namespace coral {
   public:
     std::string visitorName;
     Visitor(std::string name) : visitorName(name) { }
-#define VISIT(NODE) virtual void visit(__attribute__((unused)) NODE * c) { std::cerr << visitorName << "visit: " << #NODE << std::endl; }
+#define VISIT(NODE) virtual void visit(__attribute__((unused)) NODE * c) { std::cerr << "\033[1;35m" << visitorName << "visit: " << #NODE << "\033[0m\n"; }
     EXPR_NODE_LIST(VISIT)
 #undef VISIT
     virtual ~Visitor () { }

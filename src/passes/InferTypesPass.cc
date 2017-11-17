@@ -34,7 +34,7 @@ public:
   void show(std::ostream & out, string prefix) {
 	for(auto & it : names) {
 	  auto name = it.first;
-	  auto expr = it.second;
+	  // auto expr = it.second;
 	  auto ptr = info[it.second].get();
 	  out << "\033[1;36m[show] " << prefix << name
 		  << " :: " << ptr->type->toString()
@@ -111,10 +111,18 @@ public:
   Scope * scope;
   Type * out = 0;
   Type * in = new UnknownType();
-  ExprToType(Expr * e, Scope * s, Type * in) : Visitor("exprt "), scope(s), in(in) { if (e) e->accept(this); }
+  ExprToType(Expr * e, Scope * s, Type * in) : Visitor("inferexpr "), scope(s), in(in) { if (e) e->accept(this); }
   ExprToType(Expr * e, Scope * s) : Visitor("exprt "), scope(s) { if (e) e->accept(this); }
 
+  void visit(Set * e) {
+	e->var->accept(this);
+	e->value->accept(this);
+	out = new VoidType();
+  }
+  void visit(Return * e) { e->value->accept(this); }
+  void visit(VoidExpr * e) { out = new VoidType(); }
   void visit(Extern * e) {
+	// std::cerr << "EXTERN " << e->name << "\n";
 	out = e->type;
 	scope->put(e)->setType(e->type);
 	scope->name(e, e->name);
@@ -122,36 +130,56 @@ public:
 
   void visit(Let * e) {
 	if (e->value) e->value->accept(this);
-	cerr << "let :: " << e->var->toString() << endl;
+	// cerr << "let :: " << e->var->toString() << endl;
 	if (e->var->kind == TupleDefKind) {
 	  // TODO
 	  cerr << "TODO\n";
 	} else {
-	  auto var = (Def *)e->var;
+	  auto var = e->var;
 	  auto name = var->name;
 	  out = var->type;
+	  if (getTypeKind(out) == UnknownTypeKind) {
+		e->value->accept(this);
+		if (out) var->type = out;
+	  }
 	  scope->put(e)->setType(out);
 	  scope->name(e, name);
 	}
   }
 
   void visit(Var * e) {
-	cerr << "[Var] : " << e->name << "\n";
 	auto scopeinfo = scope->getByName(e->name);
 	if (!scopeinfo) {
 	  cerr << "not found: " << e->name << "\n";
 	}
 	else {
-	  e->ref = scope->names[e->name];
+	  auto scopeInfo = scope->getByName(e->name);
+	  e->ref = scope->getByName(e->name)->expr;
+	  // cerr << "[Var] :" << e << " " << e->name << " :: " << e->ref << "\n";
+	  // std::cerr << "REF " << e->name << " : " << (e->ref ? e->ref->toString() : "(null)") << "\n\n";
 	  out = scopeinfo->type;
 	  if (getTypeKind(out) == UnknownTypeKind && getTypeKind(in) != UnknownTypeKind) {
-		// cerr << "writing argument type " << e->value << " :: " << in->toString() << "\n";
+		cerr << "writing argument type " << e->name << " :: " << in->toString() << "\n";
 		out = in;
 		scopeinfo->setType(in);
 	  }
 	}
   }
 
+  void visit(If * e) {
+	e->cond->accept(this);
+	e->ifbody->accept(this);
+	auto type1 = out;
+	e->elsebody->accept(this);
+	auto type2 = out;
+	if (!type2) out = type1;
+	// TODO: check that type1 and type2 are compatible
+  }
+
+  void visit(BinOp * e) {
+	e->lhs->accept(this);
+	e->rhs->accept(this);
+  }
   void visit(Long * e) {
 	out = new IntType(32);
   }
@@ -192,25 +220,28 @@ public:
   void visit(Call * e) {
 	// if the calleetype is a functype,
 	// the type of the call is the calleetype->ret;
-	e->callee->accept(this);
-	auto calleeType = out;
+	auto calleeType = ExprToType(e->callee.get(), scope).out;
 	if (calleeType && getTypeKind(calleeType) == FuncTypeKind) {
 	  auto ftype = (FuncType *)calleeType;
-	  cerr << "Known Callee: " << calleeType << "\n";
+	  // cerr << "Known Callee: " << calleeType << "\n";
 	  if (ftype->args.size() != e->arguments.size()) {
-
 		// TODO: handle variadics or raise error
-	  } else for(int i=0; i<ftype->args.size(); i++)  {
+		// cerr << "TODO: VARIADIC!\n";
+		for(unsigned long i=0; i<e->arguments.size(); i++) {
+		  auto argExpr = e->arguments[i].get();
+		  argExpr->accept(this);
+		}
+	  } else for(unsigned long i=0; i<ftype->args.size(); i++)  {
 		  auto argExpr = e->arguments[i].get();
 		  in = ftype->args[i];
 		  argExpr->accept(this);
-		  // cerr << "\t\t\t" << i << ": " << ->toString() << "\n";
+		  // cerr << "\t\t\t" << i << ": " << argExpr->toString() << "\n";
 		// auto argtype = ExprToType(e->arguments[i].get(), scope, ftype->args[i]).out;
         // auto argtype = ExprToType(e->arguments[i].get(), scope, ftype->args[i]).out;
       }
 	  out = ftype->ret;
 	} else {
-	  cerr << "Unknown Callee: " << calleeType << "\n";
+	  cerr << "Unknown Callee Type: " << calleeType << "\n";
 	  out = new UnknownType();
 	}
   }
@@ -227,35 +258,42 @@ public:
   }
 
   void visit(FuncDef * e) {
+	auto funcScopeInfo = scope->put(e);
+	scope->name(e, e->name);
 	ExprToType nested(0, scope->nested());
-
 	vector<Type *>args;
 	for(auto &arg : e->args) {
 		ExprToType x(0, scope);
 		x.visitDef(arg);
 		args.push_back(x.out);
 		nested.scope->put(arg)->setType(x.out);
-		if (arg->kind == DefKind)
-		  nested.scope->name(arg, ((Def *)arg)->name);
-
+		if (arg->kind == DefKind) {
+		  auto name = ((Def *)arg)->name;
+		  nested.scope->name(arg, name);
+		} else {
+		  std::cerr << "TODO: multiarg\n";
+		}
 		// nested.scope->saveDef(arg);
 	}
 
-	e->body->accept(&nested);
-
-	auto rettype = e->rettype;
-	if (rettype == 0 || getTypeKind(rettype) == UnknownTypeKind) {
-	  rettype = nested.out;
-	}
-	// nested.scope->show(cerr);
 	int i = 0;
 	for(auto &arg : e->args) {
 	  args[i++] = nested.scope->get(arg)->type;
 	}
+	auto ftype = new FuncType(e->rettype, args, false);
+	out = ftype;
+	funcScopeInfo->setType(ftype);
 
-	out = new FuncType(rettype, args, false);
-	scope->put(e)->setType(out);
-	scope->name(e, e->name);
+	e->body->accept(&nested);
+	auto rettype = e->rettype;
+	if (rettype == 0 || getTypeKind(rettype) == UnknownTypeKind) {
+	  rettype = nested.out;
+	  // HMM. I wonder if this is kosher.
+	  e->rettype = rettype;
+	  ftype->ret = rettype;
+	}
+	// nested.scope->show(cerr);
+	funcScopeInfo->setType(ftype);
 	// scope->saveType(e->name, out);
   }
 
@@ -305,8 +343,13 @@ public:
   Expr * expr;
   Expr * out;
   Scope * scope;
+
   InferTypesPass(Expr * e) : Visitor("infer "), out(e) {
 	scope = new Scope();
+	if (e) e->accept(this);
+  }
+
+  InferTypesPass(Expr * e, Scope * scope) : Visitor("infer "), out(e), scope(scope) {
 	if (e) e->accept(this);
   }
 

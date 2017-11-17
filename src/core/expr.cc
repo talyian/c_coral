@@ -45,6 +45,10 @@ std::string Translate(std::string s) {
   return c;
 }
 
+String::String(std::string a) {
+  value = a;
+}
+
 std::string Module::toString()  {
     std::string s("");
     s += std::to_string(lines.size()) + " lines\n";

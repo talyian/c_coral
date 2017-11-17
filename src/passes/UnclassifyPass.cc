@@ -7,8 +7,7 @@
 	  func new(n):
 	      set field0 = n
 	  func toString():
-
- */
+*/
 
 #include "../core/expr.hh"
 #include "../core/utils.hh"
@@ -75,6 +74,7 @@ public:
   void visit(coral::Member * e) { }
   void visit(coral::Struct * e) { }
   void visit(coral::Set * e) { }
+  void visit(coral::MultiLet * e) { }
 };
 
 // turns "func Class$method(this): member"
@@ -150,22 +150,24 @@ public:
 class UnclassifyPass : public coral::Visitor {
 public:
   coral::Module * module;
-  coral::Expr * out;
+  std::vector<coral::Expr *> transfer;
   std::string prefix;
 
   UnclassifyPass(coral::Module * m) : Visitor("unclass ") {
 	module = m;
-	out = m;
 	if (m) m->accept(this);
   }
 
   void visit(coral::Module * m) {
+	std::vector<coral::Expr *> lines;
 	for(auto &line : m->lines) {
-	  out = line;
+	  transfer.clear();
+	  transfer.push_back(line);
 	  line->accept(this);
-	  line = out;
+	  for(auto &e : transfer)
+		lines.push_back(e);
 	}
-	vec_erase(m->lines, (coral::Expr *)0);
+	m->lines = lines;
   }
   void visit(coral::Extern * e) { }
   void visit(coral::Let * e) { }
@@ -173,8 +175,9 @@ public:
   void visit(coral::DeclTypeAlias * e) { }
   void visit(coral::FuncDef * e) { }
   void visit(coral::Struct * s) {
-	UnclassifyStruct { "$", s };
-	out = 0;
+	UnclassifyStruct ucs { "$", s };
+	for(auto &expr : ucs.out)
+	  transfer.push_back(expr);
   }
 
 };

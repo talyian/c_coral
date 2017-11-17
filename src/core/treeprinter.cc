@@ -20,7 +20,7 @@ void coral::TreePrinter::visit(Return * r) {
   out << IND() << "return ";
   auto t = line_mode;
   line_mode = 1;
-  r->value->accept(this);
+  if (r->value) r->value->accept(this);
   line_mode = t;
   out << END();
 }
@@ -342,7 +342,8 @@ void coral::TreePrinter::visit(Set * d) {
     }
     out << ")";
   } else
-    lp.visit(d->var);
+    d->var->accept(&lp);
+
   if (d->value) {
 	out << " = ";
 	d->value->accept(&lp);

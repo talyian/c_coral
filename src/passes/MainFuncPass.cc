@@ -3,9 +3,9 @@
 // we add all the little bits of code in the module root
 // into a main function
 
-#include "core/expr.hh"
-#include "core/treeprinter.hh"
-#include "parsing/lexer.hh"
+#include "../core/expr.hh"
+#include "../core/treeprinter.hh"
+#include "../parsing/lexer.hh"
 #include <iostream>
 #include <map>
 #include <algorithm>
@@ -33,7 +33,7 @@ public:
   void visit(DeclTypeAlias * a) { decls[a->name] = a; }
   void visit(DeclTypeEnum * a) { decls[a->name] = a; }
   void visit(FuncDef * a) { decls[a->name] = a; }
-
+  void visit(Struct * e) { decls[e->name] = e; }
   void finalize() {
     auto main = decls["main"];
     if (!main) {

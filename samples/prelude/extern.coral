@@ -7,20 +7,5 @@ extern "C" fprintf: Fn[Ptr[Int8], Ptr[Int8], ..., Void]
 extern "C" dprintf: Fn[Int32, Ptr[Int8], ..., Void]
 extern "C" snprintf: Fn[Ptr[Int8], Int32, Ptr[Int8], ..., Void]
 
-func [] println : Void (x: Ptr[Int8]):
-  printf("%s\n", x)
-
-func [] println :Void(x: Int32):
-  printf("%d\n", x)
-
-func [] println :Void(x: Int64):
-  printf("%ld\n", x)
-
-func [] println :Void (x: Int1):
-  if x:
-    printf "True\n"
-  else:
-    printf "False\n"
-
 func ignore : Void(x : Int64):
   pass

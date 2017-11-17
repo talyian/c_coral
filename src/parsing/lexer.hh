@@ -45,3 +45,4 @@ YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner);
 int yylex(YYSTYPE * lval, YYLTYPE * loc, yyscan_t scanner);
 
 Module * parse(FILE * in, const char * src);
+Module * parse_file(const char * filename);

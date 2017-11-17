@@ -24,20 +24,37 @@ public:
   Expr *out;
   ReplaceReturn(Expr * e) : Visitor("retins-instr "), out(e) { e->accept(this); }
 
+  void visit(Set * e) {
+	out = new Return(e);
+  }
+
+  void visit(Return * e) {
+	out = e;
+  }
+
   void visit(If * a) {
+	a->ifterminated = 1;
+	a->elseterminated = 1;
     a->ifbody = (BlockExpr *)RETURN(a->ifbody);
     a->elsebody = (BlockExpr *)RETURN(a->elsebody);
   }
 
   void visit(BlockExpr * a) {
-    if (a->lines.empty()) return;
+    if (a->lines.empty()) {
+	  a->lines.push_back(new Return(0));
+	  return;
+	}
     a->lines.back() = RETURN(a->lines.back());
   }
 
   void visit(Var * l) { out = new Return(l); }
+
   void visit(String * b) { out = new Return(b); }
+
   void visit(Long * l) { out = new Return(l); }
+
   void visit(Call * b) { out = new Return(b); }
+
   void visit(BinOp * b) {
     out = new Return(b);
   }
@@ -60,6 +77,8 @@ public:
   ReturnInsertPass(Module * m) : Visitor("retins "), func(0), out(m) {
     foreach(m->lines, it) (*it)->accept(this);
   }
+  // ignore structs, since the Unclassify pass already extracted the functions
+  void visit(Struct * a) { }
   void visit(Let * a) { }
   void visit(DeclTypeEnum * a) { }
   void visit(FuncDef * a) {
@@ -67,17 +86,23 @@ public:
       a->rettype == 0 ||
       getTypeName(a->rettype) == "Unknown" ||
       getTypeName(a->rettype) == "Void"
-    ) return;
+	  ) ;
     this->func = a;
     a->body = RETURN(a->body);
   }
   void visit(Call * a) { }
   void visit(BlockExpr * a) {
-    if (a->lines.empty()) return;
+    if (a->lines.empty()) {
+	  cerr << "EMPTY BLOCK\n";
+	  a->lines.push_back(new Return(0));
+	  return;
+	}
     Expr *expr = a->lines.back();
     if (expr) {
       a->lines.back() = RETURN(expr);
-    }
+    } else {
+	  cerr << "SOMETHING WEIRD HAPPEND\n";
+	}
   }
   void visit(Extern * a) { }
 };

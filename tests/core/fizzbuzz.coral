@@ -1,15 +1,18 @@
+# JitTest.ExpectedOutput = "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16"
 func fizzbuzz(n: Int64):
-  if n % 15 = 0: printf "fizzbuzz"
-  elif n % 5 = 0: printf "buzz"
-  elif n % 3 = 0: printf "fizz"
-  else: printf("%d", n)
+  if n % 15 = 0:
+    printf "fizzbuzz"
+  elif n % 5 = 0:
+    printf "buzz"
+  elif n % 3 = 0:
+    printf "fizz"
+  else:
+    printf("%d", n)
 
-func loop : Void(n: Int64, m: Int64):
-  fizzbuzz n
-  if n < m:
-    printf " "
-    loop(n + 1, m)
+func loop : Void (f: Int64, m: Int64):
+  fizzbuzz f
+  if f < m:
+    printf(" ")
+    loop(f + 1, m)
 
-func main : Void ():
-  let _expected = "1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz 16"
-  loop(1, 16)
+loop(0, 16)

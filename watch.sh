@@ -25,8 +25,9 @@ debounce() {
 		SRCFILE="$dir$file"
     fi
     echo "-- [$file] -----($SRCFILE)-------------------------------"
-	make bin/test-coral-codegen && bin/test-coral-codegen
-	if [[ $? != 0 ]]; then echo returned $?; fi
+	make test
+	# make bin/test-coral-codegen && bin/test-coral-codegen
+	# if [[ $? != 0 ]]; then echo returned $?; fi
 	# make -s bin/InferTypesPass && bin/InferTypesPass
     # make -s bin/coral && bin/coral parse ${SRCFILE} && bin/coral jit ${SRCFILE}
     # make -s bin/infer && bin/infer

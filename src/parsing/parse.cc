@@ -14,17 +14,8 @@ extern std::queue<int> tokenq;
 extern std::vector<int> indents;
 extern int lineno, colno, paren_depth;
 
-Module * parse(FILE * in, const char * src) {
-  if (in) {
-    char * buf = 0;
-    fseek(in, 0, SEEK_END);
-    int len = ftell(in);
-    buf = new char[len+1];
-    fseek(in, 0, 0);
-    buf[fread(buf, 1, len, in)] = 0;
-    src = buf;
-    in = 0;
-  } else if (!src) {
+Module * parse_string(const char * src, const char * name) {
+  if (!src) {
     std::cerr << "failed to initialize input\n";
     return new Module(std::vector<Expr *> { new String("\"parse error 1\"") });
   }
@@ -41,14 +32,41 @@ Module * parse(FILE * in, const char * src) {
   colno = 0;
   paren_depth = 0;
 
-  if (in) yyset_in(in, scanner);
-  else if (src) yy_scan_string(src, scanner);
+  yy_scan_string(src, scanner);
 
   yy::parser coralp(module, scanner);
   if (coralp.parse()) module = 0;
   yylex_destroy(scanner);
-  if (module) return module;
+
+  if (module) {
+	module->name = name;
+	return module;
+  }
   return new Module(std::vector<Expr *> { new String("\"parse error 2\"") });
+}
+
+Module * parse_file(const char * filename) {
+  FILE * in = fopen(filename, "r");
+  char * buf = 0;
+  fseek(in, 0, SEEK_END);
+  int len = ftell(in);
+  buf = new char[len+1];
+  fseek(in, 0, 0);
+  buf[fread(buf, 1, len, in)] = 0;
+  return parse_string(buf, filename);
+}
+
+Module * parse(FILE * in, const char * src) {
+  if (!in)
+	return parse_string(src, "module");
+
+  char * buf = 0;
+  fseek(in, 0, SEEK_END);
+  int len = ftell(in);
+  buf = new char[len+1];
+  fseek(in, 0, 0);
+  buf[fread(buf, 1, len, in)] = 0;
+  return parse_string(buf, "module");
 }
 
 void yy::parser::error(const yy::location &loc, const std::string& m) {
