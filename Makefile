@@ -8,17 +8,7 @@ LINK=${CC}
 
 default: bin/coral-core bin/coral-parse bin/coral-token bin/coral-codegen
 
-## sub-projects
-.PHONY: core parsing
-
-core: bin/coral-core
-
-parsing: bin/coral-parse
-
 test: bin/test-coral-codegen
-	$<
-
-scope: bin/temp
 	$<
 
 # Core includes code that other submodules are allowed to depend on
@@ -44,12 +34,6 @@ bin/coral-codegen: ${PARSERFILES} ${CODEGENFILES} obj/codegen/__main__.o
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
-bin/test-coral-infer: ${COREFILES} ${PARSERFILES} obj/infer.o
-	${LINK} -o $@ $^
-bin/test-coral-treecompare: ${COREFILES} ${PARSERFILES} obj/core/treecompare.o
-	${LINK} -o $@ $^
-bin/MainFuncPass: ${COREFILES} ${PARSERFILES} obj/passes/MainFuncPass.o
-	${LINK} -o $@ $^
 bin/%: ${COREFILES} ${PARSERFILES} obj/passes/%.o
 	${LINK} -o $@ $^
 
@@ -107,7 +91,7 @@ obj/codegen/%.o: obj/codegen/%.o.d
 obj/codegen/%.o.d: src/codegen/%.cc
 	@mkdir -p $(shell dirname $@)
 	@echo ---------------------------------------- making $@
-	oset -e; \
+	set -e; \
 	set -o pipefail; \
 	 OUT=$$(${MM} $(shell llvm-config-5.0 --cxxflags)); \
 	 (echo -n $$(dirname $@)/; \
