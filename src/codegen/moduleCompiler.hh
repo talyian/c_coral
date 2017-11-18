@@ -78,7 +78,7 @@ namespace coral {
 	  // TODO: e->base needs a type
 	  // which means that
 	  // e->base
-	  auto outBase = out;
+	  // auto outBase = out;
 	  std::cerr << "TODO member-base : " << e->base << "\n";
 	}
 

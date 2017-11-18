@@ -13,9 +13,7 @@
 
 namespace coral {
 
-#define EXPR_NODE_LIST(M) /*
-						   */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member) /* */ M(Struct) /* */ M(Set) /* */ M(MultiLet)
- ;
+#define EXPR_NODE_LIST(M) /* */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member) /* */ M(Struct) /* */ M(Set) /* */ M(MultiLet)
 
   enum ExprType {
 #define TYPEDEC(EXPR) EXPR##Kind,
