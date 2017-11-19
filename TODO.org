@@ -1,8 +1,13 @@
 #+STARTUP: showall
 * Milestones [0/5]
-** TODO Implement syncio library 
+** TODO Implement CString
+** TODO Implement syncio library for CString
+   Requires Structs
+   Requires Strings Library
 ** TODO Implement ByteString
 ** TODO Implement TextString
+** TODO Implement syncio library for ByteString
+** TODO Implement syncio library for TextString
 ** TODO Implement regex library
 ** TODO Implement bignum library
 
