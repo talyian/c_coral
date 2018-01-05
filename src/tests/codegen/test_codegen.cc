@@ -12,16 +12,18 @@ void checkFile(const char * filename) {
   });
 
   cc.generate_llvm_modules();
-  cout << "----------------------------------------\n";
+  cout << "--[Source]-----------------------------------\n";
   cout << cc.get_source();
-  cout << "----------------------------------------\n";
+  cout << "--[LLVM IR]----------------------------------\n";
   cout << cc.get_ir();
-  // cc.run_jit();
+  cout << "--[Output]------------------------------------\n";
+  cc.run_jit();
+  cout << "\n----------------------------------------------\n";
   printf("%30s\tOK\n", filename);
 }
 
 void runCodegenTests() {
-  cout << "----------[ Codegen Tests ]----------\n";
+  cout << "\n\e[1;32m" << "==[ Codegen Tests ]==========================\e[0m\n";
   // checkFile("tests/core/hello_world.coral");
   // checkFile("tests/core/fizzbuzz.coral");
   // checkFile("tests/core/functions.coral");

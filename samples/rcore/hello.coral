@@ -1,2 +1,0 @@
-func main:Int32():
-     println 5

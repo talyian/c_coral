@@ -1,0 +1,12 @@
+type clib:
+  extern sprintf : Fn[...]
+  extern printf : Fn[...]
+  extern atoi: Fn[...]
+  extern itoa: Fn[...]
+
+type cstdio:
+  extern sprintf : Fn[...]
+  extern printf : Fn[...]
+  extern open: Fn[...]
+  extern read: Fn[...]
+  extern close: Fn[...]

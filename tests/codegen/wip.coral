@@ -1,20 +1,29 @@
 # extern "C" open : Fn[..., Ptr[Int8]]
 # extern "C" write : Fn[..., Void]
 # extern "C" read : Fn[Ptr[Int8], Ptr[Int8], Int64, Int64]
-extern "C" printf : Fn[... , Void]
-extern "C" malloc : Fn[Int64, Ptr[Int8]]
+# extern "C" printf : Fn[... , Void]
+# extern "C" malloc : Fn[Int64, Ptr[Int8]]
 # extern "C" free :   Fn[Ptr[Int8], Void]
 
-type FdReader:
-  val fd : Int32
-  func new(n: Int32):
-    set this.fd = n
+# type FdReader:
+#   val fd : Int32
+#   func new(n: Int32):
+#     set this.fd = n
+# func test(n: Int32):
+#   set n = 0
 
-func test(n: Int32):
-  set n = 0
+func test(n: Int64):
+  let m = n
+  set m = n * 2
+  printf ("option test %d\n", m)
 
-func test(n: Int32):
-  n = 0
+let a = 1
+printf ("option test %d\n", a)
+test 1
+
+# type IntOption:
+#   | None
+#   | Some(Int32)
 
 # let O_RDONLY = 0
 # let O_WRONLY = 1

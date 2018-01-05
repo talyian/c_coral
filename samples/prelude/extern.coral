@@ -8,4 +8,4 @@ extern "C" dprintf: Fn[Int32, Ptr[Int8], ..., Void]
 extern "C" snprintf: Fn[Ptr[Int8], Int32, Ptr[Int8], ..., Void]
 
 func ignore : Void(x : Int64):
-  pass
+  return 0

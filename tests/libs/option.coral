@@ -1,0 +1,6 @@
+
+
+
+type Option(T):
+  | Some (x)
+  | None

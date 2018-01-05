@@ -16,8 +16,9 @@ int main(int argc, char *argv[]) {
   }
 
   auto filename = argv[1];
-  cout << ir_modules(std::vector<Module *> {
+  CompilationUnit cc(std::vector<Module *> {
 	parse_file("samples/prelude/extern.coral"),
     parse_file(filename),
   });
+  cc.run_jit();
 }

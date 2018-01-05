@@ -1,0 +1,5 @@
+func main():
+  let m = 1
+  printf("m: %d\n", m)
+  set m = 2
+  printf("m: %d\n", m)

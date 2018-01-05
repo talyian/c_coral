@@ -6,10 +6,10 @@ printf("%s\n", a)
 print b
 print c
 
-# Roman Numerals test
-let a : CString = "ⅠⅡⅢ"
-let b : Bytes   = "ⅠⅡⅢ"
-let c : Text    = "ⅠⅡⅢ"
+# Roman Numerals test - source files are UTF-8 encoded
+let a : CString = "ⅠⅡⅢⅣ"
+let b : Bytes   = "ⅠⅡⅢⅣ"
+let c : Text    = "ⅠⅡⅢⅣ"
 
 printf("%s\n", a)
 print b

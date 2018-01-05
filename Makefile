@@ -32,6 +32,8 @@ bin/test-coral-codegen: ${PARSERFILES} ${CODEGENFILES} obj/tests/codegen/test_co
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 bin/coral-codegen: ${PARSERFILES} ${CODEGENFILES} obj/codegen/__main__.o
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
+bin/coral-jit: ${PARSERFILES} ${CODEGENFILES} obj/codegen/__mainjit__.o
+	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
 bin/%: ${COREFILES} ${PARSERFILES} obj/passes/%.o

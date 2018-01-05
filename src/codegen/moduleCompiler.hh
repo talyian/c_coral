@@ -87,6 +87,7 @@ namespace coral {
 	  auto llvmValue = out;
 	  e->var->accept(this);
 	  auto llvmAddr = out;
+	  // auto llvmAddr = savedValues[((Var *)e->var)->ref];
 	  out = LLVMBuildStore(llvmBuilder, llvmValue, llvmAddr);
 	}
 
@@ -125,6 +126,7 @@ namespace coral {
 	  auto value = out;
 	  out = LLVMBuildStore(llvmBuilder, value, allocaInstr);
 	  savedValues[e] = LLVMBuildLoad(llvmBuilder, allocaInstr, "");
+	  // savedValues[e] = allocaInstr;
 	}
 	void visit(If * e) {
 	  auto bb = LLVMGetInsertBlock(llvmBuilder);
@@ -160,6 +162,7 @@ namespace coral {
 	  } else {
 		// std::cerr << "ref!\n";
 		out = savedValues[e->ref];
+		// out = LLVMBuildLoad(llvmBuilder, savedValues[e->ref], "");
 		if (!out) std::cerr << "Missing reference info: "<< e->name << "\n";
 	  }
 	}
