@@ -16,7 +16,7 @@
 (defvar coral-font-lock-keywords '(
    ("^[ ]+\\<set\\>" . font-lock-keyword-face)
    ("\\<\\(impl\\|class\\)\\>" . font-lock-keyword-face)
-   ("\\<\\(if\\|then\\|for\\|in\\|func\\|let\\|type\\|match\\|with\\|module\\)\\>" . font-lock-keyword-face)
+   ("\\<\\(return\\|pass\\|if\\|then\\|for\\|in\\|func\\|let\\|type\\|match\\|with\\|module\\)\\>" . font-lock-keyword-face)
    ("=>\\|\[$@<>=+*/%-\]" . font-lock-function-name-face)
  ) "Keyword highlighting specification for `coral-mode'.")
 

@@ -1,3 +1,3 @@
-# JitTest.ExpectedOutput = "Hello, World!"
+# Output: "Hello, World!"
 printf("Hello, %s", "World")
 printf "!"

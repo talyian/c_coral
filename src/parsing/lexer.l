@@ -73,6 +73,7 @@ num [0-9]+[.][0-9]+
 bin 0b[01]+
 hex 0x[0-9a-fA-F]+
 str \"([^\\\"]|\\\\|\\\"|\\[a-z])*\"
+sstr \'([^\'])\'
 id  [_a-zA-Z$][$_a-zA-Z0-9]*
 br  (\r?\n[ ]*)+
 op  ([-+*/%!^><=@$!&?])+
@@ -115,11 +116,11 @@ else     { tok(ELSE); }
 elif     { tok(ELIF); }
 pass     { tok(PASS); }
 {op}     { string val(yytext, yyleng); yylval->build(val); return oper(val); }
-{comment} { }
+{comment} { yylval->build(string(yytext, yyleng)); tok(COMMENT); }
 {int}    { yylval->build(std::stoll(yytext)); tok(INTEGER); }
 {num}    { yylval->build(std::stod(yytext)); tok(FLOAT); }
 {str}    { yylval->build(string(yytext, yyleng)); tok(STRING); }
-'([^'])' { yylval->build(string(yytext, yyleng)); tok(STRING); }
+{sstr}   { yylval->build(string(yytext, yyleng)); tok(STRING); }
 {id}     { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
 [&]      { tok(ADDR_OF); }
 \[       { push_paren('['); return '['; }

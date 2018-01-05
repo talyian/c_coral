@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../core/expr.hh"
 
 using namespace coral;
@@ -45,4 +47,29 @@ YY_BUFFER_STATE yy_scan_string (const char * yystr , yyscan_t yyscanner);
 int yylex(YYSTYPE * lval, YYLTYPE * loc, yyscan_t scanner);
 
 Module * parse(FILE * in, const char * src);
+
 Module * parse_file(const char * filename);
+
+class Lexer {
+  void * scanner;
+public:
+  YYLTYPE loc;
+  YYSTYPE lval;
+  char * text;
+  int tokenType;
+
+  Lexer(FILE * f) {
+	yylex_init(&scanner);
+	yyset_in(f, scanner);
+  }
+
+  int lex() {
+	tokenType = yylex(&lval, &loc, scanner);
+	text = yyget_text(scanner);
+	return tokenType;
+  }
+
+  ~Lexer() {
+	yylex_destroy(scanner);
+  }
+};

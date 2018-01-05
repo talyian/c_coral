@@ -18,7 +18,7 @@
 %define api.value.type variant
 %locations
 
-
+%token COMMENT
 %token FOR
 %token IN
 %token IMPL
