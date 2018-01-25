@@ -60,6 +60,7 @@ int oper(string val) {
     if (val == "*=") tok(OP_MULEQ);
     if (val == "/=") tok(OP_DIVEQ);
     if (val == "%=") tok(OP_MODEQ);
+    if (val == "&") tok(ADDR_OF);
     tok(OP_OPERATOR);
 }
 
@@ -120,9 +121,8 @@ pass     { tok(PASS); }
 {op}     { string val(yytext, yyleng); yylval->build(val); return oper(val); }
 {comment} { yylval->build(string(yytext, yyleng)); tok(COMMENT); }
 {str}    { yylval->build(string(yytext, yyleng)); tok(STRING); }
-{id}     { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
 {sstr}   { yylval->build(string(yytext, yyleng)); tok(STRING); }
-[&]      { tok(ADDR_OF); }
+{id}     { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
 \[       { push_paren('['); return '['; }
 \]       { pop_paren(']'); return ']'; }
 \(       { push_paren('('); return '('; }
