@@ -1,30 +1,31 @@
-CC=clang++-5.0
-SHELL:=/bin/bash
+CC=     clang++-5.0
+SHELL:= /bin/bash
 COMPILE=${CC} -Wall -std=c++11 -Isrc -g -c -o $@ $<
-MM=${CC} -Wall -std=c++11 -Isrc -MM $<
-LINK=${CC}
+MM=     ${CC} -Wall -std=c++11 -Isrc -MM $<
+LINK=   ${CC}
+
+.SUFFIXES:
 
 .PHONY: build test clean
 
 default: bin/coral-core bin/coral-parse bin/coral-token bin/coral-codegen
 
-test: bin/test-coral-codegen
-	$<
+test: bin/test-coral-codegen bin/test-coral-parse 
+	bin/test-coral-parse && bin/test-coral-codegen
+
+clean:
+	mkdir -p bin obj src/parsing/generated
+	rm -rf bin/* obj/* src/parsing/generated/*
+
+docker:
+	docker build -t coral dockerenv
+	docker run --rm -it -v ${PWD}:/work coral bash
 
 # Core includes code that other submodules are allowed to depend on
-COREFILES=obj/core/expr.o obj/core/type.o obj/core/treeprinter.o
-bin/coral-core: ${COREFILES} obj/core/__main__.o
-	${LINK} -o $@ $^
+include makefiles/core.Makefile
 
 # Parsing includes all code involved in turning text into an AST
-PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o obj/parsing/parse.o
-bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main_parse.o
-	${LINK} -o $@ $^
-bin/coral-token: ${COREFILES} ${PARSERFILES} obj/parsing/__main_token.o
-	${LINK} -o $@ $^
-bin/test-coral-parse: ${COREFILES} ${PARSERFILES} \
-  obj/tests/parsing/test_parser.o obj/tests/parsing/__main__.o
-	${LINK} -o $@ $^
+include makefiles/parser.Makefile
 
 # Codegen includes all the parts involved in compiling the coral AST
 CODEGENFILES=${COREFILES} obj/codegen/jitEngine.o obj/codegen/moduleCompiler.o
@@ -36,66 +37,18 @@ bin/coral-jit: ${PARSERFILES} ${CODEGENFILES} obj/codegen/__mainjit__.o
 	${LINK} -o $@ $^ $(shell llvm-config-5.0 --libs)
 
 # Aux is all coral logic that isn't needed in Core/Parsing/Codegen
-bin/%: ${COREFILES} ${PARSERFILES} obj/passes/%.o
-	${LINK} -o $@ $^
 
 # Main includes the primary facade for Coral
 
 
+include makefiles/autocc.Makefile
 
-src/parsing/generated/parser.hh: src/parsing/generated/parser.cc
-	@true
-
-src/parsing/generated/parser.cc: src/parsing/parser.yy
-	@mkdir -p $(shell dirname $@)
-	bison -d -o $@ $<
-
-src/parsing/generated/lexer.cc: src/parsing/lexer.l src/parsing/generated/parser.hh
-	@mkdir -p $(shell dirname $@)
-	flex -o $@ $<
-
-clean:
-	mkdir -p bin obj src/parsing/generated
-	rm -rf bin/* obj/* src/parsing/generated/*
-
-docker:
-	docker build -t coral dockerenv
-	docker run --rm -it -v ${PWD}:/work coral bash
-
-## SECTION auto-dependency generation
 DEPFILES=$(shell find obj -name '*.o.d')
 
--include ${DEPFILES}
+include ${DEPFILES}
 
-.PRECIOUS: obj/%.o.d obj/codegen/%.o.d
-
-## Whenever a cc file is updated, its deps are updated
-obj/%.o.d: src/%.cc
+obj/%.o: src/%.cc
 	@mkdir -p $(shell dirname $@)
-	set -e; \
-	set -o pipefail; \
-	OUT=$$(${MM}); \
-	(echo -n $$(dirname $@)/; \
-	 echo "$${OUT}"; \
-     echo $$'\t' '$(value COMPILE)') > $@
-
-## If we build a .o, we need its .d
-## If the .cc was updated, we re-generate the .d and then rebuild
-obj/%.o: obj/%.o.d
-	CC=${CC} ${MAKE} --no-print-directory -r $@
-
-# There's probably a better way to do this
-# we're saying everything in /codegen requires llvm-flags for compiling
-obj/codegen/%.o: obj/codegen/%.o.d
-	@echo '*codegen ***************************************'
-	@${MAKE} --no-print-directory -r -f $<
-
-obj/codegen/%.o.d: src/codegen/%.cc
-	@mkdir -p $(shell dirname $@)
-	@echo ---------------------------------------- making $@
-	set -e; \
-	set -o pipefail; \
-	 OUT=$$(${MM} $(shell llvm-config-5.0 --cxxflags)); \
-	 (echo -n $$(dirname $@)/; \
-	  echo "$${OUT}"; \
-      echo $$'\t' '$(value COMPILE) $(shell llvm-config-5.0 --cxxflags)') > $@
+	@${MM} | sed 's&.*.o:&$@ $@.d:&' > $@.d
+	${COMPILE}
+.PRECIOUS: obj/%.o.d

@@ -83,7 +83,7 @@ std::string Return::toString() {
   return "return " + (value ? value->toString() : "(null)");
 }
 std::string Cast::toString() {
-  return expr->toString() + " as " + to_type->toString();
+  return expr->toString() + " as " + coral::typeToString(to_type);
 }
 std::string Let::toString() {
   return var->toString() + ":=" + value->toString();

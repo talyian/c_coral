@@ -67,7 +67,7 @@
 %type <Expr *> enumLine matchLine TypeDeclLine FuncDefLine LetDeclLine
 %type <Expr *> line expr IfExpr ElseSequence UnaryExpr NonUnaryExpr BinaryExpr Atom
 %type <Tuple *> Tuple
-%type <Type *> typesig AtomType ComplexType TypeParam FuncSigType
+%type <Type *> typesig AtomType ComplexType FuncSigType
 %type <std::vector<Type *>> TypeList
 %type <Def *> classLine
 %type <std::vector<Def *>> classLines classBlock
@@ -78,6 +78,8 @@
 
 %type <Expr *> StructLine
 %type <std::vector<Expr *>> StructLines
+%type <std::string> TypeParameter
+%type <std::vector<std::string>> TypeParameterList
 
 %{
 #include "../../core/expr.hh"
@@ -93,26 +95,34 @@ program : lines { module = new Module($1); }
 
 lines
 	: NEWLINE { }
-	| lines NEWLINE { $$ = $1; }
+	| COMMENT { }
 	| line { $$.push_back($1); }
+	| lines NEWLINE { $$ = $1; }
+	| lines COMMENT { $$ = $1; }
 	| lines line { $$ = $1; $$.push_back($2); }
 
 ExternLine
-	: EXTERN STRING IDENTIFIER { $$ = new Extern($2, $3, new UnknownType()); }
+	: EXTERN STRING IDENTIFIER { $$ = new Extern($2, $3, 0); }
 	| EXTERN STRING IDENTIFIER ':' typesig { $$ = new Extern($2, $3, $5); }
 
 TypeDeclLine
 	// Type Alias
 	: TYPE IDENTIFIER OP_EQ typesig { $$ = new DeclTypeAlias($2, $4); }
 	// Enum Type
-	| TYPE IDENTIFIER enumBlock { $$ = new DeclTypeEnum($2, "??", $3); }
-	// Class Type
+	| TYPE IDENTIFIER enumBlock { $$ = new DeclTypeEnum($2, { 0 }, $3); }
+	| TYPE IDENTIFIER '(' TypeParameterList ')' enumBlock {
+	    $$ = new DeclTypeEnum($2, $4, $6);
+    }
+
+    // Class Type
+	// TODO - settle on either parentheses or brackets
 	| TYPE IDENTIFIER ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
 	    $$ = new Struct($2, std::vector<std::string> { } , $6); }
-	| TYPE IDENTIFIER '(' IDENTIFIER ')' ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
-	    $$ = new Struct($2, std::vector<std::string> { $4 } , $9); }
-	| TYPE IDENTIFIER '[' IDENTIFIER ']' ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
-	    $$ = new Struct($2, std::vector<std::string> { $4 } , $9); }
+	// | TYPE IDENTIFIER '(' IDENTIFIER ')' ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
+	//     $$ = new Struct($2, std::vector<std::string> { $4 } , $9); }
+	// | TYPE IDENTIFIER '[' IDENTIFIER ']' ':' NEWLINE INDENT StructLines NEWLINE DEDENT {
+	//     $$ = new Struct($2, std::vector<std::string> { $4 } , $9); }
+
 StructLines
 	: NEWLINE { }
 	| StructLine { $$.push_back($1); }
@@ -190,7 +200,7 @@ block
 
 // P A R A M E T E R S --------------------
 SingleParameter
-	: IDENTIFIER { $$ = new Def($1, new UnknownType()); }
+	: IDENTIFIER { $$ = new Def($1, 0); }
 	| IDENTIFIER ':' typesig { $$ = new Def($1, $3); }
 
 Parameter
@@ -281,6 +291,7 @@ ElseSequence
 typesig
 	: AtomType { $$ = $1; }
 	| ComplexType { $$ = $1; }
+	| '.' '.' '.' { $$ = BuildType("..."); }
 
 FuncSigType
 	: AtomType  { $$ = $1; }
@@ -294,11 +305,14 @@ ComplexType
 	: IDENTIFIER '[' TypeList ']' { $$ = BuildType($1, $3); }
 	| IDENTIFIER '(' TypeList ')' { $$ = BuildType($1, $3); }
 
-TypeParam
-	: AtomType { $$ = $1; }
-	| ComplexType { $$ = $1; }
-	| '.' '.' '.' { $$ = BuildType("..."); }
-
 TypeList
-	: TypeParam { $$.push_back($1); }
-	| TypeList ',' TypeParam { $$ = $1; $$.push_back($3); }
+	: typesig { $$.push_back($1); }
+	| TypeList ',' typesig { $$ = $1; $$.push_back($3); }
+
+// type Dictionary(T, U) :: TYPE IDENTIFIER '(' TypeParameterList ')'
+TypeParameter
+	: IDENTIFIER { $$ = $1; }
+
+TypeParameterList
+    : TypeParameter { $$.push_back($1); }
+	| TypeParameterList ',' TypeParameter { $$ = $1; $$.push_back($3); }

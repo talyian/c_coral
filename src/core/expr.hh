@@ -1,7 +1,7 @@
 /*
   core/expr contains all nodes of the syntax tree.
   depends on core/type because expressions have types
- */
+*/
 #pragma once
 
 #include "type.hh"
@@ -13,7 +13,43 @@
 
 namespace coral {
 
-#define EXPR_NODE_LIST(M) /* */ M(Expr) /* */ M(BinOp) /* */ M(Call) /* */ M(Index) /* */ M(Extern) /* */ M(String) /* */ M(Long) /* */ M(VoidExpr) /* */ M(BoolExpr) /* */ M(Double) /* */ M(Module) /* */ M(FuncDef) /* */ M(BlockExpr) /* */ M(Var) /* */ M(If) /* */ M(For) /* */ M(Return) /* */ M(Cast) /* */ M(Let) /* */ M(AddrOf) /* */ M(DeclClass) /* */ M(ImplType) /* */ M(ImplClassFor) /* */ M(DeclTypeEnum) /* */ M(DeclTypeAlias) /* */ M(MatchExpr) /* */ M(MatchCaseTagsExpr) /* */ M(Tuple) /* */ M(EnumCase) /* */ M(MatchEnumCaseExpr) /* */ M(Member) /* */ M(Struct) /* */ M(Set) /* */ M(MultiLet)
+// A list of all the Node types.
+#define EXPR_NODE_LIST(M) /*
+*/ M(Expr) /*
+*/ M(BinOp) /*
+*/ M(Call) /*
+*/ M(Index) /*
+*/ M(Extern) /*
+*/ M(String) /*
+*/ M(Long) /*
+*/ M(VoidExpr) /*
+*/ M(BoolExpr) /*
+*/ M(Double) /*
+*/ M(Module) /*
+*/ M(FuncDef) /*
+*/ M(BlockExpr) /*
+*/ M(Var) /*
+*/ M(If) /*
+*/ M(For) /*
+*/ M(Return) /*
+*/ M(Cast) /*
+*/ M(Let) /*
+*/ M(AddrOf) /*
+*/ M(DeclClass) /*
+*/ M(ImplType) /*
+*/ M(ImplClassFor) /*
+*/ M(DeclTypeEnum) /*
+*/ M(DeclTypeAlias) /*
+*/ M(MatchExpr) /*
+*/ M(MatchCaseTagsExpr) /*
+*/ M(Tuple) /*
+*/ M(EnumCase) /*
+*/ M(MatchEnumCaseExpr) /*
+*/ M(Member) /*
+*/ M(Struct) /*
+*/ M(Set) /*
+*/ M(MultiLet) /*
+*/
 
   enum ExprType {
 #define TYPEDEC(EXPR) EXPR##Kind,
@@ -222,7 +258,9 @@ namespace coral {
     Def(std::string name, Type * t) : name(name), type(t) { kind = DefKind; }
     ~Def() { delete type; }
     virtual std::string toString() {
-      return ((type && getTypeKind(type) != UnknownTypeKind) ? name + ": " + type->toString() : name);
+	  if (type == 0) return name;
+	  return name + ": " + coral::typeToString(type);
+      // return ((type && getTypeKind(type) != UnknownTypeKind) ? name + ": " + type->toString() : name);
 	}
   };
 
@@ -354,12 +392,13 @@ namespace coral {
   class DeclTypeEnum : public Expr {
   public:
     std::string name;
+	std::vector<std::string> typeParams;
     std::vector<Expr *> body;
     DeclTypeEnum(
       std::string name,
-	  __attribute__((unused)) std::string unused,
+	  std::vector<std::string> typeParams,
       std::vector<Expr *> body
-      ) : name(name), body(body) { }
+      ) : name(name), typeParams(typeParams), body(body) { }
     virtual void accept(class AbstractVisitor * v);
     virtual std::string toString() { return "type-enum"; }
     ~DeclTypeEnum() { }

@@ -120,7 +120,7 @@ int checkFile(string path) {
   return ASSERT_EQ(s, s2);
 }
 
-void runParsingTests() {
+bool runParsingTests() {
   cout << "----------[ Parsing Tests ]----------\n";
   checkString("let", "let x = 1\n");
   checkString("tuple-destructuring-1", "let (a, b) = x\n");
@@ -147,4 +147,5 @@ void runParsingTests() {
   checkFile("libs/syncio.coral");
   checkFile("libs/array.coral");
   cout << "----------[ "<< passed <<" / "<< total <<" ]----------\n";
+  return passed == total;
 }

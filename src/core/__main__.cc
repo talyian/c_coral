@@ -8,17 +8,18 @@ int main() {
   auto module = new Module(
     std::vector<Expr *> {
       new Let(
-	new Def("a", 0),
-	new Long(3)),
-	new Let(
-	  new Def("b", 0),
-	  new Long(458354)),
-	new Call(
-	  new Var("printf"),
-	  std::vector<Expr *> {
-	    new String("\"Hello %d\""),
-	      new Var("a"),
-	      }),
-	});
+		new Def("a", 0),
+		new Long(3)),
+		new Let(
+		  new Def("b", new Type("Int64")),
+		  new Long(458354)),
+		new Call(
+		  new Var("printf"),
+		  std::vector<Expr *> {
+			new String("\"Hello %d\""),
+			  new Var("a"),
+			  }),
+		});
   TreePrinter(module, std::cout).print();
+  delete module;
 }

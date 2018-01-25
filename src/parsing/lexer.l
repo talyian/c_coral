@@ -115,13 +115,13 @@ if       { tok(IF); }
 else     { tok(ELSE); }
 elif     { tok(ELIF); }
 pass     { tok(PASS); }
-{op}     { string val(yytext, yyleng); yylval->build(val); return oper(val); }
-{comment} { yylval->build(string(yytext, yyleng)); tok(COMMENT); }
 {int}    { yylval->build(std::stoll(yytext)); tok(INTEGER); }
 {num}    { yylval->build(std::stod(yytext)); tok(FLOAT); }
+{op}     { string val(yytext, yyleng); yylval->build(val); return oper(val); }
+{comment} { yylval->build(string(yytext, yyleng)); tok(COMMENT); }
 {str}    { yylval->build(string(yytext, yyleng)); tok(STRING); }
-{sstr}   { yylval->build(string(yytext, yyleng)); tok(STRING); }
 {id}     { yylval->build(string(yytext, yyleng)); tok(IDENTIFIER); }
+{sstr}   { yylval->build(string(yytext, yyleng)); tok(STRING); }
 [&]      { tok(ADDR_OF); }
 \[       { push_paren('['); return '['; }
 \]       { pop_paren(']'); return ']'; }

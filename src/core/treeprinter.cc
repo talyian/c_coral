@@ -82,13 +82,13 @@ void coral::TreePrinter::visit(Module * m) {
 // function return types must be atom-types because otherwise
 // the trailing Paren gets confused for the opening parenthesis
 // for the parameter list.
-std::string printFuncRetType(coral::BaseType * ret) {
-  if (getTypeKind(ret) == coral::UserTypeKind) {
-	auto u = (coral::UserType *) ret;
-	if (u->params.size())
-	  return "(" + u->toString() + ")";
-  }
-  return ret->toString();
+std::string printFuncRetType(coral::Type * ret) {
+  // if (getTypeKind(ret) == coral::UserTypeKind) {
+  // 	auto u = (coral::UserType *) ret;
+  // 	if (u->params.size())
+  // 	  return "(" + u->toString() + ")";
+  // }
+  return typeToString(ret);
 }
 
 void coral::TreePrinter::visit(FuncDef * m) {
@@ -192,7 +192,7 @@ void coral::TreePrinter::visit(DeclClass * a) {
 }
 
 void coral::TreePrinter::visit(DeclTypeAlias * a) {
-  out << IND() << "type " << a->name << " = " << a->wrapped->toString() << END();
+  out << IND() << "type " << a->name << " = " << typeToString(a->wrapped) << END();
   out << END();
 }
 void coral::TreePrinter::visit(DeclTypeEnum * a) {

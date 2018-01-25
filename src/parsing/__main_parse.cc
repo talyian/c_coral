@@ -7,12 +7,7 @@ int main(int argc, char ** argv) {
   if (argc > 1)
     modulep = parse(fopen(argv[1], "r"), 0);
   else
-    modulep = parse(
-      0,
-      "let x = 1 + 2\n"
-      "let y = \"foobar\"\n"
-      "printf(\"[%d]%s\", x, y)\n"
-      );
+    modulep = parse(stdin, 0);
   TreePrinter tp(modulep, std::cout);
   tp.print();
 }

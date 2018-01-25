@@ -2,6 +2,7 @@ import regex
 import threads.map
 
 let input = stdin.bytes.read()
+
 let text = regex.replace(">.*\n|\n", "", input)
 
 let q = [
@@ -16,6 +17,7 @@ let q = [
   "agggtaa[cgt]|[acg]ttaccct"]
 
 func run(r): format("%s %i", r, regex.count_matches(r, text))
+
 let out = threads.map(q, run)
 
 let q = [

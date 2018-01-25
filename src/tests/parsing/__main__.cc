@@ -2,6 +2,6 @@
 #include "../../parsing/lexer.hh"
 #include "../../core/treeprinter.hh"
 
-void runParsingTests();
+bool runParsingTests();
 
-int main() { runParsingTests(); }
+int main() { return runParsingTests() ? 0 : 1; }

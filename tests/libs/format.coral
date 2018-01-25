@@ -1,0 +1,2 @@
+assert("\"foobar\" 00300.00000" == format("{c} {05.5i}", "foobar", 300))
+assert("foobar foobar f0084r" == format(
