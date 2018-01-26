@@ -1,13 +1,13 @@
 #depends on core.Makefile
 PARSERFILES=obj/parsing/generated/lexer.o obj/parsing/generated/parser.o obj/parsing/parse.o
 
-all_parsing: bin/coral-parse bin/coral-token bin/test-coral-parse
+parser: bin/coralp bin/coralt bin/test-coral-parse
 
 # binaries for parsing
-bin/coral-parse: ${COREFILES} ${PARSERFILES} obj/parsing/__main_parse.o
+bin/coralp: ${COREFILES} ${PARSERFILES} obj/parsing/__main_parse.o
 	${LINK} -o $@ $^
 
-bin/coral-token: ${COREFILES} ${PARSERFILES} obj/parsing/__main_token.o
+bin/coralt: ${COREFILES} ${PARSERFILES} obj/parsing/__main_token.o
 	${LINK} -o $@ $^
 
 bin/test-coral-parse: ${COREFILES} ${PARSERFILES} \

@@ -53,6 +53,7 @@ Module * parse_file(const char * filename) {
   buf = new char[len+1];
   fseek(in, 0, 0);
   buf[fread(buf, 1, len, in)] = 0;
+  fclose(in);
   return parse_string(buf, filename);
 }
 
@@ -66,21 +67,23 @@ Module * parse(FILE * in, const char * src) {
   buf = new char[len+1];
   fseek(in, 0, 0);
   buf[fread(buf, 1, len, in)] = 0;
-  return parse_string(buf, "module");
+  auto module = parse_string(buf, "module");
+  delete [] buf;
+  return module;
 }
 
 void yy::parser::error(const yy::location &loc, const std::string& m) {
-  std::stringstream ss(yy_src);
-  std::string line;
-  int i = 0;
-  for(; i < (int)loc.begin.line - 1; i++) {
-    std::getline(ss, line, '\n');
-  }
-  for(; i<(int)loc.begin.line + 2; i++) {
-    std::getline(ss, line, '\n');
-    std::cerr << line << std::endl;
-	if (i == (int)loc.begin.line)
-	  std::cerr << std::string(loc.begin.column, '.') << "^\n";
-  }
+  // std::stringstream ss(yy_src);
+  // std::string line;
+  // int i = 0;
+  // for(; i < (int)loc.begin.line - 1; i++) {
+  //   std::getline(ss, line, '\n');
+  // }
+  // for(; i<(int)loc.begin.line + 2; i++) {
+  //   std::getline(ss, line, '\n');
+  //   std::cerr << line << std::endl;
+  // 	if (i == (int)loc.begin.line)
+  // 	  std::cerr << std::string(loc.begin.column, '.') << "^\n";
+  // }
   std::cerr << '[' << loc.begin << '-' << loc.end << "]: " << m << std::endl;
 }

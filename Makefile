@@ -1,7 +1,7 @@
 CC=     clang++-5.0
 SHELL:= /bin/bash
-COMPILE=${CC} -Wall -std=c++11 -Isrc -g -c -o $@ $<
-MM=     ${CC} -Wall -std=c++11 -Isrc -MM $<
+COMPILE=${CC} -Wall -Wextra -std=c++11 -Isrc -g -c -o $@ $<
+MM=     ${CC} -Wall -Wextra -std=c++11 -Isrc -MM $<
 LINK=   ${CC}
 
 .SUFFIXES:
@@ -10,7 +10,7 @@ LINK=   ${CC}
 
 default: bin/coral-core bin/coral-parse bin/coral-token bin/coral-codegen
 
-test: bin/test-coral-codegen bin/test-coral-parse 
+test: bin/test-coral-codegen bin/test-coral-parse
 	bin/test-coral-parse && bin/test-coral-codegen
 
 clean:

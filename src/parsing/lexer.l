@@ -16,16 +16,16 @@ using namespace coral;
 #define YYSTYPE yy::parser::semantic_type
 #define YYLTYPE yy::location
 #define tok(TOKEN_NAME) return yy::parser::token::TOKEN_NAME
-#define YY_USER_ACTION update(yylloc, yyleng);
+#define YY_USER_ACTION /*printf("TOK: [%s]\n", yytext); */update(yylloc, yyleng);
 #define YY_NO_UNPUT
 #define YY_NO_INPUT
 
 int lineno = 0, colno = 0, paren_depth = 0;
 
-void push_paren(char c) {
+void push_paren(__attribute__((unused)) char c) {
    paren_depth++;
 }
-void pop_paren(char c) {
+void pop_paren(__attribute__((unused)) char c) {
    paren_depth--;
 }
 
@@ -128,7 +128,7 @@ pass     { tok(PASS); }
 \(       { push_paren('('); return '('; }
 \)       { pop_paren(')'); return ')'; }
 {br}     {
-  for(int i=0; i<yyleng; i++) {
+  for(unsigned long i=0; i<yyleng; i++) {
     if (yytext[i] == '\n') { lineno++; colno = 0; }
     else if (yytext[i] == '\r') { colno = 0; }
     else colno++;
