@@ -1,7 +1,5 @@
-#include "lexer.hh"
-
-#include <cstdio>
+#include "parser.hh"
 
 int main() {
-  printf("----------------------------------------\nhi\n");
+  auto module = coralParseModule("../../tests/shootout/knucleotide.coral");
 }
