@@ -1,7 +1,7 @@
 #include <cstdio>
 
 struct ModuleT {
-  FILE * fp = 0;
+
 };
 
 #define Module ModuleT *
@@ -12,11 +12,11 @@ struct ModuleT {
 int zzparse(ParserParam scanner);
 
 Module coralParseModule(const char * infile) {
-  ParserParam scanner = new ParserParamStruct();
-  scanner->lexer = lexerCreate(infile);
-  zzparse(scanner);
-  lexerDestroy(scanner->lexer);
-  delete scanner;
+  ParserParam pp = new ParserParamStruct();
+  pp->lexer = lexerCreate(infile);
+  zzparse(pp);
+  lexerDestroy(pp->lexer);
+  delete pp;
   return 0;
 }
 

@@ -6,24 +6,30 @@
 #error Do not include "lexer.hh" before "lexer-internal.hh"
 #endif
 
-struct Lexer;
+class Lexer;
 #define LexerT Lexer *
+#include "lexer.hh"
 
-// If we need to include the flex source,
-// this flag states that we have a real type for yyscan_t
+// If the flex code hasn't been included yet,
+// this flag states that we've defined yyscan_t already
 #define YY_TYPEDEF_YY_SCANNER_T
 #define yyscan_t void *
 
 #include <vector>
 #include <cstdio>
-struct Lexer {
+class Lexer {
+  FILE * fp = 0;
   yyscan_t scanner;
-  int row = 0;
-  int col = 0;
-  int pos = 0;
   std::vector<int> indents { 0 };
   std::vector<int> tokenQueue;
-  FILE * fp = 0;
+public:
+  Position pos;
+  char * text;
+  int length;
+  Lexer();
+  Lexer(const char * filename);
+  ~Lexer();
+  int Read();
 };
 
 
@@ -31,6 +37,7 @@ typedef struct ParserParamStruct {
   Lexer * lexer = 0;
 } * ParserParam;
 
+// yylex is the original lexer function generated from flexLexer.l;
+// zzlex is our enriched lexer function (handling indents, etc) that
+// encapsulates class Lexer::Read()
 int zzlex(int * yylval, ParserParam scanner);
-
-# include "lexer.hh"
