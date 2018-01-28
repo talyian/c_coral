@@ -1,3 +1,5 @@
+#include <string>
+
 namespace coral {
   class Token {
   public:
@@ -9,6 +11,11 @@ namespace coral {
 	  NEWLINE,
 	  INDENT,
 	  DEDENT,
+	  FUNC,
 	};
+
+	static int GetKeyword(std::string s) {
+	  return s == "func" ? Token::FUNC : 0;
+	}
   };
 }

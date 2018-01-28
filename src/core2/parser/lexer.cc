@@ -1,8 +1,4 @@
-// Include lexer.h before everything else, but make LexerT a transparent pointer.
-// this way, we can access the struct in the flex file.
-struct Lexer;
-#define LexerT Lexer *
-#include "lexer.hh"
+#include "lexer-internal.hh"
 
 // this must be included before flex.hh for easy path reasons
 #include "tokens.hh"
@@ -11,19 +7,6 @@ struct Lexer;
 #define YYSTYPE int
 #define YY_EXTRA_TYPE Lexer *
 #include "../build/parser/flexLexer.hh"
-
-#include <cstdio>
-#include <vector>
-
-struct Lexer {
-  yyscan_t scanner;
-  int row = 0;
-  int col = 0;
-  int pos = 0;
-  std::vector<int> indents { 0 };
-  std::vector<int> tokenQueue;
-  FILE * fp = 0;
-};
 
 LexerT lexerCreate(char* filename) {
   auto lexer = new Lexer();
@@ -41,7 +24,15 @@ void lexerDestroy(LexerT lexer) {
   delete lexer;
 }
 
-/// in which we build a loop around yylex to track line numbers and indent/dedents
+// Used by the Bison parser
+int zzlex(YYSTYPE * val, ParserParam pp) {
+  printf("[ZZLEX] \n");
+  auto lexer = pp->lexer;
+  if (lexer) return lexerRead(lexer, 0, 0, 0);
+  return 0;
+}
+
+// in which we build a loop around yylex to track line numbers and indent/dedents
 int lexerRead(LexerT lexer, char ** text, int * length, Position* position) {
   YYSTYPE lval;
   auto scan = lexer->scanner;
@@ -59,7 +50,11 @@ int lexerRead(LexerT lexer, char ** text, int * length, Position* position) {
 		position->start.col = yyget_column(scan);
 		position->start.row = yyget_lineno(scan);
 	  }
-	  if (val == coral::Token::NEWLINE) {
+
+	  if (val != coral::Token::NEWLINE) {
+		printf("lexerread: %d\n", val);
+		return val;
+	  } else {
 		auto newIndent = *length - 1;
 		auto curIndent = lexer->indents.empty() ? 0 : lexer->indents.back();
 		if (curIndent < newIndent) {
@@ -76,8 +71,6 @@ int lexerRead(LexerT lexer, char ** text, int * length, Position* position) {
 		} else {
 		  return val;
 		}
-	  } else {
-		return val;
 	  }
 	}
   }

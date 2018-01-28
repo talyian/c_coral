@@ -1,7 +1,7 @@
-
 /// Public Interface for the Coral lexer
 
 #pragma once
+#define CORAL_LEXER_HH
 
 #include <cstdio>
 

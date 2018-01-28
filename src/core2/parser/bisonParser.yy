@@ -1,24 +1,34 @@
+%define api.pure full
+%name-prefix "zz"
+%lex-param {scanner}
+
+%parse-param {ParserParam scanner}
 
 %{
+#include "lexer-internal.hh"
+
 #include <cstdio>
 
-int yylex() {
-
-}
-
-void yyerror(char * msg) {
-
+void yyerror(ParserParam pp, const char * msg) {
+	printf("Error: %s\n", msg, pp);
 }
 
 %}
 
+%token STRING 1001
+%token IDENTIFIER 1002
+%token NEWLINE 1003
+%token INDENT 1004
+%token DEDENT 1005
+%token FUNC 1006
+
 %%
 
-program : { printf("hi\n"); }
+line : IDENTIFIER { }
+	 | line IDENTIFIER { }
+	 | line '(' { }
+
+program : NEWLINE { printf("[RULE] Program\n"); }
+		| program line NEWLINE { printf("[RULE] Identifier\n"); }
 
 %%
-
-int main() {
-	printf("hi there\n");
-	yyparse();
-}
