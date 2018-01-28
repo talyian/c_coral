@@ -28,8 +28,14 @@ void lexerDestroy(LexerT lexer) {
 int zzlex(YYSTYPE * val, ParserParam pp) {
   printf("[ZZLEX] \n");
   auto lexer = pp->lexer;
-  if (lexer) return lexerRead(lexer, 0, 0, 0);
-  return 0;
+  int length;
+  char * text;
+
+  if (!lexer) return 0;
+  auto ret_val = lexerRead(lexer, &text, &length, 0);
+  std::string tok = coral::Token::show(ret_val, text);
+  printf("lexerread: [%d] %s \n", ret_val, tok.c_str());
+  return ret_val;
 }
 
 // in which we build a loop around yylex to track line numbers and indent/dedents
@@ -52,10 +58,9 @@ int lexerRead(LexerT lexer, char ** text, int * length, Position* position) {
 	  }
 
 	  if (val != coral::Token::NEWLINE) {
-		printf("lexerread: %d\n", val);
 		return val;
 	  } else {
-		auto newIndent = *length - 1;
+		auto newIndent = yyget_leng(scan) - 1;
 		auto curIndent = lexer->indents.empty() ? 0 : lexer->indents.back();
 		if (curIndent < newIndent) {
 		  lexer->indents.push_back(newIndent);
