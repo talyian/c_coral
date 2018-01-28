@@ -1,21 +1,23 @@
-LINKCMD=clang++-5.0 -o $@ $^
+LINKCMD=mkdir -p $(dir $@); clang++-5.0 -o $@ $^
+BUILD=obj
+BIN=bin
 .SUFFIXES:
 
-run: build/main-coral-parse
+run: ${BIN}/main-coral-parse
 	@$<
 clean:
-	@rm -r build parser/bisonParser.tab.cc parser/bisonParser.tab.hh
+	@rm -r ${BIN} ${BUILD} parser/bisonParser.tab.cc parser/bisonParser.tab.hh
 
-build/main-coral-core: build/core/expr.o  build/core/prettyprinter.o build/core/main.o
+${BIN}/main-coral-core: ${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/core/main_core.o
 	${LINKCMD}
-build/main-coral-token: build/core/expr.o  build/core/prettyprinter.o build/parser/lexer.o build/parser/main_tokens.o
+${BIN}/main-coral-token: ${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/parser/lexer.o ${BUILD}/parser/main_tokens.o
 	${LINKCMD}
-build/main-coral-parse: build/core/expr.o  build/core/prettyprinter.o build/parser/lexer.o build/parser/bisonParser.tab.o build/parser/parser.o build/parser/main.o
+${BIN}/main-coral-parse: ${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o ${BUILD}/parser/parser.o ${BUILD}/parser/main_parse.o
 	${LINKCMD}
 
 # # # Bison # # #
-build/parser/lexer.o: build/parser/flexLexer.hh
-build/parser/flexLexer.hh: parser/flexLexer.l
+${BUILD}/parser/lexer.o: parser/flexLexer.hh
+parser/flexLexer.hh: parser/flexLexer.l
 	@mkdir -p $(dir $@)
 	flex -o $@ $<
 parser/bisonParser.tab.hh: parser/bisonParser.tab.cc
@@ -23,9 +25,9 @@ parser/bisonParser.tab.cc: parser/bisonParser.yy
 	bison -d -o $@ $<
 
 # # # Autodeps # # #
-build/%.o: %.cc
+${BUILD}/%.o: %.cc
 	@mkdir -p $(dir $@)
 	clang++-5.0 -std=c++11 -Wall -Wextra -MM -o $@.d -MT '$@ $@.d' $<
 	clang++-5.0 -std=c++11 -Wall -Wextra -c -g -o $@ $<
 
--include build/**/*.d
+-include ${BUILD}/**/*.d

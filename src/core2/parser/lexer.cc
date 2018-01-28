@@ -6,7 +6,7 @@
 // bison-bridge assumes YYSTYPE is defined before flex is included
 #define YYSTYPE int
 #define YY_EXTRA_TYPE Lexer *
-#include "../build/parser/flexLexer.hh"
+#include "flexLexer.hh"
 
 LexerT lexerCreate(const char * filename) { return new Lexer(filename); }
 

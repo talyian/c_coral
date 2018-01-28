@@ -1,4 +1,5 @@
-build
+bin
+obj
 bisonParser.tab.cc
 bisonParser.tab.hh
 flexLexer.hh
