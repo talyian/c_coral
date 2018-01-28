@@ -1,0 +1,32 @@
+import regex
+import threads.map
+
+let input = stdin.bytes.read()
+
+let text = regex.replace(">.*\n|\n", "", input)
+
+let q = [
+  "agggtaaa|tttaccct",
+  "[cgt]gggtaaa|tttaccc[acg]",
+  "a[act]ggtaaa|tttacc[agt]t",
+  "ag[act]gtaaa|tttac[agt]ct",
+  "agg[act]taaa|ttta[agt]cct",
+  "aggg[acg]aaa|ttt[cgt]ccct",
+  "agggt[cgt]aa|tt[acg]accct",
+  "agggta[cgt]a|t[acg]taccct",
+  "agggtaa[cgt]|[acg]ttaccct"]
+
+func run(r): format("%s %i", r, regex.count_matches(r, text))
+
+let out = threads.map(q, run)
+
+let q = [
+  ("tHa[Nt]","<4>"),
+  ("aND|caN|Ha[DS]|WaS","<3>"),
+  ("a[NSt]|BY","<2>"),
+  ("<[^>]*>","|"),
+  ("\\|[^|][^|]*\\|","-")]
+
+out.add $ q.reduce(text, regex.replace >> (flip tconcat))
+
+printf("\n%d\n%d\n%d\n", input.length, text.length, final.length)

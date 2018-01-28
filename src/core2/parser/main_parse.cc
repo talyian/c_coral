@@ -1,5 +1,5 @@
 #include "parser.hh"
 
 int main() {
-  coralParseModule("../../tests/shootout/knucleotide.coral");
+  coralParseModule("tests/cases/shootout/knucleotide.coral");
 }
