@@ -11,7 +11,7 @@ struct ModuleT {
 
 int zzparse(ParserParam scanner);
 
-Module coralParseModule(char * infile) {
+Module coralParseModule(const char * infile) {
   ParserParam scanner = new ParserParamStruct();
   scanner->lexer = lexerCreate(infile);
   zzparse(scanner);
@@ -20,7 +20,7 @@ Module coralParseModule(char * infile) {
   return 0;
 }
 
-void coralJsonModule(Module m, char * outfile) {
+void coralJsonModule(Module m, const char * outfile) {
 
 }
 

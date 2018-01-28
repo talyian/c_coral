@@ -5,6 +5,6 @@
 #define Module void *
 #endif
 
-extern "C" Module coralParseModule(char * infile);
-extern "C" void coralJsonModule(Module m, char * outfile);
+extern "C" Module coralParseModule(const char * infile);
+extern "C" void coralJsonModule(Module m, const char * outfile);
 extern "C" void coralDestroyModule(Module m);

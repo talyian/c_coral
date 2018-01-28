@@ -8,7 +8,7 @@
 #define YY_EXTRA_TYPE Lexer *
 #include "../build/parser/flexLexer.hh"
 
-LexerT lexerCreate(char* filename) {
+LexerT lexerCreate(const char * filename) {
   auto lexer = new Lexer();
   yylex_init_extra(lexer, &lexer->scanner);
   if (filename) {

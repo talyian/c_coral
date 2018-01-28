@@ -14,6 +14,6 @@ struct Position {
   struct { int pos, row, col; } end;
 };
 
-extern "C" LexerT lexerCreate(char* input);
+extern "C" LexerT lexerCreate(const char * input);
 extern "C" void lexerDestroy(LexerT lexer);
 extern "C" int lexerRead(LexerT lexer, char ** text, int * length, Position* position);
