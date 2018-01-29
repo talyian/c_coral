@@ -18,12 +18,22 @@ class Lexer;
 
 #include <vector>
 #include <cstdio>
+
+// Bison's Stack type
+typedef union {
+  struct { char * buf; int len; } str;
+  // coral::ast::BaseExpr * expr;
+  void * expr;
+} YYSTYPE;
+
+
 class Lexer {
   FILE * fp = 0;
   yyscan_t scanner;
   std::vector<int> indents { 0 };
   std::vector<int> tokenQueue;
 public:
+  YYSTYPE lval;
   Position pos;
   char * text;
   int length;
@@ -38,13 +48,9 @@ typedef struct ParserParamStruct {
   Lexer * lexer = 0;
 } * ParserParam;
 
-typedef union {
-  char * str;
-} YYSTYPE;
-
 // yylex is the original lexer function generated from flexLexer.l;
 // coral_lex is our enriched lexer function (handling indents, etc) that
 // encapsulates class Lexer::Read()
 int coral_lex(YYSTYPE * yylval, ParserParam scanner);
 
-#define YYTOKENTYPE coral::Token::TokenValues
+// #define YYTOKENTYPE coral::Token::TokenValues

@@ -1,10 +1,10 @@
 // C api for parser
 #pragma once
 
-#ifndef Module
-#define Module void *
+#ifndef ParserModule
+#define ParserModule void *
 #endif
 
-extern "C" Module coralParseModule(const char * infile);
-extern "C" void coralJsonModule(Module m, const char * outfile);
-extern "C" void coralDestroyModule(Module m);
+extern "C" ParserModule coralParseModule(const char * infile);
+extern "C" void coralJsonModule(ParserModule m, const char * outfile);
+extern "C" void coralDestroyModule(ParserModule m);

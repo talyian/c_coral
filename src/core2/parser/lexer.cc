@@ -6,6 +6,7 @@
 // bison-bridge assumes YYSTYPE is defined before flex is included
 #define YY_EXTRA_TYPE Lexer *
 #include "flexLexer.hh"
+#include "bisonParser.tab.hh"
 
 LexerT lexerCreate(const char * filename) { return new Lexer(filename); }
 
@@ -39,7 +40,6 @@ Lexer::~Lexer() {
 
 // in which we build a loop around yylex to track line numbers and indent/dedents
 int Lexer::Read() {
-  YYSTYPE lval;
   int val = 0;
   while(true) {
 	if (!tokenQueue.empty()) {
@@ -53,21 +53,21 @@ int Lexer::Read() {
 	  pos.start.col = yyget_column(scanner);
 	  pos.start.row = yyget_lineno(scanner);
 
-	  if (val != coral::Token::NEWLINE) {
+	  if (val != NEWLINE) {
 		return val;
 	  } else {
 		auto newIndent = (int) yyget_leng(scanner) - 1;
 		auto curIndent = indents.empty() ? 0 : indents.back();
 		if (curIndent < newIndent) {
 		  indents.push_back(newIndent);
-		  tokenQueue.push_back(coral::Token::NEWLINE);
-		  tokenQueue.push_back(coral::Token::INDENT);
+		  tokenQueue.push_back(NEWLINE);
+		  tokenQueue.push_back(INDENT);
 		} else if (curIndent > newIndent) {
 		  while(curIndent > newIndent) {
 			indents.pop_back();
 			curIndent = indents.empty() ? 0 : indents.back();
-			tokenQueue.push_back(coral::Token::NEWLINE);
-			tokenQueue.push_back(coral::Token::DEDENT);
+			tokenQueue.push_back(NEWLINE);
+			tokenQueue.push_back(DEDENT);
 		  }
 		} else {
 		  return val;
@@ -85,7 +85,8 @@ int coral_lex(YYSTYPE * val, ParserParam pp) {
 
   if (!lexer) return 0;
   auto ret_val = lexerRead(lexer, &text, &length, 0);
-  std::string tok = coral::Token::show(ret_val, text);
-  printf("ZZLEX: [%4d] %s \n", ret_val, tok.c_str());
+  std::string tok = show(ret_val, text);
+  printf("Coral LEX: [%4d] %s \n", ret_val, tok.c_str());
+  *val = lexer->lval;
   return ret_val;
 }

@@ -20,14 +20,15 @@ void yyerror(ParserParam pp, const char * msg) {
 %token FUNC
 %token LET
 
+%type <expr> Function ModuleLine
 %%
 
 ModuleRule : { printf("[RULE] Program Empty\n"); }
 | ModuleRule NEWLINE { printf("[RULE] Program continued \n"); }
-| ModuleRule line NEWLINE { printf("[RULE] Program continued \n"); }
+| ModuleRule ModuleLine NEWLINE { printf("[RULE] Program continued \n"); }
 
 StatementLinesRule : { printf("Statement Lines \n"); }
-| StatementLinesRule line NEWLINE { printf ("line\n"); }
+| StatementLinesRule ModuleLine NEWLINE { printf ("line\n"); }
 
 BodyRule : INDENT StatementLinesRule DEDENT { }
 
@@ -41,19 +42,18 @@ ArgumentsListInner : Argument { } | ArgumentsListInner ',' Argument { }
 
 Argument : Expr { } | IDENTIFIER '=' Expr { printf("Argument Name %s", $1); }
 
-function
-: FUNC IDENTIFIER '(' ParamsListInner ')' ':' NEWLINE BodyRule { printf("[RULE] function\n"); }
-| FUNC IDENTIFIER '(' ')' ':' NEWLINE BodyRule { printf("[RULE] function\n"); }
-
 Param   : IDENTIFIER { }
 
 ParamsListInner : Param { }
 | ParamsListInner ',' Param { }
 
-line : Expr { }
-| function { }
-| LET IDENTIFIER '=' Expr { }
-| line IDENTIFIER { }
-| line '(' { }
+ModuleLine : Expr { }
+| Function { $$ = $1; }
+| Let { }
 
+Function
+: FUNC IDENTIFIER '(' ParamsListInner ')' ':' NEWLINE BodyRule { printf("[RULE] function\n"); }
+| FUNC IDENTIFIER '(' ')' ':' NEWLINE BodyRule { printf("[RULE] function\n"); }
+
+Let : LET IDENTIFIER '=' Expr { printf("LET [%.*s]\n\n", $2.len, $2.buf); }
 %%

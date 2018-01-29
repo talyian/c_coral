@@ -3,22 +3,13 @@
 %option reentrant
 %option yylineno
 
-%{
-// the path for this is kind of annoying so
-// we just rely on the relative include from the parent
-#include "tokens.hh"
-%}
-
 %%
 
-\"(\\\"|[^\"])*\" { return coral::Token::STRING; }
-
-[a-zA-Z][a-zA-Z0-9]* { return coral::Token::GetKeyword(yytext) ?: coral::Token::IDENTIFIER; }
-
-[0-9][0-9]*L? { return coral::Token::INTEGER; }
-
+\"(\\\"|[^\"])*\" { yylval->str.buf = yytext; yylval->str.len = yyleng; return STRING; }
+[a-zA-Z][a-zA-Z0-9]* { yylval->str.buf = yytext; yylval->str.len = yyleng; return coral::Token::GetKeyword(yytext) ?: IDENTIFIER; }
+[0-9][0-9]*L? { yylval->str.buf = yytext; yylval->str.len = yyleng; return INTEGER; }
 [ ]       { }
-\n[ \t]*  { yytext[0] = ' '; return coral::Token::NEWLINE; }
+\n[ \t]*  { yytext[0] = ' '; return NEWLINE; }
 .         { return yytext[0]; }
 
 %%
