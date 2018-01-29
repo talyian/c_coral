@@ -9,12 +9,12 @@ struct ModuleT {
 #include "parser.hh"
 #include "lexer-internal.hh"
 
-int zzparse(ParserParam scanner);
+int coral_parse(ParserParam scanner);
 
 Module coralParseModule(const char * infile) {
   ParserParam pp = new ParserParamStruct();
   pp->lexer = lexerCreate(infile);
-  zzparse(pp);
+  coral_parse(pp);
   lexerDestroy(pp->lexer);
   delete pp;
   return 0;

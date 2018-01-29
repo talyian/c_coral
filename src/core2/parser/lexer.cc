@@ -4,7 +4,6 @@
 #include "tokens.hh"
 
 // bison-bridge assumes YYSTYPE is defined before flex is included
-#define YYSTYPE int
 #define YY_EXTRA_TYPE Lexer *
 #include "flexLexer.hh"
 
@@ -79,7 +78,7 @@ int Lexer::Read() {
 }
 
 // Used by the Bison parser
-int zzlex(YYSTYPE * val, ParserParam pp) {
+int coral_lex(YYSTYPE * val, ParserParam pp) {
   auto lexer = pp->lexer;
   int length;
   char * text;

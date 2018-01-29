@@ -1,3 +1,4 @@
+#pragma once
 /// Private interface for Coral Lexer
 
 // The public Lexer interface. We forward-declare the Lexer struct
@@ -37,7 +38,13 @@ typedef struct ParserParamStruct {
   Lexer * lexer = 0;
 } * ParserParam;
 
+typedef union {
+  char * str;
+} YYSTYPE;
+
 // yylex is the original lexer function generated from flexLexer.l;
-// zzlex is our enriched lexer function (handling indents, etc) that
+// coral_lex is our enriched lexer function (handling indents, etc) that
 // encapsulates class Lexer::Read()
-int zzlex(int * yylval, ParserParam scanner);
+int coral_lex(YYSTYPE * yylval, ParserParam scanner);
+
+#define YYTOKENTYPE coral::Token::TokenValues
