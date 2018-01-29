@@ -10,6 +10,7 @@ namespace coral {
 	  ParserParam pp = new ParserParamStruct();
 	  pp->lexer = lexerCreate(infile);
 	  coral_parse(pp);
+	  if (pp->module) delete pp->module;
 	  lexerDestroy(pp->lexer);
 	  delete pp;
 	}

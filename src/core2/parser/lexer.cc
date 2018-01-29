@@ -60,18 +60,18 @@ int Lexer::Read() {
 		auto curIndent = indents.empty() ? 0 : indents.back();
 		if (curIndent < newIndent) {
 		  indents.push_back(newIndent);
-		  tokenQueue.push_back(NEWLINE);
 		  tokenQueue.push_back(INDENT);
 		} else if (curIndent > newIndent) {
 		  while(curIndent > newIndent) {
 			indents.pop_back();
 			curIndent = indents.empty() ? 0 : indents.back();
-			tokenQueue.push_back(NEWLINE);
 			tokenQueue.push_back(DEDENT);
+			tokenQueue.push_back(NEWLINE);
 		  }
 		} else {
 		  return val;
 		}
+		return val;
 	  }
 	}
   }

@@ -1,22 +1,7 @@
 #pragma once
 
 #include <string>
-
-// namespace coral {
-//   class Token {
-//   public:
-
-// 	enum {
-// 	  STRING = 258,
-// 	  IDENTIFIER = 259,
-// 	  INTEGER = 260,
-// 	  NEWLINE = 261,
-// 	  INDENT = 262,
-// 	  DEDENT = 263,
-// 	  FUNC = 264,
-// 	  LET = 265
-// 	};
-
+#include "lexer-internal.hh"
 #include "bisonParser.tab.hh"
 
 namespace coral {
@@ -24,6 +9,8 @@ namespace coral {
 	static int GetKeyword(std::string s) {
 	  return s == "func" ? FUNC :
 		s == "let" ? LET :
+		s == "for" ? FOR :
+		s == "in" ?  IN :
 		0;
 	}
   }

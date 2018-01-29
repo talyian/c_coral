@@ -16,7 +16,7 @@ ${BIN}/main-coral-parse: ${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${B
 	${LINKCMD}
 
 # # # Bison # # #
-${BUILD}/parser/lexer.o: parser/flexLexer.hh
+${BUILD}/parser/lexer.o: parser/flexLexer.hh parser/bisonParser.tab.hh
 parser/flexLexer.hh: parser/flexLexer.l
 	@mkdir -p $(dir $@)
 	flex -o $@ $<

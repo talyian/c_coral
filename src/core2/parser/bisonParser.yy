@@ -1,7 +1,7 @@
 %define api.pure full
-%lex-param {scanner}
+%lex-param {pp}
 %name-prefix "coral_"
-%parse-param {ParserParam scanner}
+%parse-param {ParserParam pp}
 
 %{
 #include "lexer-internal.hh"
@@ -19,24 +19,36 @@ void yyerror(ParserParam pp, const char * msg) {
 %token DEDENT
 %token FUNC
 %token LET
+%token FOR
+%token IN
 
-%type <expr> Function ModuleLine
+%type <expr> Function ModuleLine ModuleRule Expr ForLoop Let
+%type <exprlines> StatementLinesRule
+
 %%
 
-ModuleRule : { printf("[RULE] Program Empty\n"); }
-| ModuleRule NEWLINE { printf("[RULE] Program continued \n"); }
-| ModuleRule ModuleLine NEWLINE { printf("[RULE] Program continued \n"); }
+ModuleRule : StatementLinesRule {
+  std::vector<coral::ast::BaseExpr *> bb = *$1;
+  pp->module = new coral::ast::Module(bb);
+  delete $1;
+  for(auto v: bb) delete v;
+  printf("done loading module\n");
+  return 0;
+}
 
-StatementLinesRule : { printf("Statement Lines \n"); }
-| StatementLinesRule ModuleLine NEWLINE { printf ("line\n"); }
+StatementLinesRule : { $$ = new std::vector<coral::ast::BaseExpr *>(); }
+| StatementLinesRule ModuleLine NEWLINE { $$ = $1; $$->push_back($2); }
 
-BodyRule : INDENT StatementLinesRule DEDENT { }
-
-Expr : IDENTIFIER { }
-| Expr '.' IDENTIFIER { }
-| Expr '(' ArgumentsListInner ')' { }
-| Expr '(' ')' { }
-| INTEGER { }
+Expr : IDENTIFIER { $$ = 0; }
+| Expr '.' IDENTIFIER { $$ = 0; }
+| Expr '(' ArgumentsListInner ')' { $$ = 0; }
+| Expr '(' ')' { $$ = 0; }
+| INTEGER { $$ = 0; }
+| IDENTIFIER '[' ArgumentsListInner ']' { $$ = 0; }
+| Expr '+' '=' Expr { $$ = 0; }
+| Expr '=' '>' Expr { $$ = 0; }
+| Expr '-' Expr { $$ = 0; }
+| Expr Expr { $$ = 0; }
 
 ArgumentsListInner : Argument { } | ArgumentsListInner ',' Argument { }
 
@@ -47,13 +59,16 @@ Param   : IDENTIFIER { }
 ParamsListInner : Param { }
 | ParamsListInner ',' Param { }
 
-ModuleLine : Expr { }
+ModuleLine : Expr { $$ = $1; }
 | Function { $$ = $1; }
-| Let { }
+| Let { $$ = $1; }
+| ForLoop { $$ = $1; }
 
 Function
-: FUNC IDENTIFIER '(' ParamsListInner ')' ':' NEWLINE BodyRule { printf("[RULE] function\n"); }
-| FUNC IDENTIFIER '(' ')' ':' NEWLINE BodyRule { printf("[RULE] function\n"); }
+: FUNC IDENTIFIER '(' ParamsListInner ')' ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = 0; }
+| FUNC IDENTIFIER '(' ')' ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = 0; }
 
-Let : LET IDENTIFIER '=' Expr { printf("LET [%.*s]\n\n", $2.len, $2.buf); }
+ForLoop : FOR IDENTIFIER IN Expr ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = 0; }
+
+Let : LET IDENTIFIER '=' Expr { $$ = 0; }
 %%

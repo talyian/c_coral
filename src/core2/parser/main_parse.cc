@@ -1,5 +1,7 @@
 #include "parser.hh"
 
 int main() {
-  coralParseModule("tests/cases/shootout/knucleotide.coral");
+  // auto m = coralParseModule("tests/cases/simple/hello_world.coral");
+  auto m = coralParseModule("tests/cases/shootout/knucleotide.coral");
+  coralDestroyModule(m);
 }

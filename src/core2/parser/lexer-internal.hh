@@ -7,6 +7,8 @@
 #error Do not include "lexer.hh" before "lexer-internal.hh"
 #endif
 
+#include "../core/expr.hh"
+
 class Lexer;
 #define LexerT Lexer *
 #include "lexer.hh"
@@ -22,8 +24,8 @@ class Lexer;
 // Bison's Stack type
 typedef union {
   struct { char * buf; int len; } str;
-  // coral::ast::BaseExpr * expr;
-  void * expr;
+  coral::ast::BaseExpr * expr;
+  std::vector<coral::ast::BaseExpr *> * exprlines;
 } YYSTYPE;
 
 
@@ -46,6 +48,7 @@ public:
 
 typedef struct ParserParamStruct {
   Lexer * lexer = 0;
+  coral::ast::Module * module = 0;
 } * ParserParam;
 
 // yylex is the original lexer function generated from flexLexer.l;

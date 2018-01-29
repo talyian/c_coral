@@ -32,19 +32,21 @@ namespace coral {
 	public:
 #define F(E) virtual void visit(__attribute__((unused)) E * expr) { printf(#E "\n"); }
 	MAP_ALL_EXPRS(F)
-	F(BaseExpr);
+	F(BaseExpr)
 #undef F
 	};
 
 	enum class ExprTypeKind {
 #define F(E) E##Kind,
 	MAP_ALL_EXPRS(F)
+	F(BaseExpr)
 #undef F
 	};
 
 	class BaseExpr {
 	public:
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	  virtual ~BaseExpr() { }
 	};
 
 	class Expr : public BaseExpr { };
@@ -59,7 +61,8 @@ namespace coral {
 #undef F
 	static ExprTypeKind of(BaseExpr * e) {
 	  ExprTypeVisitor v;
-	  e->accept(&v);
+	  v.out = ExprTypeKind::BaseExprKind;
+	  if (e) e->accept(&v);
 	  return v.out;
 	}
 	};
@@ -88,7 +91,7 @@ namespace coral {
 			functions.push_back(unique_ptr<Func>((Func *) line));
 		  else if (ExprTypeVisitor::of(line) == ExprTypeKind::ImportKind)
 			imports.push_back(unique_ptr<Import>((Import *) line));
-		  else
+		  else if (line)
 			init->lines.push_back(unique_ptr<BaseExpr>(line));
 		}
 	  }
