@@ -60,7 +60,7 @@ namespace coral {
 	cout << IND() << e->value << END(); }
 
   void PrettyPrinter::visit(ast::StringLiteral * s) {
-	cout << IND() << '"' << s->value << '"' << END(); }
+	cout << IND()  << s->value << END(); }
 
   void PrettyPrinter::visit(ast::IfExpr * s) {
 	cout << IND() << "if ";

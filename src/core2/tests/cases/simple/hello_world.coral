@@ -1,1 +1,2 @@
-printf printf
+printf("Hello, %s\n", "World!")
+printf("Goodbye, World!\n")

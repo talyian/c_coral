@@ -4,12 +4,21 @@
 #include "bisonParser.tab.hh"
 #include "../core/prettyprinter.hh"
 namespace coral {
+
+  void coral::parser::error(const std::string & msg) {
+	auto lexer = this->pp->lexer;
+	fprintf(stderr, "[Line %d]: Error: %s", lexer->pos.start.row, msg.c_str());
+	fprintf(stderr, "  '%s'\n", lexer->text);
+  }
+
+
   class Parser {
   public:
 	coral::ast::BaseExpr * module;
 	Parser(const char * infile) {
 	  ParserParam pp = new ParserParamStruct();
 	  pp->lexer = lexerCreate(infile);
+	  pp->lexer->debug = true;
 	  coral::parser PP(pp);
 	  PP.parse();
 	  module = pp->module;

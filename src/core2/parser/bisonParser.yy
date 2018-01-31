@@ -7,9 +7,6 @@
 %{
 #include "lexer-internal.hh"
 #include <cstdio>
-void coral::parser::error(const std::string & msg) {
-    std::cerr << "Parsing Error: " << msg << "\n";
-}
 %}
 
 %token <std::string> OP
@@ -53,6 +50,7 @@ Expr : IDENTIFIER { $$ = new ast::Var($1); }
 | Expr '(' ')' { $$ = 0; }
 | Expr Expr { $$ = new ast::Call($1, $2); }
 | INTEGER { $$ = new ast::IntLiteral($1); }
+| STRING { $$ = new ast::StringLiteral($1); }
 | IDENTIFIER '[' ArgumentsListInner ']' { $$ = 0; }
 | Expr OP Expr  { $$ = new ast::BinOp($1, $2, $3); }
 
