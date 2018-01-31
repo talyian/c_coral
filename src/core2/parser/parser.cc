@@ -2,19 +2,28 @@
 
 #include "lexer-internal.hh"
 #include "bisonParser.tab.hh"
-
+#include "../core/prettyprinter.hh"
 namespace coral {
   class Parser {
   public:
+	coral::ast::BaseExpr * module;
 	Parser(const char * infile) {
 	  ParserParam pp = new ParserParamStruct();
 	  pp->lexer = lexerCreate(infile);
-	  coral_parse(pp);
-	  if (pp->module) delete pp->module;
+	  pp->lexer->debug = true;
+	  coral::parser PP(pp);
+	  PP.parse();
+	  module = pp->module;
 	  lexerDestroy(pp->lexer);
 	  delete pp;
+
+	  coral::PrettyPrinter pretty;
+	  module->accept(&pretty);
 	}
 	void writeJson(const char * outfile) { }
+	~Parser() {
+	  delete module;
+	}
   };
 }
 

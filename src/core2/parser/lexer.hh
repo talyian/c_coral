@@ -5,8 +5,8 @@
 
 #include <cstdio>
 
-#ifndef LexerT
-typedef void * LexerT;
+#ifndef LexerHandle
+typedef void * LexerHandle;
 #endif
 
 struct Position {
@@ -14,6 +14,6 @@ struct Position {
   struct { int pos, row, col; } end;
 };
 
-extern "C" LexerT lexerCreate(const char * input);
-extern "C" void lexerDestroy(LexerT lexer);
-extern "C" int lexerRead(LexerT lexer, char ** text, int * length, Position* position);
+extern "C" LexerHandle lexerCreate(const char * input);
+extern "C" void lexerDestroy(LexerHandle lexer);
+extern "C" int lexerRead(LexerHandle lexer, char ** text, int * length, Position* position);

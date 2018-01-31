@@ -1,4 +1,4 @@
-// C api for parser
+// C api for Coral Parser
 #pragma once
 
 #ifndef ParserModule

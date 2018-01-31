@@ -1,19 +1,22 @@
-%define api.pure full
+%language "c++"
+%define api.value.type variant
 %lex-param {pp}
-%name-prefix "coral_"
+%name-prefix "coral"
 %parse-param {ParserParam pp}
 
 %{
 #include "lexer-internal.hh"
 #include <cstdio>
-void yyerror(ParserParam pp, const char * msg) {
-	printf("Error: %s\n", msg, pp);
+void coral::parser::error(const std::string & msg) {
+    std::cerr << "Parsing Error: " << msg << "\n";
 }
 %}
 
-%token <str> STRING
-%token <str> IDENTIFIER
-%token <str> INTEGER
+%token <std::string> OP
+%token <std::string> COMMENT
+%token <std::string> STRING
+%token <std::string> IDENTIFIER
+%token <std::string> INTEGER
 %token NEWLINE
 %token INDENT
 %token DEDENT
@@ -21,54 +24,68 @@ void yyerror(ParserParam pp, const char * msg) {
 %token LET
 %token FOR
 %token IN
+%token IF
+%token ELIF
+%token ELSE
+%token RETURN
 
-%type <expr> Function ModuleLine ModuleRule Expr ForLoop Let
-%type <exprlines> StatementLinesRule
+// TODO split between Statements and Exprs
+%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule Expr ForLoop Let IfElse Argument
+%type <coral::ast::Block *> StatementBlock
+%type <std::vector<coral::ast::BaseExpr *>> StatementLinesRule ParamsListInner ArgumentsListInner
 
 %%
 
 ModuleRule : StatementLinesRule {
-  std::vector<coral::ast::BaseExpr *> bb = *$1;
-  pp->module = new coral::ast::Module(bb);
-  delete $1;
-  for(auto v: bb) delete v;
-  printf("done loading module\n");
+  pp->module = new coral::ast::Module($1);
   return 0;
 }
 
-StatementLinesRule : { $$ = new std::vector<coral::ast::BaseExpr *>(); }
-| StatementLinesRule ModuleLine NEWLINE { $$ = $1; $$->push_back($2); }
+StatementLinesRule : { }
+| StatementLinesRule ModuleLine NEWLINE { $$ = $1; $$.push_back($2); }
 
-Expr : IDENTIFIER { $$ = 0; }
+StatementBlock : ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = new ast::Block($4); }
+| ':' ModuleLine { $$ = new ast::Block({ $2 }); }
+
+Expr : IDENTIFIER { $$ = new ast::Var($1); }
 | Expr '.' IDENTIFIER { $$ = 0; }
-| Expr '(' ArgumentsListInner ')' { $$ = 0; }
+| Expr '(' ArgumentsListInner ')' { $$ = new ast::Call($1, $3); }
 | Expr '(' ')' { $$ = 0; }
-| INTEGER { $$ = 0; }
+| Expr Expr { $$ = new ast::Call($1, $2); }
+| INTEGER { $$ = new ast::IntLiteral($1); }
 | IDENTIFIER '[' ArgumentsListInner ']' { $$ = 0; }
-| Expr '+' '=' Expr { $$ = 0; }
-| Expr '=' '>' Expr { $$ = 0; }
-| Expr '-' Expr { $$ = 0; }
-| Expr Expr { $$ = 0; }
+| Expr OP Expr  { $$ = new ast::BinOp($1, $2, $3); }
 
-ArgumentsListInner : Argument { } | ArgumentsListInner ',' Argument { }
 
-Argument : Expr { } | IDENTIFIER '=' Expr { printf("Argument Name %s", $1); }
+ArgumentsListInner : Argument { $$.push_back($1); }
+| ArgumentsListInner ',' Argument { $$ = $1; $$.push_back($3); }
 
-Param   : IDENTIFIER { }
+Argument : Expr { $$ = $1; } | IDENTIFIER '=' Expr { $$ = $3; }
+
+Param : IDENTIFIER { }
 
 ParamsListInner : Param { }
 | ParamsListInner ',' Param { }
 
-ModuleLine : Expr { $$ = $1; }
+ModuleLine : { $$ = 0; }
+| COMMENT { $$ = new ast::Comment($1); }
+| Expr { $$ = $1; }
 | Function { $$ = $1; }
 | Let { $$ = $1; }
 | ForLoop { $$ = $1; }
+| IfElse { $$ = $1; }
+| RETURN Expr { $$ = new ast::Return($2); }
 
 Function
-: FUNC IDENTIFIER '(' ParamsListInner ')' ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = 0; }
-| FUNC IDENTIFIER '(' ')' ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = 0; }
+: FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock {
+    $$ = new ast::Func($2, Type("o"), {}, $6); }
+| FUNC IDENTIFIER '(' ')' StatementBlock {
+    $$ = new ast::Func($2, Type("o"), {}, $5); }
 
-ForLoop : FOR IDENTIFIER IN Expr ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = 0; }
+ForLoop : FOR IDENTIFIER IN Expr StatementBlock { $$ = 0; }
+
+IfElse : IF Expr StatementBlock NEWLINE ELSE StatementBlock {
+    $$ = new ast::IfExpr($2, $3, $6); }
 
 Let : LET IDENTIFIER '=' Expr { $$ = 0; }
 %%

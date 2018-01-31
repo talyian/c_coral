@@ -1,0 +1,23 @@
+# Basic example
+func factorial(n):
+  if n < 2:
+    return 1
+  else:
+    return factorial(n - 1)
+
+# Implicit Return
+# if as expression
+func factorial(n):
+  if n < 2: 1
+  else: factorial(n - 1)
+
+# # Match Pattern
+# func factorial(n):
+#   match n:
+#     0: 1
+#     n: factorial(n - 1) # warning: case variable 'n' shadows variable 'n' in 'factorial'
+
+# # LambdaCase-like match
+# let factorial = match:
+#   0: 1
+#   n: factorial(n - 1)
