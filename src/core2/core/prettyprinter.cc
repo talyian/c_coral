@@ -90,16 +90,16 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Module * m) {
-	printf("Module %d %d %d %d\n",
-		   m->externs.size(),
-		   m->imports.size(),
-		   m->functions.size(),
-		   m->init ? m->init->lines.size() : -1
-	  );
-	for(auto && def: m->externs) def->accept(this);
-	for(auto && def: m->imports) def->accept(this);
-	cout << END();
-	for(auto && def: m->functions) def->accept(this);
+	// printf("Module %d %d %d %d\n",
+	// 	   m->externs.size(),
+	// 	   m->imports.size(),
+	// 	   m->functions.size(),
+	// 	   m->init ? m->init->lines.size() : -1
+	//   );
+	// for(auto && def: m->externs) def->accept(this);
+	// for(auto && def: m->imports) def->accept(this);
+	// cout << END();
+	// for(auto && def: m->functions) def->accept(this);
 	if (m->init) m->init->accept(this);
   }
   PrettyPrinter::PrettyPrinter() {

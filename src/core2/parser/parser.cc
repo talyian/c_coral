@@ -10,7 +10,6 @@ namespace coral {
 	Parser(const char * infile) {
 	  ParserParam pp = new ParserParamStruct();
 	  pp->lexer = lexerCreate(infile);
-	  pp->lexer->debug = true;
 	  coral::parser PP(pp);
 	  PP.parse();
 	  module = pp->module;
