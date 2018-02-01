@@ -16,6 +16,9 @@ namespace coral {
 	std::string END() { return line ? "" : "\n"; }
 
 	template <typename Tn>
+	void withline(std::unique_ptr<Tn> & node) { withline(node.get()); }
+
+	template <typename Tn>
 	void withline(Tn * node) {
 	  auto old_line = line;
 	  line = true;
@@ -37,5 +40,9 @@ namespace coral {
 	virtual void visit(ast::IfExpr * m);
 	virtual void visit(ast::ForExpr * m);
 	virtual void visit(ast::BinOp * m);
+	virtual void visit(ast::Let * m);
+	virtual void visit(ast::Member * m);
+	virtual void visit(ast::ListLiteral * m);
+	virtual void visit(ast::TupleLiteral * m);
   };
 }

@@ -23,26 +23,40 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::BinOp * e) {
-	auto oldline = line;
-	line = true;
-	if (e->lhs) e->lhs->accept(this);
+	cout << IND();
+	withline(e->lhs);
 	cout << " " << e->op << " ";
-	if (e->rhs) e->rhs->accept(this);
-	line = oldline;
+	withline(e->rhs);
+	cout << END();
   }
 
   void PrettyPrinter::visit(ast::Call * e) {
+	auto l = line;
 	cout << IND();
 	line = true;
-	e->callee->accept(this);
+	if (e->callee) e->callee->accept(this);
+	else cout << "(null callee)";
 	// TODO: atomize
-	if (true) cout << '('; else cout << ' ';
+	bool showParens = true;
+	// if (e->arguments.size() == 1 && (
+	// 	  ExprTypeVisitor::of(e->arguments[0]) == ExprTypeKind::ListLiteralKind))
+	if (e->arguments.size() == 1) {
+	  auto type = ast::ExprTypeVisitor::of(e->arguments[0].get());
+	  if (type == ast::ExprTypeKind::ListLiteralKind ||
+		  type == ast::ExprTypeKind::IntLiteralKind ||
+		  type == ast::ExprTypeKind::StringLiteralKind ||
+		  type == ast::ExprTypeKind::VarKind ||
+		  type == ast::ExprTypeKind::TupleLiteralKind
+		) showParens = false;
+	}
+	if (showParens) cout << '('; else cout << ' ';
 	for(auto &&arg : e->arguments) {
+	  if (!arg) { cout << "(null arg)"; continue; }
 	  if (arg != e->arguments.front()) cout << ", ";
 	  arg->accept(this);
 	}
-	if (true) cout << ')';
-	line = false;
+	if (showParens) cout << ')';
+	line = l;
 	cout << END();
   }
 
@@ -64,7 +78,7 @@ namespace coral {
 
   void PrettyPrinter::visit(ast::IfExpr * s) {
 	cout << IND() << "if ";
-	withline(s->cond.get());
+	withline(s->cond);
 	cout << ":" << END();
 	indent++;
 	s->ifbody->accept(this);
@@ -77,31 +91,57 @@ namespace coral {
 
   void PrettyPrinter::visit(ast::ForExpr * s) {
 	cout << IND() << "for ";
-	if (s->var) s->var->accept(this);
+	withline(s->var);
 	cout << " in ";
-	if (s->sequence) s->sequence->accept(this);
-	cout << END() << ":" << "\n";
+	withline(s->sequence);
+	cout << ":" << END();
+	indent++;
 	if (s->body) s->body->accept(this);
+	indent--;
   }
-
 
   void PrettyPrinter::visit(ast::Comment * c) {
 	cout << IND() << c->value << END();
   }
 
-  void PrettyPrinter::visit(ast::Module * m) {
-	// printf("Module %d %d %d %d\n",
-	// 	   m->externs.size(),
-	// 	   m->imports.size(),
-	// 	   m->functions.size(),
-	// 	   m->init ? m->init->lines.size() : -1
-	//   );
-	// for(auto && def: m->externs) def->accept(this);
-	// for(auto && def: m->imports) def->accept(this);
-	// cout << END();
-	// for(auto && def: m->functions) def->accept(this);
-	if (m->init) m->init->accept(this);
+  void PrettyPrinter::visit(ast::Let * e) {
+	cout << IND() << "let ";
+	withline(e->var);
+	cout << " = ";
+	withline(e->value);
+	cout << END();
   }
+
+  void PrettyPrinter::visit(ast::Module * m) {
+	if (m->body) m->body->accept(this);
+  }
+
+  void PrettyPrinter::visit(ast::Member * m) {
+	cout << IND();
+	m->base->accept(this);
+	cout << "." << m->member << END();
+  }
+
+  void PrettyPrinter::visit(ast::ListLiteral * m) {
+	cout << IND() << '[';
+	for(auto && item : m->items) {
+	  if (item != m->items.front())
+		cout << ", ";
+	  withline(item);
+	}
+	cout << ']' << END();
+  }
+
+  void PrettyPrinter::visit(ast::TupleLiteral * m) {
+	cout << IND() << '(';
+	for(auto && item : m->items) {
+	  if (item != m->items.front())
+		cout << ", ";
+	  withline(item);
+	}
+	cout << ')' << END();
+  }
+
   PrettyPrinter::PrettyPrinter() {
 	indent = 0;
   }

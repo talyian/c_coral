@@ -381,8 +381,8 @@ static void yy_fatal_error (yyconst char msg[] ,yyscan_t yyscanner );
 	*yy_cp = '\0'; \
 	yyg->yy_c_buf_p = yy_cp;
 
-#define YY_NUM_RULES 9
-#define YY_END_OF_BUFFER 10
+#define YY_NUM_RULES 11
+#define YY_END_OF_BUFFER 12
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -390,11 +390,11 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[23] =
+static yyconst flex_int16_t yy_accept[31] =
     {   0,
-        0,    0,   10,    8,    7,    6,    5,    8,    1,    4,
-        3,    7,    5,    0,    2,    0,    1,    4,    4,    3,
-        2,    0
+        0,    0,   12,   10,    9,    8,    7,   10,    1,   10,
+        5,    4,    9,    7,    0,    2,    0,    1,    0,    3,
+        0,    0,    5,    5,    4,    2,    3,    6,    6,    0
     } ;
 
 static yyconst YY_CHAR yy_ec[256] =
@@ -402,17 +402,17 @@ static yyconst YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    2,    3,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    4,    5,    6,    7,    5,    5,    1,    1,    1,
-        1,    5,    5,    1,    5,    1,    5,    8,    8,    8,
-        8,    8,    8,    8,    8,    8,    8,    1,    1,    5,
-        5,    5,    1,    5,    9,    9,    9,    9,    9,    9,
-        9,    9,    9,    9,    9,   10,    9,    9,    9,    9,
-        9,    9,    9,    9,    9,    9,    9,    9,    9,    9,
-        1,   11,    1,    5,    1,    1,    9,    9,    9,    9,
+        1,    4,    5,    6,    7,    5,    5,    1,    8,    1,
+        1,    5,    5,    1,    5,    9,    5,   10,   10,   10,
+       10,   10,   10,   10,   10,   10,   10,    1,    1,    5,
+        5,    5,    1,    5,   11,   11,   11,   11,   11,   11,
+       11,   11,   11,   11,   11,   12,   11,   11,   11,   11,
+       11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
+        1,   13,    1,    5,   11,    1,   11,   11,   11,   11,
 
-        9,    9,    9,    9,    9,    9,    9,    9,    9,    9,
-        9,    9,    9,    9,    9,    9,    9,    9,    9,    9,
-        9,    9,    1,    5,    1,    1,    1,    1,    1,    1,
+       11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
+       11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
+       11,   11,    1,    5,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -429,50 +429,62 @@ static yyconst YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1
     } ;
 
-static yyconst YY_CHAR yy_meta[12] =
+static yyconst YY_CHAR yy_meta[14] =
     {   0,
-        1,    2,    3,    2,    1,    1,    1,    4,    4,    4,
-        1
+        1,    2,    3,    2,    1,    1,    1,    1,    1,    4,
+        4,    4,    1
     } ;
 
-static yyconst flex_uint16_t yy_base[27] =
+static yyconst flex_uint16_t yy_base[36] =
     {   0,
-        0,    0,   19,   47,    0,   47,   11,    6,    0,   10,
-        0,    0,   10,   15,   47,   21,    0,    0,   47,    0,
-       27,   47,   12,   38,   42,    9
+        0,    0,   24,   86,    0,   86,   18,    8,    0,   14,
+       19,    0,    0,   15,   26,   86,   34,    0,   40,   86,
+       46,    9,    0,   86,    0,   54,   60,    8,    7,   86,
+       14,   73,   77,   81,   11
     } ;
 
-static yyconst flex_int16_t yy_def[27] =
+static yyconst flex_int16_t yy_def[36] =
     {   0,
-       22,    1,   22,   22,   23,   22,   22,   24,   25,   22,
-       26,   23,   22,   24,   22,   24,   25,   10,   22,   26,
-       24,    0,   22,   22,   22,   22
+       30,    1,   30,   30,   31,   30,   30,   32,   33,   34,
+       30,   35,   31,   30,   32,   30,   32,   33,   34,   30,
+       34,   30,   11,   30,   35,   32,   34,   30,   30,    0,
+       30,   30,   30,   30,   30
     } ;
 
-static yyconst flex_uint16_t yy_nxt[59] =
+static yyconst flex_uint16_t yy_nxt[100] =
     {   0,
-        4,    4,    5,    6,    7,    8,    9,   10,   11,   11,
-        4,   15,   20,   12,   13,   13,   16,   18,   22,   19,
-       15,   22,   22,   22,   22,   16,   21,   22,   22,   22,
-       22,   16,   15,   22,   22,   22,   22,   16,   14,   14,
-       14,   14,   17,   17,   22,   17,    3,   22,   22,   22,
-       22,   22,   22,   22,   22,   22,   22,   22
+        4,    4,    5,    6,    7,    8,    9,   10,    4,   11,
+       12,   12,    4,   16,   25,   13,   29,   29,   28,   14,
+       17,   20,   14,   30,   30,   30,   21,   22,   23,   30,
+       24,   16,   30,   30,   30,   30,   30,   30,   17,   26,
+       30,   30,   30,   30,   30,   30,   17,   20,   30,   30,
+       30,   30,   21,   27,   30,   30,   30,   30,   21,   16,
+       30,   30,   30,   30,   30,   30,   17,   20,   30,   30,
+       30,   30,   21,   15,   15,   15,   15,   18,   18,   30,
+       18,   19,   19,   19,   19,    3,   30,   30,   30,   30,
+       30,   30,   30,   30,   30,   30,   30,   30,   30
+
     } ;
 
-static yyconst flex_int16_t yy_chk[59] =
+static yyconst flex_int16_t yy_chk[100] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
-        1,    8,   26,   23,   13,    7,    8,   10,    3,   10,
-       14,    0,    0,    0,    0,   14,   16,    0,    0,    0,
-        0,   16,   21,    0,    0,    0,    0,   21,   24,   24,
-       24,   24,   25,   25,    0,   25,   22,   22,   22,   22,
-       22,   22,   22,   22,   22,   22,   22,   22
+        1,    1,    1,    8,   35,   31,   29,   28,   22,   14,
+        8,   10,    7,    3,    0,    0,   10,   11,   11,    0,
+       11,   15,    0,    0,    0,    0,    0,    0,   15,   17,
+        0,    0,    0,    0,    0,    0,   17,   19,    0,    0,
+        0,    0,   19,   21,    0,    0,    0,    0,   21,   26,
+        0,    0,    0,    0,    0,    0,   26,   27,    0,    0,
+        0,    0,   27,   32,   32,   32,   32,   33,   33,    0,
+       33,   34,   34,   34,   34,   30,   30,   30,   30,   30,
+       30,   30,   30,   30,   30,   30,   30,   30,   30
+
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static yyconst flex_int32_t yy_rule_can_match_eol[10] =
+static yyconst flex_int32_t yy_rule_can_match_eol[12] =
     {   0,
-0, 1, 0, 0, 0, 0, 1, 0, 0,     };
+0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0,     };
 
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
@@ -488,7 +500,7 @@ static yyconst flex_int32_t yy_rule_can_match_eol[10] =
 #include "tokens.hh"
 
 #define STRLVAL yylval->build(std::string(yytext, yyleng))
-#line 492 "parser/flexLexer.cc"
+#line 504 "parser/flexLexer.cc"
 
 #define INITIAL 0
 
@@ -766,7 +778,7 @@ YY_DECL
 #line 12 "parser/flexLexer.l"
 
 
-#line 770 "parser/flexLexer.cc"
+#line 782 "parser/flexLexer.cc"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -793,13 +805,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 23 )
+				if ( yy_current_state >= 31 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 47 );
+		while ( yy_base[yy_current_state] != 86 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -847,42 +859,53 @@ YY_RULE_SETUP
 { STRLVAL; return TOK::STRING; }
 	YY_BREAK
 case 3:
+/* rule 3 can match eol */
 YY_RULE_SETUP
 #line 16 "parser/flexLexer.l"
-{ STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
+{ STRLVAL; return TOK::STRING; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
 #line 17 "parser/flexLexer.l"
-{ STRLVAL; return TOK::INTEGER; }
+{ STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
 #line 18 "parser/flexLexer.l"
-{ STRLVAL; return TOK::OP; }
+{ STRLVAL; return TOK::INTEGER; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
 #line 19 "parser/flexLexer.l"
-{ }
+{ STRLVAL; return TOK::INTEGER; }
 	YY_BREAK
 case 7:
-/* rule 7 can match eol */
 YY_RULE_SETUP
 #line 20 "parser/flexLexer.l"
-{ yytext[0] = ' '; return TOK::NEWLINE; }
+{ STRLVAL; return coral::Token::GetOperator(yytext); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
 #line 21 "parser/flexLexer.l"
-{ return yytext[0]; }
+{ }
 	YY_BREAK
 case 9:
+/* rule 9 can match eol */
+YY_RULE_SETUP
+#line 22 "parser/flexLexer.l"
+{ yytext[0] = ' '; return TOK::NEWLINE; }
+	YY_BREAK
+case 10:
 YY_RULE_SETUP
 #line 23 "parser/flexLexer.l"
+{ return yytext[0]; }
+	YY_BREAK
+case 11:
+YY_RULE_SETUP
+#line 25 "parser/flexLexer.l"
 ECHO;
 	YY_BREAK
-#line 886 "parser/flexLexer.cc"
+#line 909 "parser/flexLexer.cc"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1177,7 +1200,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 23 )
+			if ( yy_current_state >= 31 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1206,11 +1229,11 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 23 )
+		if ( yy_current_state >= 31 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 22);
+	yy_is_jam = (yy_current_state == 30);
 
 	(void)yyg;
 	return yy_is_jam ? 0 : yy_current_state;
@@ -2074,7 +2097,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 23 "parser/flexLexer.l"
+#line 25 "parser/flexLexer.l"
 
 
 
@@ -2098,11 +2121,13 @@ Lexer::~Lexer() {
 int Lexer::Read() {
   int val = 0;
   while(true) {
-  	if (!tokenQueue.empty()) {
+	while(!tokenQueue.empty()) {
   	  int val = tokenQueue.front();
   	  tokenQueue.erase(tokenQueue.begin());
   	  return val;
-  	} else {
+  	}
+
+	{
 		// val = yylex(lval,scanner);
       val = yylex(lval,scanner);
   	  text = yyget_text(scanner);
@@ -2110,26 +2135,29 @@ int Lexer::Read() {
   	  pos.start.col = yyget_column(scanner);
   	  pos.start.row = yyget_lineno(scanner);
 
-  	  if (val != TOK::NEWLINE) {
-  		return val;
-  	  } else {
-  		auto newIndent = (int) yyget_leng(scanner) - 1;
-  		auto curIndent = indents.empty() ? 0 : indents.back();
-  		if (curIndent < newIndent) {
-  		  indents.push_back(newIndent);
-  		  tokenQueue.push_back(TOK::INDENT);
-  		} else if (curIndent > newIndent) {
-  		  while(curIndent > newIndent) {
-  			indents.pop_back();
-  			curIndent = indents.empty() ? 0 : indents.back();
-  			tokenQueue.push_back(TOK::DEDENT);
-  			tokenQueue.push_back(TOK::NEWLINE);
-  		  }
-  		} else {
-  		  return val;
-  		}
-  		return val;
+	  // detect "inline mode"
+	  if (!strcmp(text, "(") || !strcmp(text, "[") || !strcmp(text, "{"))
+		  parens.push_back(text);
+	  if (!strcmp(text, ")") || !strcmp(text, "]") || !strcmp(text, "}"))
+		  parens.pop_back();
+	  // translate whitespace into INDENT/DEDENT tokens
+  	  if (val == TOK::NEWLINE) {
+		  if (parens.size()) { return Read(); }
+		  auto newIndent = (int) yyget_leng(scanner) - 1;
+		  auto curIndent = indents.empty() ? 0 : indents.back();
+		  if (curIndent < newIndent) {
+			  indents.push_back(newIndent);
+			  tokenQueue.push_back(TOK::INDENT);
+		  } else if (curIndent > newIndent) {
+			  while(curIndent > newIndent) {
+				  indents.pop_back();
+				  curIndent = indents.empty() ? 0 : indents.back();
+				  tokenQueue.push_back(TOK::DEDENT);
+				  tokenQueue.push_back(TOK::NEWLINE);
+			  }
+		  }
   	  }
+	  return val;
   	}
   }
 }
@@ -2154,7 +2182,7 @@ int corallex(coral::parser::semantic_type * val, ParserParam pp) {
   if (!lexer) return 0;
   lexer->lval = val;
   auto ret_val = lexer->Read();
-  std::string tok = show(ret_val, lexer->text);
+  std::string tok = coral::Token::show(ret_val, lexer->text);
   if (lexer->debug) printf("lex: [%4d] %s \n", ret_val, tok.c_str());
   return ret_val;
 }

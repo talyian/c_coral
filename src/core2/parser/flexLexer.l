@@ -13,9 +13,11 @@
 
 #.*                      { STRLVAL; return TOK::COMMENT; }
 \"(\\\"|[^\"])*\"        { STRLVAL; return TOK::STRING; }
-[a-zA-Z][a-zA-Z0-9]*     { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
+\'(\\\'|[^\'])*\'        { STRLVAL; return TOK::STRING; }
+[_a-zA-Z][_a-zA-Z0-9]*     { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
 [0-9][0-9]*L?            { STRLVAL; return TOK::INTEGER; }
-[-+*/=><$!|^%@]+         { STRLVAL; return TOK::OP; }
+[0-9][0-9]*[.][0-9][0-9]*  { STRLVAL; return TOK::INTEGER; }
+[-+*/=><$!|^%@]+         { STRLVAL; return coral::Token::GetOperator(yytext); }
 [ ]                      { }
 \n[ \t]*                 { yytext[0] = ' '; return TOK::NEWLINE; }
 .                        { return yytext[0]; }
@@ -42,11 +44,13 @@ Lexer::~Lexer() {
 int Lexer::Read() {
   int val = 0;
   while(true) {
-  	if (!tokenQueue.empty()) {
+	while(!tokenQueue.empty()) {
   	  int val = tokenQueue.front();
   	  tokenQueue.erase(tokenQueue.begin());
   	  return val;
-  	} else {
+  	}
+
+	{
 		// val = yylex(lval, scanner);
       val = yylex(lval, scanner);
   	  text = yyget_text(scanner);
@@ -54,26 +58,29 @@ int Lexer::Read() {
   	  pos.start.col = yyget_column(scanner);
   	  pos.start.row = yyget_lineno(scanner);
 
-  	  if (val != TOK::NEWLINE) {
-  		return val;
-  	  } else {
-  		auto newIndent = (int) yyget_leng(scanner) - 1;
-  		auto curIndent = indents.empty() ? 0 : indents.back();
-  		if (curIndent < newIndent) {
-  		  indents.push_back(newIndent);
-  		  tokenQueue.push_back(TOK::INDENT);
-  		} else if (curIndent > newIndent) {
-  		  while(curIndent > newIndent) {
-  			indents.pop_back();
-  			curIndent = indents.empty() ? 0 : indents.back();
-  			tokenQueue.push_back(TOK::DEDENT);
-  			tokenQueue.push_back(TOK::NEWLINE);
-  		  }
-  		} else {
-  		  return val;
-  		}
-  		return val;
+	  // detect "inline mode"
+	  if (!strcmp(text, "(") || !strcmp(text, "[") || !strcmp(text, "{"))
+		  parens.push_back(text);
+	  if (!strcmp(text, ")") || !strcmp(text, "]") || !strcmp(text, "}"))
+		  parens.pop_back();
+	  // translate whitespace into INDENT/DEDENT tokens
+  	  if (val == TOK::NEWLINE) {
+		  if (parens.size()) { return Read(); }
+		  auto newIndent = (int) yyget_leng(scanner) - 1;
+		  auto curIndent = indents.empty() ? 0 : indents.back();
+		  if (curIndent < newIndent) {
+			  indents.push_back(newIndent);
+			  tokenQueue.push_back(TOK::INDENT);
+		  } else if (curIndent > newIndent) {
+			  while(curIndent > newIndent) {
+				  indents.pop_back();
+				  curIndent = indents.empty() ? 0 : indents.back();
+				  tokenQueue.push_back(TOK::DEDENT);
+				  tokenQueue.push_back(TOK::NEWLINE);
+			  }
+		  }
   	  }
+	  return val;
   	}
   }
 }
@@ -98,7 +105,7 @@ int corallex(coral::parser::semantic_type * val, ParserParam pp) {
   if (!lexer) return 0;
   lexer->lval = val;
   auto ret_val = lexer->Read();
-  std::string tok = show(ret_val, lexer->text);
+  std::string tok = coral::Token::show(ret_val, lexer->text);
   if (lexer->debug) printf("lex: [%4d] %s \n", ret_val, tok.c_str());
   return ret_val;
 }

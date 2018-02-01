@@ -19,7 +19,7 @@ namespace coral {
 	using std::unique_ptr;
 	using std::map;
 
-#define MAP_ALL_EXPRS(F) F(Module) F(Extern) F(Import) F(Let) F(Func) F(Block) F(Var) F(Call) F(StringLiteral) F(IntLiteral) F(FloatLiteral) F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp)
+#define MAP_ALL_EXPRS(F) F(Module) F(Extern) F(Import) F(Let) F(Func) F(Block) F(Var) F(Call) F(StringLiteral) F(IntLiteral) F(FloatLiteral) F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member) F(ListLiteral) F(TupleLiteral)
 
 	// Forward-declare all Expr classes
 #define F(E) class E;
@@ -42,6 +42,11 @@ namespace coral {
 	F(BaseExpr)
 #undef F
 	};
+
+	template<typename T>
+	void moveTo(vector<T *> source, vector<unique_ptr<T>> & target) {
+	  for(auto && ptr : source) if (ptr) target.push_back(unique_ptr<coral::ast::BaseExpr>(ptr));
+	}
 
 	class BaseExpr {
 	public:
@@ -76,9 +81,9 @@ namespace coral {
 
 	class Block : public Statement {
 	public:
-	  std::vector<coral::ast::BaseExpr *> lines;
+	  std::vector<unique_ptr<coral::ast::BaseExpr>> lines;
 	  Block(std::vector<coral::ast::BaseExpr *> lines) {
-		for(auto && ptr : lines) this->lines.push_back(ptr);
+		for(auto && ptr : lines) if (ptr) this->lines.push_back(unique_ptr<coral::ast::BaseExpr>(ptr));
 	  }
 	  virtual void accept(ExprVisitor * v) {
 		v->visit(this);
@@ -87,25 +92,10 @@ namespace coral {
 
 	class Module : public BaseExpr {
 	public:
-	  vector<unique_ptr<Extern>> externs;
-	  vector<unique_ptr<Import>> imports;
-	  vector<Func *> functions;
-	  unique_ptr<Block> init;
+	  unique_ptr<Block> body;
 	  Module();
 	  Module(vector<BaseExpr *> lines) {
-		init = unique_ptr<Block>(new Block(lines));
-		for(auto && line : lines) {
-		  if (!line) continue;
-		  if (ExprTypeVisitor::of(line) == ExprTypeKind::ExternKind)
-			externs.push_back(unique_ptr<Extern>((Extern *) line));
-		  else if (ExprTypeVisitor::of(line) == ExprTypeKind::FuncKind)
-			// functions.push_back(unique_ptr<Func>((Func *) line));
-			functions.push_back((Func *)line);
-		  else if (ExprTypeVisitor::of(line) == ExprTypeKind::ImportKind)
-			imports.push_back(unique_ptr<Import>((Import *) line));
-		  else
-			; // init->lines.push_back(unique_ptr<BaseExpr>(line));
-		}
+		body = unique_ptr<Block>(new Block(lines));
 	  }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
@@ -114,13 +104,15 @@ namespace coral {
 	public:
 	  std::string name;
 	  coral::Type type;
-	  vector<coral::ast::BaseExpr *> params;
-	  Block * body;
+	  vector<unique_ptr<coral::ast::BaseExpr>> params;
+	  unique_ptr<Block> body;
 	  Func(std::string name,
 		   Type type,
 		   vector<coral::ast::BaseExpr *> params,
 		   Block * body)
-		: name(name), type(type), params(params), body(body) { }
+		: name(name), type(type), body(body) {
+		for(auto && p : params) this->params.push_back(std::unique_ptr<BaseExpr>(p));
+	  }
 
 	  virtual void accept(ExprVisitor * v) {
 		v->visit(this);
@@ -140,9 +132,7 @@ namespace coral {
 	class ForExpr : public Expr {
 	public:
 	  unique_ptr<BaseExpr> var, sequence, body;
-	  ForExpr(BaseExpr* var,
-			  BaseExpr* sequence,
-			  BaseExpr* body)
+	  ForExpr(BaseExpr* var, BaseExpr* sequence, BaseExpr* body)
 		: var(var), sequence(sequence), body(body) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
@@ -150,14 +140,14 @@ namespace coral {
 	class Call : public Expr {
 	public:
 	  unique_ptr<BaseExpr> callee;
-	  vector<BaseExpr *> arguments;
-	  Call(BaseExpr * callee, BaseExpr * argument): callee(callee) {
-		arguments.push_back(argument);
-	  }
+	  vector<std::unique_ptr<BaseExpr>> arguments;
+
+	  Call(BaseExpr * callee, BaseExpr * argument): Call(callee, vector<BaseExpr *> { argument }) { }
 
 	  Call(BaseExpr * callee, vector<BaseExpr *> arguments): callee(callee) {
 		for(auto && ptr : arguments)
-		  this->arguments.push_back(ptr);
+		  if (ptr)
+		  	this->arguments.push_back(std::unique_ptr<BaseExpr>(ptr));
 	  }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
@@ -165,6 +155,9 @@ namespace coral {
 	class Var : public Expr {
 	public:
 	  std::string name;
+	  Var(std::vector<std::string> names) {
+		name = "undefined";
+	  }
 	  Var(std::string name) : name(name) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
@@ -187,7 +180,7 @@ namespace coral {
 
 	class BinOp : public Expr {
 	public:
-	  BaseExpr * lhs = 0, * rhs = 0;
+	  std::unique_ptr<BaseExpr> lhs, rhs;
 	  std::string op;
 	  BinOp(BaseExpr * lhs, std::string op, BaseExpr * rhs) : lhs(lhs), rhs(rhs), op(op) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
@@ -195,6 +188,34 @@ namespace coral {
 
 	class Let : public Statement {
 	public:
+	  unique_ptr<BaseExpr> var, value;
+	  Let(BaseExpr * var, BaseExpr * value) : var(var), value(value) { }
+	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	};
+
+	class Member : public Expr {
+	public:
+	  unique_ptr<BaseExpr> base = 0;
+	  std::string member;
+	  Member(BaseExpr * base, std::string member) : base(base), member(member) { }
+	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	};
+
+	class ListLiteral : public Expr {
+	public:
+	  std::vector<unique_ptr<BaseExpr>> items;
+	  ListLiteral(std::vector<BaseExpr *> items) {
+		for(auto && pp : items) if (pp) this->items.push_back(std::unique_ptr<BaseExpr>(pp));
+	  }
+	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	};
+
+	class TupleLiteral : public Expr {
+	public:
+	  std::vector<unique_ptr<BaseExpr>> items;
+	  TupleLiteral(std::vector<BaseExpr *> items) {
+		for(auto && pp : items) if (pp) this->items.push_back(std::unique_ptr<BaseExpr>(pp));
+	  }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 

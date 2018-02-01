@@ -1,6 +1,6 @@
 import gmp.bigint
 
-let (acc, num, den, t1, t2) = (0, 1, 1, 0, 0).map bigint
+# let acc, num, den, t1, t2 = (0, 1, 1, 0, 0).map bigint
 
 func extract(n):
   t1 = num * n
@@ -27,13 +27,19 @@ func pi():
       if d3 = extract 4:
         yield d3
         eliminate d3
+      else:
+        pass
+    else:
+      pass
 
 let n = int32 argv[0]
 let digits = array(pi().take(n))
-for i in range(-(-n/10*10)):
+for i in range(0 - (0 - n / 10 * 10)):
   if i < n:
     print digits[i]
   else:
     print " "
   if i % 10 = 9:
     printf("\t: %d\n", min(i, n))
+  else:
+    pass

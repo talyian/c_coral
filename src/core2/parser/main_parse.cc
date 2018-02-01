@@ -1,10 +1,17 @@
 #include "parser.hh"
 #include <cstdio>
 
-int main(int argc, const char ** argv) {
-  const char * filename = argc > 1 ? argv[1] : "tests/cases/simple/factorial.coral";
+void showFile(const char * filename) {
   FILE * f = fopen(filename, "r");
-  if (f) fclose(f); else return 1;
-  auto m = coralParseModule(filename);
-  coralDestroyModule(m);
+  if (f) {
+	fclose(f);
+	coralDestroyModule(coralParseModule(filename));
+  }
+}
+
+int main(int argc, const char ** argv) {
+  showFile("tests/cases/shootout/fasta.coral");
+  showFile("tests/cases/shootout/knucleotide.coral");
+  showFile("tests/cases/shootout/regexredux.coral");
+  showFile("tests/cases/shootout/pidigits.coral");
 }

@@ -4,7 +4,12 @@ BIN=bin
 .SUFFIXES:
 
 run: ${BIN}/main-coral-parse
-	@$<
+	$<
+debug: ${BIN}/main-coral-parse
+	@gdb -ex run -ex quit $<
+mdebug: ${BIN}/main-coral-parse
+	valgrind --leak-check=full $<
+
 clean:
 	@rm -r ${BIN} ${BUILD} parser/flexLexer.cc parser/bisonParser.tab.cc parser/bisonParser.tab.hh
 

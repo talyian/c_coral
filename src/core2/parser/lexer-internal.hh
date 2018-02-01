@@ -27,6 +27,7 @@ typedef ParserParamStruct * ParserParam;
 
 #include <vector>
 #include <cstdio>
+#include <stack>
 
 class Lexer {
   FILE * fp = 0;
@@ -39,6 +40,7 @@ public:
   char * text;
   int length;
   bool debug = false;
+  std::vector<std::string> parens;
   Lexer();
   Lexer(const char * filename);
   ~Lexer();

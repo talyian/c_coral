@@ -6,6 +6,7 @@
 namespace coral {
 
   void coral::parser::error(const std::string & msg) {
+	this->pp->module = 0;
 	auto lexer = this->pp->lexer;
 	fprintf(stderr, "[Line %d]: Error: %s", lexer->pos.start.row, msg.c_str());
 	fprintf(stderr, "  '%s'\n", lexer->text);
@@ -14,23 +15,24 @@ namespace coral {
 
   class Parser {
   public:
-	coral::ast::BaseExpr * module;
+	coral::ast::BaseExpr * module = 0;
 	Parser(const char * infile) {
 	  ParserParam pp = new ParserParamStruct();
 	  pp->lexer = lexerCreate(infile);
-	  pp->lexer->debug = true;
 	  coral::parser PP(pp);
-	  PP.parse();
-	  module = pp->module;
+	  if (!PP.parse()) {
+		module = pp->module;
+		if (pp->module) {
+		  coral::PrettyPrinter pretty;
+		  pp->module->accept(&pretty);
+		}
+	  }
 	  lexerDestroy(pp->lexer);
 	  delete pp;
-
-	  coral::PrettyPrinter pretty;
-	  module->accept(&pretty);
 	}
 	void writeJson(const char * outfile) { }
 	~Parser() {
-	  delete module;
+	  if (module) delete module;
 	}
   };
 }

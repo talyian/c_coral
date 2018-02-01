@@ -19,13 +19,17 @@ let sapiens = [
 let col = 0
 func putc(c):
   col += 1
-  match col % 60:
-    zero: printf "\n%c" c
-    n: printf "%c" c
+  # match col % 60:
+  #   zero: printf "\n%c" c
+  #   n: printf "%c" c
 
 func get_char(table, r):
   for c, p in table:
-    if r < p: return c
+    # if r < p: return c
+    if r < p:
+      return c
+    else:
+      pass
 
 func repeatFasta(header, n, seq):
   print header

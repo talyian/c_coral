@@ -8,6 +8,11 @@ using TOK = coral::parser::token;
 
 namespace coral {
   namespace Token {
+	static int GetOperator(std::string s) {
+	  return s == "=" ? TOK::OP_EQ :
+		TOK::OP;
+	}
+
 	static int GetKeyword(std::string s) {
 	  return s == "func" ? TOK::FUNC :
 		s == "let" ? TOK::LET :
@@ -19,16 +24,14 @@ namespace coral {
 		s == "return" ? TOK::RETURN :
 		0;
 	}
+	static std::string show(int token, char * text) {
+	  return token < 256 ? std::string(1, (char)token) :
+		token == TOK::NEWLINE ? "NEWLINE" :
+		token == TOK::INDENT ? "INDENT" :
+		token == TOK::DEDENT ? "DEDENT" :
+		token == TOK::IDENTIFIER ? std::string("[") + text  + "]" :
+		text;
+	}
   }
-}
-
-static std::string show(int token, char * text) {
-  return token < 256 ? std::string(1, (char)token) :
-	token == TOK::NEWLINE ? "NEWLINE" :
-	token == TOK::INDENT ? "INDENT" :
-	token == TOK::DEDENT ? "DEDENT" :
-	token == TOK::IDENTIFIER ? std::string("[") + text  + "]" :
-	text;
-}
-//   };
+}//   };
 // }

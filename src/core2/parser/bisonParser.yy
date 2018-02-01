@@ -10,6 +10,7 @@
 %}
 
 %token <std::string> OP
+%token <std::string> OP_EQ
 %token <std::string> COMMENT
 %token <std::string> STRING
 %token <std::string> IDENTIFIER
@@ -27,10 +28,14 @@
 %token RETURN
 
 // TODO split between Statements and Exprs
-%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule Expr ForLoop Let IfElse Argument
+%type <coral::ast::BaseExpr *> Expr Atom Expr2
+%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Let IfElse Argument
 %type <coral::ast::Block *> StatementBlock
 %type <std::vector<coral::ast::BaseExpr *>> StatementLinesRule ParamsListInner ArgumentsListInner
+%type <std::string> Operator
+%type <std::vector<std::string>> IdentifierList
 
+%type <coral::ast::BaseExpr *> Param
 %%
 
 ModuleRule : StatementLinesRule {
@@ -44,26 +49,32 @@ StatementLinesRule : { }
 StatementBlock : ':' NEWLINE INDENT StatementLinesRule DEDENT { $$ = new ast::Block($4); }
 | ':' ModuleLine { $$ = new ast::Block({ $2 }); }
 
-Expr : IDENTIFIER { $$ = new ast::Var($1); }
-| Expr '.' IDENTIFIER { $$ = 0; }
-| Expr '(' ArgumentsListInner ')' { $$ = new ast::Call($1, $3); }
-| Expr '(' ')' { $$ = 0; }
-| Expr Expr { $$ = new ast::Call($1, $2); }
+Atom // Expr0 - Can be called without parens
+: IDENTIFIER { $$ = new ast::Var($1); }
 | INTEGER { $$ = new ast::IntLiteral($1); }
 | STRING { $$ = new ast::StringLiteral($1); }
-| IDENTIFIER '[' ArgumentsListInner ']' { $$ = 0; }
-| Expr OP Expr  { $$ = new ast::BinOp($1, $2, $3); }
+| '[' ArgumentsListInner ']' { $$ = new ast::ListLiteral($2); }
+| '(' ArgumentsListInner ')' { $$ = new ast::TupleLiteral($2); }
+| '(' Expr ')' { $$ = $2; }
 
+Expr2 : Atom { $$ = $1; }
+| Expr2 '.' IDENTIFIER { $$ = new ast::Member($1, $3); }
+| Expr2 '(' ArgumentsListInner ')' { $$ = new ast::Call($1, $3); }
+| Expr2 '(' ')' { $$ = new ast::Call($1, std::vector<ast::BaseExpr *>()); }
+| Expr2 Atom { $$ = new ast::Call($1, $2); }
+
+Expr : Expr2 { $$ = $1; }
+| Expr Operator Expr  { $$ = new ast::BinOp($1, $2, $3); }
 
 ArgumentsListInner : Argument { $$.push_back($1); }
 | ArgumentsListInner ',' Argument { $$ = $1; $$.push_back($3); }
 
 Argument : Expr { $$ = $1; } | IDENTIFIER '=' Expr { $$ = $3; }
 
-Param : IDENTIFIER { }
+Param : IDENTIFIER { $$ = 0; }
 
-ParamsListInner : Param { }
-| ParamsListInner ',' Param { }
+ParamsListInner : Param { $$.push_back($1); }
+| ParamsListInner ',' Param { $$ = $1; }
 
 ModuleLine : { $$ = 0; }
 | COMMENT { $$ = new ast::Comment($1); }
@@ -80,10 +91,17 @@ Function
 | FUNC IDENTIFIER '(' ')' StatementBlock {
     $$ = new ast::Func($2, Type("o"), {}, $5); }
 
-ForLoop : FOR IDENTIFIER IN Expr StatementBlock { $$ = 0; }
+ForLoop
+: FOR IDENTIFIER IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
+| FOR IdentifierList IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 
 IfElse : IF Expr StatementBlock NEWLINE ELSE StatementBlock {
     $$ = new ast::IfExpr($2, $3, $6); }
 
-Let : LET IDENTIFIER '=' Expr { $$ = 0; }
+Let : LET IDENTIFIER OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
+
+Operator : OP { $$ = $1; } | OP_EQ { $$ = $1; }
+
+IdentifierList : IDENTIFIER { $$.push_back($1); }
+			   | IdentifierList ',' IDENTIFIER { $$ = $1; $$.push_back($3); }
 %%
