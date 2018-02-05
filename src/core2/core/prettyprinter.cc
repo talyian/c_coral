@@ -22,9 +22,9 @@ namespace coral {
 	indent--;
   }
   void PrettyPrinter::visit(ast::Block * e) {
-	// for(auto && line : e->lines)
-	//   if (line) line->accept(this);
-	//   else cout << "\n";
+	for(auto && line : e->lines)
+	  if (line) line->accept(this);
+	  else cout << "\n";
   }
 
   void PrettyPrinter::visit(ast::BinOp * e) {

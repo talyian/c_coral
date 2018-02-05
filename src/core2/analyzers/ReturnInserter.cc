@@ -29,40 +29,26 @@ namespace coral {
 
 	  static ast::BaseExpr * replace(ast::BaseExpr * original) {
 		ReturnReplace rr(original);
-		std::cout << "Replacing Return: "
-				  << ast::ExprNameVisitor::of(rr.original) << " -- "
-				  << ast::ExprNameVisitor::of(rr.out) << std::endl;
+		// std::cout << "Replacing Return: "
+		// 		  << ast::ExprNameVisitor::of(rr.original) << " -- "
+		// 		  << ast::ExprNameVisitor::of(rr.out) << std::endl;
 		return rr.out;
 	  }
 
 	  void visit(ast::Comment * e) { }
 	  void visit(ast::IfExpr * e) {
-		// e->ifbody.reset(ReturnReplace::replace(e->ifbody.release()));
-		// e->elsebody.reset(ReturnReplace::replace(e->elsebody.release()));
+		e->ifbody.reset(ReturnReplace::replace(e->ifbody.release()));
+		e->elsebody.reset(ReturnReplace::replace(e->elsebody.release()));
 		out = e;
 	  }
 	  void visit(ast::Block * e) {
-		return;
 		auto m = e->lines.back().get();
 		std::cout << ast::ExprNameVisitor::of(m) << "\n";
-		// e->lines.back().reset(ReturnReplace::replace(e->lines.back().release()));
-		std::cout << "----------------------------------------\n";
-		coral::PrettyPrinter pp;
-		e->accept(&pp);
-		std::cout << "----------------------------------------\n";
+		e->lines.back().reset(ReturnReplace::replace(e->lines.back().release()));
 		out = e;
 	  }
 	  void visit(ast::Var * e) { out = new ast::Return(e); }
 	  void visit(ast::Call * e) { out = new ast::Return(e); }
-// 	  void visit(ast::Func * e) { e->body->accept(this); }
-// 	  void visit(ast::Block * e) {
-// 		if (e->lines.empty()) return;
-// 		auto lastItem = e->lines.end();
-// 		*lastItem = ReturnReplace::run(*lastItem);
-// 	  }
-// #define F(E) void visit(ast::E * e) { out = new ast::Return(e); }
-// 	  MAP_ALL_EXPRS(F)
-// #undef F
 	};
   }
 }
@@ -79,5 +65,5 @@ void coral::analyzers::ReturnInserter::visit(ast::Func * m) {
   auto block = m->body.get();
   decltype(block->lines)::iterator iter;
   for(auto i = block->lines.begin(); i != block->lines.end(); i++) if (*i) { iter = i; }
-  iter->reset(ReturnReplace::replace(iter->get()));
+  iter->reset(ReturnReplace::replace(iter->release()));
 }
