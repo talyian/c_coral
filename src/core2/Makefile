@@ -39,7 +39,7 @@ ${BUILD}/%.o: %.cc
 	${CC} -c -g -o $@ $<
 ${BUILD}/codegen/%.o: codegen/%.cc
 	@mkdir -p $(dir $@)
-	${CC} $(shell llvm-config-5.0 --cxxflags) -MM -o $@.d -MT '$@ $@.d' $<
-	${CC} $(shell llvm-config-5.0 --cxxflags) -c -g -o $@ $<
+	${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags) -MM -o $@.d -MT '$@ $@.d' $<
+	${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags) -c -g -o $@ $<
 
 -include ${BUILD}/**/*.d

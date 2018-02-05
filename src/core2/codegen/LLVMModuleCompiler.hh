@@ -1,5 +1,6 @@
-#include "llvm-c/Core.h"
+#pragma once
 
+#include "llvm-c/Core.h"
 #include "../core/expr.hh"
 #include "LLVMFunctionCompiler.hh"
 
@@ -13,6 +14,7 @@ namespace coral {
 	  LLVMBuilderRef llvmBuilder;
 	  ast::Module * astModule;
 
+	  std::map<ast::BaseExpr *, LLVMValueRef> info;
 	  // output values
 	  LLVMValueRef out = 0;
 	  LLVMBasicBlockRef outBlock = 0;
@@ -21,11 +23,20 @@ namespace coral {
 		llvmContext = LLVMContextCreate();
 		llvmModule = LLVMModuleCreateWithNameInContext("module", llvmContext);
 		llvmBuilder = LLVMCreateBuilderInContext(llvmContext);
+
 		m->accept(this);
+
 		char *  outstr = LLVMPrintModuleToString(llvmModule);
 		printf("\n%s\n", outstr);
 		free(outstr);
 	  }
+
+	  ~LLVMModuleCompiler() {
+		LLVMDisposeModule(llvmModule);
+		LLVMDisposeBuilder(llvmBuilder);
+		LLVMContextDispose(llvmContext);
+	  }
+
 	  void visit(ast::Module * m) {
 		for (auto && line : m->body->lines) if (line) line->accept(this);
 	  }
@@ -35,9 +46,11 @@ namespace coral {
 		  llvmContext,
 		  llvmModule,
 		  llvmBuilder,
+		  &info,
 		  f);
 		fcc.visit(f);
 	  }
 	};
+
   }
 }

@@ -56,7 +56,7 @@ Atom // Expr0 - Can be called without parens
 | INTEGER { $$ = new ast::IntLiteral($1); }
 | STRING { $$ = new ast::StringLiteral($1); }
 | '[' ArgumentsListInner ']' { $$ = new ast::ListLiteral($2); }
-| '(' ArgumentsListInner ')' { $$ = new ast::TupleLiteral($2); }
+// | '(' ArgumentsListInner ')' { $$ = new ast::TupleLiteral($2); }
 | '(' Expr ')' { $$ = $2; }
 
 Expr2 : Atom { $$ = $1; }

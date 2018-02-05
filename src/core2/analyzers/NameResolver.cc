@@ -21,11 +21,15 @@ namespace coral {
 	  std::map<std::string, NameInfo> info;
 
 	  NameResolver(ast::Module * m) : module(m) { visit(m); }
+	  virtual std::string visitorName() { return "NameResolver"; }
 
 	  void visit(ast::Module * m) { m->body->accept(this); }
 	  void visit(ast::Block * m) { for(auto && line : m->lines) if (line) line->accept(this); }
 	  void visit(ast::Comment * m) { }
-	  void visit(ast::IfExpr * m) { m->ifbody->accept(this); m->elsebody->accept(this); }
+	  void visit(ast::IfExpr * m) {
+		m->cond->accept(this);
+		m->ifbody->accept(this);
+		m->elsebody->accept(this); }
 	  void visit(ast::BinOp * m) { m->lhs->accept(this); m->rhs->accept(this); }
 	  void visit(ast::Return * m) { if (m->val) m->val->accept(this); }
 	  void visit(ast::Call * c) {
@@ -35,9 +39,9 @@ namespace coral {
 
 	  void visit(ast::Var * v) {
 		auto expr = info[v->name].expr;
-		std::cout << "Var! " << v->name
-				  << " ("  << (void *) expr << ") "
-				  << ast::ExprNameVisitor::of(expr) << std::endl;
+		// std::cout << "Var! " << v->name
+		// 		  << " ("  << (void *) expr << ") "
+		// 		  << ast::ExprNameVisitor::of(expr) << std::endl;
 		v->expr = info[v->name].expr;
 	  }
 

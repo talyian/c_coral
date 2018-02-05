@@ -43,12 +43,14 @@ namespace coral {
 	  }
 	  void visit(ast::Block * e) {
 		auto m = e->lines.back().get();
-		std::cout << ast::ExprNameVisitor::of(m) << "\n";
 		e->lines.back().reset(ReturnReplace::replace(e->lines.back().release()));
 		out = e;
 	  }
 	  void visit(ast::Var * e) { out = new ast::Return(e); }
 	  void visit(ast::Call * e) { out = new ast::Return(e); }
+	  void visit(ast::BinOp * e) { out = new ast::Return(e); }
+	  void visit(ast::IntLiteral * e) { out = new ast::Return(e); }
+	  void visit(ast::StringLiteral * e) { out = new ast::Return(e); }
 	};
   }
 }

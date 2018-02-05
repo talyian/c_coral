@@ -108,7 +108,9 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Comment * c) {
+	cout << "\033[32m";
 	cout << IND() << c->value << END();
+	cout << "\033[0m";
   }
 
   void PrettyPrinter::visit(ast::Let * e) {

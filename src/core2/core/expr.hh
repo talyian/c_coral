@@ -31,7 +31,10 @@ namespace coral {
 	// Visitor
 	class ExprVisitor {
 	public:
-#define F(E) virtual void visit(__attribute__((unused)) E * expr) { printf(#E "\n"); }
+	  virtual std::string visitorName() { return "ExprVisitor"; }
+#define F(E) virtual void visit(__attribute__((unused)) E * expr) { \
+		printf("%s: %s", visitorName().c_str(), #E "\n"); \
+	  }
       MAP_ALL_EXPRS(F)
 	  F(BaseExpr)
 #undef F
@@ -187,6 +190,7 @@ namespace coral {
 	  std::string value;
 	  StringLiteral(std::string value): value(value) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	  std::string getString();
 	};
 	class IntLiteral : public Expr {
 	public:
