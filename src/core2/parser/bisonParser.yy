@@ -76,7 +76,7 @@ Argument : Expr { $$ = $1; } | IDENTIFIER '=' Expr { $$ = $3; }
 Param : IDENTIFIER { $$ = new ast::Def($1, 0); }
 
 ParamsListInner : Param { $$.push_back($1); }
-| ParamsListInner ',' Param { $$ = $1; }
+| ParamsListInner ',' Param { $$ = $1; $$.push_back($3); }
 
 ModuleLine : { $$ = 0; }
 | COMMENT { $$ = new ast::Comment($1); }

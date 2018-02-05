@@ -2,4 +2,18 @@ func collatz(n, m):
   if n = 1:
     m
   else:
-    collatz(3 * n + 1, m + 1)
+    if 0 = n % 2:
+      collatz(n / 2, m + 1)
+    else:
+      collatz(1 + 3 * n, m + 1)
+
+func collatz_loop(a, b):
+  if a = b:
+    printf("done\n")
+  else:
+    printf("collatz %d = %d\n", a, collatz(a, 0))
+    collatz_loop(a + 1, b)
+
+func main():
+  collatz_loop(1, 30)
+  0

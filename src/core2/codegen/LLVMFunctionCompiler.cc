@@ -80,10 +80,16 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
 	out = LLVMBuildSub(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
   else if (expr->op == "+")
 	out = LLVMBuildAdd(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+  else if (expr->op == "%")
+	out = LLVMBuildSRem(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
   else if (expr->op == "*")
 	out = LLVMBuildMul(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
   else if (expr->op == "/")
 	out = LLVMBuildSDiv(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+  else if (expr->op == "=")
+	out = LLVMBuildICmp(builder, LLVMIntEQ, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+  else if (expr->op == "!=")
+	out = LLVMBuildICmp(builder, LLVMIntNE, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
   else if (expr->op == "<")
 	out = LLVMBuildICmp(builder, LLVMIntSLT, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
   else if (expr->op == "<=")
