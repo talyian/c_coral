@@ -1,11 +1,7 @@
 func collatz(n, m):
-  if n = 1:
-    m
-  else:
-    if 0 = n % 2:
-      collatz(n / 2, m + 1)
-    else:
-      collatz(1 + 3 * n, m + 1)
+  if n = 1: m
+  else if 0 = n % 2: collatz(n / 2, m + 1)
+  else: collatz(1 + 3 * n, m + 1)
 
 func collatz_loop(a, b):
   if a = b:

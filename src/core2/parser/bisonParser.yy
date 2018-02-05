@@ -101,7 +101,7 @@ IfStatement : IF Expr StatementBlock { $$ = new ast::IfExpr($2, $3, 0); }
 IfElse
 : IfStatement { $$ = $1; }
 | IfStatement NEWLINE ELSE StatementBlock { $$ = $1; $$->elsebody.reset($4); }
-
+| IfStatement NEWLINE ELSE IfElse { $$ = $1; $$->elsebody.reset($4); }
 Let : LET IDENTIFIER OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
 
 Operator : OP { $$ = $1; } | OP_EQ { $$ = $1; }
