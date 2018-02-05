@@ -1,0 +1,8 @@
+
+
+func toString(m: Int32): return sprintf("%d", m)
+
+
+a normal function has a single TInput -> TOutput
+a multifunction has a map TInput0 -> TOUtput0, TInput1 - TOutput1, etc
+  it's generic output type is TOutput0 | TOutput1 | ... etc but can be collapsed to a single T

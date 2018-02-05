@@ -1,0 +1,5 @@
+func collatz(n, m):
+  if n = 1:
+    m
+  else:
+    collatz(3 * n + 1, m + 1)

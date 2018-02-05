@@ -1,0 +1,20 @@
+# Regex Module
+
+type PcrePattern = VoidPtr
+extern pcre_compile : Func[CStr, Int32, Ptr[CStr], Ptr[Int32], 0, PcrePattern]
+extern pcre_exec : Func[PcrePattern, Int32, CStr, Int32, Int32, Int32, VoidPtr, Int32]
+
+
+let pattern = pcre_compile("s...", 0, &errString, &errOffset, 0)
+let result = pcre_exec(pattern, 0, "best test in the west", 21, 0, 0, ove, 10)
+
+
+let p = regex.Regex "s..."
+print (' '.join (p.matches "sunflowershower"))
+print (p.search "sunflowershower")
+print (p.isMatch "sunflowershower")
+
+type Regex:
+  func new(pattern):
+    this.pcrepattern = pcre_compile(
+      pattern, 0,

@@ -1,0 +1,33 @@
+# Synchronous IO Library
+
+# from syncio import print, stdin, stdout, stderr
+# stdout.write('hi there') <-- takes text
+
+
+# POSIX IO functions
+type CStr = Ptr[Int8]
+type VoidPtr = Ptr[Int8]
+type FilePtr = VoidPtr
+
+extern "C" open : Func[CStr, Int32, Int32]
+extern "C" write : Func[Int32, VoidPtr, Int32)
+
+type StringFromByteWriter(T):
+   func new(id, encoding):
+      this.writer = T.new(id)
+      this.encoding = encoding
+   func write(str):
+      writer.write(str.get_bytes())
+
+type FdByteWriter:
+  func new(fd):
+    this.fd = fd
+  func new(path):
+    this.fd = open(path)
+  func write(bstr):
+    platform.write(fd, bs.buf, bs.length)
+
+type FdStringWriter = StringFromByteWriter(FdByteWriter)
+
+stdout = FdStringWriter(1)
+stderr = FdStringWriter(2)

@@ -11,15 +11,20 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Func * e) {
-	cout << IND() << "func " << e->name << "():\n";
+	cout << IND() << "func " << e->name << "(";
+	for(auto && def : e->params) {
+	  if (def != e->params.front()) cout << ", ";
+	  if (def) def->accept(this);
+	}
+	cout << "):\n";
 	indent++;
 	if (e->body) e->body->accept(this);
 	indent--;
   }
   void PrettyPrinter::visit(ast::Block * e) {
-	for(auto && line : e->lines)
-	  if (line) line->accept(this);
-	  else cout << "\n";
+	// for(auto && line : e->lines)
+	//   if (line) line->accept(this);
+	//   else cout << "\n";
   }
 
   void PrettyPrinter::visit(ast::BinOp * e) {
@@ -83,10 +88,12 @@ namespace coral {
 	indent++;
 	s->ifbody->accept(this);
 	indent--;
-	cout << IND() << "else:" << END();
-	indent++;
-	s->elsebody->accept(this);
-	indent--;
+	if (s->elsebody) {
+	  cout << IND() << "else:" << END();
+	  indent++;
+	  s->elsebody->accept(this);
+	  indent--;
+	}
   }
 
   void PrettyPrinter::visit(ast::ForExpr * s) {
@@ -118,7 +125,7 @@ namespace coral {
 
   void PrettyPrinter::visit(ast::Member * m) {
 	cout << IND();
-	m->base->accept(this);
+	withline(m->base);
 	cout << "." << m->member << END();
   }
 
@@ -131,6 +138,8 @@ namespace coral {
 	}
 	cout << ']' << END();
   }
+
+  void PrettyPrinter::visit(ast::Def * d) { cout << d->name; }
 
   void PrettyPrinter::visit(ast::TupleLiteral * m) {
 	cout << IND() << '(';

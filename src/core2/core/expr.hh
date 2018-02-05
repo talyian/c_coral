@@ -2,6 +2,7 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <cstdio>
 
 namespace coral {
   namespace type {
@@ -19,7 +20,7 @@ namespace coral {
 	using std::unique_ptr;
 	using std::map;
 
-#define MAP_ALL_EXPRS(F) F(Module) F(Extern) F(Import) F(Let) F(Func) F(Block) F(Var) F(Call) F(StringLiteral) F(IntLiteral) F(FloatLiteral) F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member) F(ListLiteral) F(TupleLiteral)
+#define MAP_ALL_EXPRS(F) F(Module) F(Extern) F(Import) F(Let) F(Func) F(Block) F(Var) F(Call) F(StringLiteral) F(IntLiteral) F(FloatLiteral) F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member) F(ListLiteral) F(TupleLiteral) F(Def)
 
 	// Forward-declare all Expr classes
 #define F(E) class E;
@@ -31,8 +32,8 @@ namespace coral {
 	class ExprVisitor {
 	public:
 #define F(E) virtual void visit(__attribute__((unused)) E * expr) { printf(#E "\n"); }
-	MAP_ALL_EXPRS(F)
-	F(BaseExpr)
+      MAP_ALL_EXPRS(F)
+	  F(BaseExpr)
 #undef F
 	};
 
@@ -61,15 +62,31 @@ namespace coral {
 	class ExprTypeVisitor : public ExprVisitor {
 	public:
 	  ExprTypeKind out;
+
+	  static ExprTypeKind of(BaseExpr * e) {
+		ExprTypeVisitor v;
+		v.out = ExprTypeKind::BaseExprKind;
+		if (e) e->accept(&v);
+		return v.out;
+	  }
 #define F(E) virtual void visit(__attribute__((unused)) E * expr) { out = ExprTypeKind::E##Kind; }
-	MAP_ALL_EXPRS(F)
+	  MAP_ALL_EXPRS(F)
 #undef F
-	static ExprTypeKind of(BaseExpr * e) {
-	  ExprTypeVisitor v;
-	  v.out = ExprTypeKind::BaseExprKind;
-	  if (e) e->accept(&v);
-	  return v.out;
-	}
+	};
+
+	class ExprNameVisitor : public ExprVisitor {
+	public:
+	  std::string out;
+
+	  static std::string of(BaseExpr * e) {
+		ExprNameVisitor v;
+		v.out = "(null)";
+		if (e) e->accept(&v);
+		return v.out;
+	  }
+#define F(E) virtual void visit(__attribute__((unused)) E * expr) { out = #E; }
+	  MAP_ALL_EXPRS(F)
+#undef F
 	};
 
 	class Comment : public Statement {
@@ -104,14 +121,14 @@ namespace coral {
 	public:
 	  std::string name;
 	  coral::Type type;
-	  vector<unique_ptr<coral::ast::BaseExpr>> params;
+	  vector<unique_ptr<coral::ast::Def>> params;
 	  unique_ptr<Block> body;
 	  Func(std::string name,
 		   Type type,
-		   vector<coral::ast::BaseExpr *> params,
+		   vector<coral::ast::Def *> params,
 		   Block * body)
 		: name(name), type(type), body(body) {
-		for(auto && p : params) this->params.push_back(std::unique_ptr<BaseExpr>(p));
+		for(auto && p : params) this->params.push_back(std::unique_ptr<Def>(p));
 	  }
 
 	  virtual void accept(ExprVisitor * v) {
@@ -155,8 +172,12 @@ namespace coral {
 	class Var : public Expr {
 	public:
 	  std::string name;
+      // the declaring expression -- the node that created the name in question
+	  // in the current scope
+	  ast::BaseExpr * expr;
+
 	  Var(std::vector<std::string> names) {
-		name = "undefined";
+		name = names.size() ? names[0] : "undefined";
 	  }
 	  Var(std::string name) : name(name) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
@@ -190,6 +211,14 @@ namespace coral {
 	public:
 	  unique_ptr<BaseExpr> var, value;
 	  Let(BaseExpr * var, BaseExpr * value) : var(var), value(value) { }
+	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	};
+
+	class Def : public Expr {
+	public:
+	  std::string name;
+	  BaseExpr * value;
+	  Def(std::string name, BaseExpr * value) : name(name), value(value) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 

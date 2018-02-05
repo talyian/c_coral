@@ -28,8 +28,6 @@ func get_char(table, r):
     # if r < p: return c
     if r < p:
       return c
-    else:
-      pass
 
 func repeatFasta(header, n, seq):
   print header

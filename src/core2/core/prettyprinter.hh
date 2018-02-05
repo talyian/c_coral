@@ -15,6 +15,8 @@ namespace coral {
 	std::string IND() { return line ? "" : std::string(indent * 3, ' '); }
 	std::string END() { return line ? "" : "\n"; }
 
+	static void print(ast::BaseExpr * e) { PrettyPrinter pp; e->accept(&pp); }
+
 	template <typename Tn>
 	void withline(std::unique_ptr<Tn> & node) { withline(node.get()); }
 
@@ -44,5 +46,6 @@ namespace coral {
 	virtual void visit(ast::Member * m);
 	virtual void visit(ast::ListLiteral * m);
 	virtual void visit(ast::TupleLiteral * m);
+	virtual void visit(ast::Def * m);
   };
 }

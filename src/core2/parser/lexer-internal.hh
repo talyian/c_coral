@@ -7,7 +7,7 @@
 #error Do not include "lexer.hh" before "lexer-internal.hh"
 #endif
 
-#include "../core/expr.hh"
+#include "core/expr.hh"
 
 class Lexer;
 #define LexerHandle Lexer *

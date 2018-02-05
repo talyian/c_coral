@@ -1,8 +1,8 @@
 #include <cstdio>
 
-#include "lexer-internal.hh"
+#include "parser/lexer-internal.hh"
 #include "bisonParser.tab.hh"
-#include "../core/prettyprinter.hh"
+#include "core/prettyprinter.hh"
 namespace coral {
 
   void coral::parser::error(const std::string & msg) {
@@ -20,13 +20,7 @@ namespace coral {
 	  ParserParam pp = new ParserParamStruct();
 	  pp->lexer = lexerCreate(infile);
 	  coral::parser PP(pp);
-	  if (!PP.parse()) {
-		module = pp->module;
-		if (pp->module) {
-		  coral::PrettyPrinter pretty;
-		  pp->module->accept(&pretty);
-		}
-	  }
+	  if (!PP.parse()) module = pp->module;
 	  lexerDestroy(pp->lexer);
 	  delete pp;
 	}
@@ -37,9 +31,11 @@ namespace coral {
   };
 }
 
-#define ParserModule coral::Parser *
+#define ParserType coral::Parser *
+#define ModuleType void *
 #include "parser.hh"
 
-ParserModule coralParseModule(const char * infile) { return new coral::Parser(infile); }
-void coralJsonModule(ParserModule m, const char * outfile) { m->writeJson(outfile); }
-void coralDestroyModule(ParserModule m) { delete m; }
+ParserType coralParseModule(const char * infile) { return new coral::Parser(infile); }
+void coralJsonModule(ParserType m, const char * outfile) { m->writeJson(outfile); }
+void coralDestroyModule(ParserType m) { delete m; }
+ModuleType _coralModule(ParserType m) { return m->module; }

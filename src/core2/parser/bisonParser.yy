@@ -29,13 +29,15 @@
 
 // TODO split between Statements and Exprs
 %type <coral::ast::BaseExpr *> Expr Atom Expr2
-%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Let IfElse Argument
+%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Let Argument
+%type <coral::ast::IfExpr *> IfElse IfStatement
 %type <coral::ast::Block *> StatementBlock
-%type <std::vector<coral::ast::BaseExpr *>> StatementLinesRule ParamsListInner ArgumentsListInner
+%type <std::vector<coral::ast::BaseExpr *>> StatementLinesRule ArgumentsListInner
 %type <std::string> Operator
 %type <std::vector<std::string>> IdentifierList
 
-%type <coral::ast::BaseExpr *> Param
+%type <coral::ast::Def *> Param
+%type <std::vector<coral::ast::Def *>> ParamsListInner
 %%
 
 ModuleRule : StatementLinesRule {
@@ -71,7 +73,7 @@ ArgumentsListInner : Argument { $$.push_back($1); }
 
 Argument : Expr { $$ = $1; } | IDENTIFIER '=' Expr { $$ = $3; }
 
-Param : IDENTIFIER { $$ = 0; }
+Param : IDENTIFIER { $$ = new ast::Def($1, 0); }
 
 ParamsListInner : Param { $$.push_back($1); }
 | ParamsListInner ',' Param { $$ = $1; }
@@ -87,7 +89,7 @@ ModuleLine : { $$ = 0; }
 
 Function
 : FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock {
-    $$ = new ast::Func($2, Type("o"), {}, $6); }
+    $$ = new ast::Func($2, Type("o"), $4, $6); }
 | FUNC IDENTIFIER '(' ')' StatementBlock {
     $$ = new ast::Func($2, Type("o"), {}, $5); }
 
@@ -95,8 +97,10 @@ ForLoop
 : FOR IDENTIFIER IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 | FOR IdentifierList IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 
-IfElse : IF Expr StatementBlock NEWLINE ELSE StatementBlock {
-    $$ = new ast::IfExpr($2, $3, $6); }
+IfStatement : IF Expr StatementBlock { $$ = new ast::IfExpr($2, $3, 0); }
+IfElse
+: IfStatement { $$ = $1; }
+| IfStatement NEWLINE ELSE StatementBlock { $$ = $1; $$->elsebody.reset($4); }
 
 Let : LET IDENTIFIER OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
 
