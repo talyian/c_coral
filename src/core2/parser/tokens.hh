@@ -10,6 +10,18 @@ namespace coral {
   namespace Token {
 	static int GetOperator(std::string s) {
 	  return s == "=" ? TOK::OP_EQ :
+		s == "**" ? TOK::OP1 :
+		s == "*" ? TOK::OP2 :
+		s == "/" ? TOK::OP2 :
+		s == "%" ? TOK::OP2 :
+		s == "+" ? TOK::OP3 :
+		s == "-" ? TOK::OP3 :
+		s == "<" ? TOK::OP4 :
+		s == ">" ? TOK::OP4 :
+		s == "=" ? TOK::OP4 :
+		s == "!=" ? TOK::OP4 :
+		s == "<=" ? TOK::OP4 :
+		s == ">=" ? TOK::OP4 :
 		TOK::OP;
 	}
 

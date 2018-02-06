@@ -157,21 +157,6 @@ namespace coral {
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 
-	class Call : public Expr {
-	public:
-	  unique_ptr<BaseExpr> callee;
-	  vector<std::unique_ptr<BaseExpr>> arguments;
-
-	  Call(BaseExpr * callee, BaseExpr * argument): Call(callee, vector<BaseExpr *> { argument }) { }
-
-	  Call(BaseExpr * callee, vector<BaseExpr *> arguments): callee(callee) {
-		for(auto && ptr : arguments)
-		  if (ptr)
-		  	this->arguments.push_back(std::unique_ptr<BaseExpr>(ptr));
-	  }
-	  virtual void accept(ExprVisitor * v) { v->visit(this); }
-	};
-
 	class Var : public Expr {
 	public:
 	  std::string name;
@@ -251,6 +236,23 @@ namespace coral {
 	  }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
+
+		class Call : public Expr {
+	public:
+	  unique_ptr<BaseExpr> callee;
+	  vector<std::unique_ptr<BaseExpr>> arguments;
+
+	  Call(BaseExpr * callee, TupleLiteral * arguments) : callee(callee) {
+		for(auto && p : arguments->items)
+		  this->arguments.push_back(std::unique_ptr<BaseExpr>(p.release()));
+	  }
+	  Call(BaseExpr * callee, vector<BaseExpr *> arguments): callee(callee) {
+		for(auto && ptr : arguments)
+		  if (ptr) this->arguments.push_back(std::unique_ptr<BaseExpr>(ptr));
+	  }
+	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	};
+
 
 	class Return : public Statement {
 	public:

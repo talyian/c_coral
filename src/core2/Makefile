@@ -4,6 +4,9 @@ BUILD=obj
 BIN=bin
 .SUFFIXES:
 
+pp: ${BIN}/main-coral-parse
+	$< tests/cases/shootout/fasta.coral
+
 run: ${BIN}/main-coral-jit
 	$<
 debug: ${BIN}/main-coral-jit

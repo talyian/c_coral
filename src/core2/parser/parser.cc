@@ -9,7 +9,7 @@ namespace coral {
 	this->pp->module = 0;
 	auto lexer = this->pp->lexer;
 	fprintf(stderr, "[Line %d]: Error: %s", lexer->pos.start.row, msg.c_str());
-	fprintf(stderr, "  '%s'\n", lexer->text);
+	fprintf(stderr, " (\"%s\")\n", lexer->text);
   }
 
 

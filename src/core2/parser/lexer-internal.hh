@@ -45,6 +45,10 @@ public:
   Lexer(const char * filename);
   ~Lexer();
   int Read();
+  int BasicRead();
+  int InlineRead();
+  int IndentRead();
+  int IfElseRead();
 };
 
 

@@ -41,48 +41,85 @@ Lexer::~Lexer() {
 }
 
 // in which we build a loop around yylex to track line numbers and indent/dedents
+
+// This function tracks parentheses and if we're not in a top-level context
+// then whitespace is not significant
+int Lexer::InlineRead() {
+	int tok = BasicRead();
+	if (!strcmp(text, "(") || !strcmp(text, "[") || !strcmp(text, "{"))
+		parens.push_back(text);
+	if (!strcmp(text, ")") || !strcmp(text, "]") || !strcmp(text, "}"))
+		parens.pop_back();
+	if (!parens.empty() && tok == TOK::NEWLINE) return InlineRead();
+	return tok;
+}
+
+// this function tracks newlines and issues indents and dedent tokens
+int Lexer::IndentRead() {
+	if (!tokenQueue.empty()) {
+		int val = tokenQueue.front();
+		tokenQueue.erase(tokenQueue.begin());
+		return val;
+	}
+	int tok = InlineRead();
+	if (tok == TOK::NEWLINE) {
+		auto newIndent = (int) yyget_leng(scanner) - 1;
+		auto curIndent = indents.empty() ? 0 : indents.back();
+		if (newIndent > curIndent) {
+			indents.push_back(newIndent);
+			tokenQueue.push_back(TOK::NEWLINE);
+			tokenQueue.push_back(TOK::INDENT);
+		} else if (newIndent < curIndent) {
+			indents.pop_back();
+			tokenQueue.push_back(TOK::NEWLINE);
+			tokenQueue.push_back(TOK::DEDENT);
+			tokenQueue.push_back(TOK::NEWLINE);
+		} else {
+			tokenQueue.push_back(TOK::NEWLINE);
+		}
+		return IndentRead();
+	}
+	return tok;
+}
+
+int Lexer::IfElseRead() {
+	static int prev_tok = -1;
+	static Position prev_pos;
+	static std::string prev_text;
+
+	static int _tok = -1;
+	static Position _pos;
+	static std::string _text;
+
+	prev_tok = _tok;
+	prev_pos = _pos;
+	prev_text = _text;
+
+	_tok = IndentRead();
+	_pos = pos;
+	_text = std::string(text, length);
+
+	if (prev_tok == -1) return IfElseRead();
+
+	// if (prev_tok == TOK::NEWLINE && _tok == TOK::ELSE) return IfElseRead();
+
+	text = (char *)_text.c_str();
+	length = _text.size();
+	pos = _pos;
+	return prev_tok;
+}
+
+int Lexer::BasicRead() {
+	int val = yylex(lval, scanner);
+	text = yyget_text(scanner);
+	length = yyget_leng(scanner);
+	pos.start.col = yyget_column(scanner);
+	pos.start.row = yyget_lineno(scanner);
+	return val;
+}
+
 int Lexer::Read() {
-  int val = 0;
-  while(true) {
-	while(!tokenQueue.empty()) {
-  	  int val = tokenQueue.front();
-  	  tokenQueue.erase(tokenQueue.begin());
-  	  return val;
-  	}
-
-	{
-		// val = yylex(lval, scanner);
-      val = yylex(lval, scanner);
-  	  text = yyget_text(scanner);
-  	  length = yyget_leng(scanner);
-  	  pos.start.col = yyget_column(scanner);
-  	  pos.start.row = yyget_lineno(scanner);
-
-	  // detect "inline mode"
-	  if (!strcmp(text, "(") || !strcmp(text, "[") || !strcmp(text, "{"))
-		  parens.push_back(text);
-	  if (!strcmp(text, ")") || !strcmp(text, "]") || !strcmp(text, "}"))
-		  parens.pop_back();
-	  // translate whitespace into INDENT/DEDENT tokens
-  	  if (val == TOK::NEWLINE) {
-		  if (parens.size()) { return Read(); }
-		  auto newIndent = (int) yyget_leng(scanner) - 1;
-		  auto curIndent = indents.empty() ? 0 : indents.back();
-		  if (curIndent < newIndent) {
-			  indents.push_back(newIndent);
-			  tokenQueue.push_back(TOK::INDENT);
-		  } else if (curIndent > newIndent) {
-			  while(curIndent > newIndent) {
-				  indents.pop_back();
-				  curIndent = indents.empty() ? 0 : indents.back();
-				  tokenQueue.push_back(TOK::DEDENT);
-				  tokenQueue.push_back(TOK::NEWLINE);
-			  }
-		  }
-  	  }
-	  return val;
-  	}
-  }
+	return IndentRead();
 }
 
 LexerHandle lexerCreate(const char * filename) { return new Lexer(filename); }

@@ -25,9 +25,7 @@ func putc(c):
 
 func get_char(table, r):
   for c, p in table:
-    # if r < p: return c
-    if r < p:
-      return c
+    if r < p: return c
 
 func repeatFasta(header, n, seq):
   print header

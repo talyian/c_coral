@@ -1,11 +1,18 @@
 #include "parser.hh"
+#include "core/prettyprinter.hh"
 #include <cstdio>
 
 void showFile(const char * filename) {
   FILE * f = fopen(filename, "r");
   if (f) {
 	fclose(f);
-	coralDestroyModule(coralParseModule(filename));
+	auto parser = coralParseModule(filename);
+	auto module = _coralModule(parser);
+	if (module) {
+	  coral::PrettyPrinter pp;
+	  ((coral::ast::Module *)module)->accept(&pp);
+	}
+	coralDestroyModule(parser);
   }
   printf("\n");
 }
