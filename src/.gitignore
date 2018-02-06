@@ -1,1 +1,7 @@
-generated/
+bin
+obj
+bisonParser.tab.cc
+bisonParser.tab.hh
+flexLexer.hh
+flexLexer.cc
+stack.hh
