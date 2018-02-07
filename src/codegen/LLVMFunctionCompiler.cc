@@ -56,7 +56,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::StringLiteral * expr) {
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
   out = 0;
   if (info->find(var->expr) == info->end()) {
-	std::cerr << "Not Found: " << var->name << "\n";
+	// std::cerr << "Not Found: " << var->name << "\n";
 	return;
   }
   switch (ast::ExprTypeVisitor::of(var->expr)) {

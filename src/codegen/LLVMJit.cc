@@ -1,34 +1,34 @@
 #include "llvm-c/Core.h"
 #include "llvm-c/ExecutionEngine.h"
 #include "LLVMModuleCompiler.hh"
+#include "LLVMJit.hh"
 
 namespace coral {
   namespace codegen {
-	void LLVMRunJIT(LLVMModuleRef module) {
+	JIT::JIT(LLVMModuleRef module) {
 	  LLVMInitializeNativeTarget();
 	  LLVMInitializeNativeAsmPrinter();
 	  LLVMLinkInMCJIT();
 
-	  char * triple = LLVMGetDefaultTargetTriple();
-	  LLVMTargetRef target = 0;
-	  LLVMExecutionEngineRef engine = 0;
-	  char * err = 0;
-
+	  triple = LLVMGetDefaultTargetTriple();
 	  if (LLVMGetTargetFromTriple(triple, &target, &err))
 	  { std::cerr << err << "\n"; return; }
 	  if (LLVMCreateExecutionEngineForModule(&engine, module, &err))
 	  { std::cerr << err << "\n"; return; }
+	}
 
-	  // LLVMValueRef func = 0;
-	  // LLVMFindFunction(engine, "main", &func);
-	  // LLVMRunFunction(engine, func, 0, 0);
-	  // LLVMDeleteFunction(func);
-	  // LLVMFreeMachineCodeForFunction(engine, func);
+	void JIT::runMain() {
+	  GetFunctionPointer<int (*)()>("main")();
+	}
 
-	  auto main = (int (*)())LLVMGetFunctionAddress(engine, "main");
-	  main();
+	JIT::~JIT() {
 	  LLVMDisposeMessage(triple);
 	  LLVMDisposeExecutionEngine(engine);
+	}
+
+	void LLVMRunJIT(LLVMModuleRef module) {
+	  JIT jit(module);
+	  jit.runMain();
 	};
   }
 }

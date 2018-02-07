@@ -22,6 +22,7 @@ namespace coral {
 
 	  virtual const char * getName() { return "Tests"; }
 	  void add_suite(TestSuite * tt) { subsuites.push_back(std::unique_ptr<TestSuite>(tt)); }
+	  void show_header() { std::cout << "-------------------------------------------------------\n"; }
 	  void show() { show(10); }
 	  void show(int depth) {
 		if (depth > 0)

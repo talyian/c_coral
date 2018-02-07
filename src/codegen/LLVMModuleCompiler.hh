@@ -25,10 +25,10 @@ namespace coral {
 		llvmBuilder = LLVMCreateBuilderInContext(llvmContext);
 
 		m->accept(this);
+	  }
 
-		char *  outstr = LLVMPrintModuleToString(llvmModule);
-		printf("\n%s\n", outstr);
-		free(outstr);
+	  std::string GetIR() {
+		return std::string(LLVMPrintModuleToString(llvmModule));
 	  }
 
 	  ~LLVMModuleCompiler() {

@@ -1,5 +1,7 @@
 # Coral Language
 
+[https://travis-ci.org/talyian/coral.svg?branch=coral]
+
 A toy LLVM-based language. A Kaleidoscope tutorial project that gained sentience.
 
 ## Getting Started

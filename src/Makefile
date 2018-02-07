@@ -31,7 +31,7 @@ ${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
 	${LINKCMD}
 ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_jit.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs)
-${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o
+${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o ${BUILD}/tests/runner/codegen.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs)
 
 # # # Bison # # #
@@ -42,7 +42,6 @@ parser/flexLexer.cc: parser/flexLexer.l
 parser/bisonParser.tab.hh: parser/bisonParser.tab.cc
 parser/bisonParser.tab.cc: parser/bisonParser.yy
 	bison -d -o $@ $<
-
 # # # Autodeps # # #
 ${BUILD}/%.o: %.cc
 	@mkdir -p $(dir $@)
