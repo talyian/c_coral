@@ -1,6 +1,6 @@
 # Coral Language
 
-![Build Status](https://travis-ci.org/talyian/coral.svg?branch=coral)
+[![Build Status](https://travis-ci.org/talyian/coral.svg?branch=coral)](https://travis-ci.org/talyian/coral)
 
 A toy LLVM-based language. A Kaleidoscope tutorial project that gained sentience.
 
