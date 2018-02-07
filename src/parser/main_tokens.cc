@@ -5,6 +5,8 @@
 
 void showFile(const char * filename) {
   auto lexer = lexerCreate(filename);
+  coral::parser::semantic_type lval;
+  lexer->lval = &lval;
   int tok = 0;
   int length;
   char * s;

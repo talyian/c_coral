@@ -41,6 +41,7 @@ public:
   int length;
   bool debug = false;
   std::vector<std::string> parens;
+  int prev_tok = 0;
   Lexer();
   Lexer(const char * filename);
   ~Lexer();

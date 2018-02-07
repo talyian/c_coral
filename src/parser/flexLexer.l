@@ -21,6 +21,7 @@
 [ ]                      { }
 \n[ \t]*                 { yytext[0] = ' '; return TOK::NEWLINE; }
 .                        { return yytext[0]; }
+<<EOF>>                  { return TOK::ENDOFFILE; }
 
 %%
 
@@ -40,8 +41,6 @@ Lexer::~Lexer() {
   yylex_destroy(scanner);
 }
 
-// in which we build a loop around yylex to track line numbers and indent/dedents
-
 // This function tracks parentheses and if we're not in a top-level context
 // then whitespace is not significant
 int Lexer::InlineRead() {
@@ -54,6 +53,15 @@ int Lexer::InlineRead() {
 	return tok;
 }
 
+int Lexer::BasicRead() {
+	int val = yylex(lval, scanner);
+	text = yyget_text(scanner);
+	length = yyget_leng(scanner);
+	pos.start.col = yyget_column(scanner);
+	pos.start.row = yyget_lineno(scanner);
+	return val;
+}
+
 // this function tracks newlines and issues indents and dedent tokens
 int Lexer::IndentRead() {
 	if (!tokenQueue.empty()) {
@@ -64,15 +72,18 @@ int Lexer::IndentRead() {
 	int tok = InlineRead();
 	if (tok == TOK::NEWLINE) {
 		auto newIndent = (int) yyget_leng(scanner) - 1;
-		auto curIndent = indents.empty() ? 0 : indents.back();
+		auto curIndent = indents.back();
 		if (newIndent > curIndent) {
 			indents.push_back(newIndent);
 			tokenQueue.push_back(TOK::NEWLINE);
 			tokenQueue.push_back(TOK::INDENT);
 		} else if (newIndent < curIndent) {
-			indents.pop_back();
-			tokenQueue.push_back(TOK::NEWLINE);
-			tokenQueue.push_back(TOK::DEDENT);
+			while (newIndent < curIndent) {
+				indents.pop_back();
+				tokenQueue.push_back(TOK::NEWLINE);
+				tokenQueue.push_back(TOK::DEDENT);
+				curIndent = indents.back();
+			}
 			tokenQueue.push_back(TOK::NEWLINE);
 		} else {
 			tokenQueue.push_back(TOK::NEWLINE);
@@ -82,44 +93,25 @@ int Lexer::IndentRead() {
 	return tok;
 }
 
-int Lexer::BasicRead() {
-	int val = yylex(lval, scanner);
-	text = yyget_text(scanner);
-	length = yyget_leng(scanner);
-	pos.start.col = yyget_column(scanner);
-	pos.start.row = yyget_lineno(scanner);
-	return val;
-}
-
+// this function converts [NEWLINE + ELSE] into [ELSE]
 int Lexer::IfElseRead() {
-	static int prev_tok = -1;
-	static Position prev_pos;
-	static std::string prev_text;
-
-	static int _tok = -1;
-	static Position _pos;
-	static std::string _text;
-
-	prev_tok = _tok;
-	prev_pos = _pos;
-	prev_text = _text;
-
-	_tok = IndentRead();
-	_pos = pos;
-	_text = std::string(text, length);
-
-	if (prev_tok == -1) return IfElseRead();
-
-	// if (prev_tok == TOK::NEWLINE && _tok == TOK::ELSE) return IfElseRead();
-
-	text = (char *)_text.c_str();
-	length = _text.size();
-	pos = _pos;
-	return prev_tok;
+	if (prev_tok && prev_tok != TOK::NEWLINE) { auto v = prev_tok; prev_tok = 0; return v; }
+	auto _tok = IndentRead();
+	if (_tok == TOK::ELSE) {
+		if (prev_tok) { prev_tok = 0; return _tok; }
+		else { prev_tok = _tok; return _tok; }
+	} else if (_tok == TOK::NEWLINE) {
+		if (prev_tok) { return _tok; }
+		prev_tok = _tok;
+		return IfElseRead();
+	} else {
+		if (prev_tok) { prev_tok = _tok; return TOK::NEWLINE; }
+		return _tok;
+	}
 }
 
 int Lexer::Read() {
-	return IndentRead();
+	return IfElseRead();
 }
 
 LexerHandle lexerCreate(const char * filename) { return new Lexer(filename); }

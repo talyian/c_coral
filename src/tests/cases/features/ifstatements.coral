@@ -12,3 +12,6 @@ else if bar:
   "bar"
 else:
   "other"
+if ham: "ham"
+if spam: "spam"
+if eggs: "eggs"
