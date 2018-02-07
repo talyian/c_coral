@@ -1,5 +1,6 @@
 LINKCMD=mkdir -p $(dir $@); clang++-5.0 -o $@ $^
 CC=clang++-5.0 -std=c++11 -Wall -Wextra -I.
+LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
 BUILD=obj
 BIN=bin
 .SUFFIXES:
@@ -21,15 +22,16 @@ clean:
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
 ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o
+CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o ${BUILD}/codegen/LLVMJit.o
 ${BIN}/coral-core: ${COREFILES} ${BUILD}/core/main_core.o
 	${LINKCMD}
 ${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_parse.o
 	${LINKCMD}
 ${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
 	${LINKCMD}
-${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o ${BUILD}/codegen/main_jit.o
+${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_jit.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs)
-${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/tests/actions.o
+${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs)
 
 # # # Bison # # #
@@ -46,9 +48,13 @@ ${BUILD}/%.o: %.cc
 	@mkdir -p $(dir $@)
 	${CC} -MM -o $@.d -MT '$@ $@.d' $<
 	${CC} -c -g -o $@ $<
+${BUILD}/tests/runner/%.o: tests/runner/%.cc
+	@mkdir -p $(dir $@)
+	${LLVM_CC} -MM -o $@.d -MT '$@ $@.d' $<
+	${LLVM_CC} -c -g -o $@ $<
 ${BUILD}/codegen/%.o: codegen/%.cc
 	@mkdir -p $(dir $@)
-	${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags) -MM -o $@.d -MT '$@ $@.d' $<
-	${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags) -c -g -o $@ $<
+	${LLVM_CC} -MM -o $@.d -MT '$@ $@.d' $<
+	${LLVM_CC} -c -g -o $@ $<
 
 -include ${BUILD}/**/*.d
