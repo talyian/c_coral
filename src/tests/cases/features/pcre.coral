@@ -1,0 +1,18 @@
+func main():
+  let subject = "crabcakes contain an abcd"
+  let error = 5
+  let offset = 5
+  let regex =  pcre2_compile_8("abc", 3, 0, addrof error, addrof offset, 0)
+  printf("Error : [%d]\n", error)
+  printf("Offset: [%d]\n", offset)
+  let match_data = pcre2_match_data_create_8(10, 0)
+  let rc = pcre2_match_8(regex, subject, 30, 0, 0, match_data, 0)
+  printf("Result: %d\n", rc)
+  if rc < 0:
+     printf("No Matches\n")
+     return 0
+  else:
+     printf("Matches: %d\n", rc)
+     # let ov = pcre2_get_ovector_count_8(match_data)
+     return 0
+  0

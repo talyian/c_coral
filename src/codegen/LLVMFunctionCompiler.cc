@@ -69,8 +69,14 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
   	// std::cout << "codegening: var fun " << ((ast::Func *)var->expr)->name << "\n";
 	out = info->find(var->expr)->second;
 	return;
+  case ast::ExprTypeKind::LetKind:
+	if (this->rawPointer)
+	  out = info->find(var->expr)->second;
+	else
+	  out = LLVMBuildLoad(builder, info->find(var->expr)->second, var->name.c_str()) ;
+	return;
   default:
-  	std::cout << "var : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
+  	std::cout << "unknown var kind : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
   	break;
   }
   out = LLVMConstInt(LLVMInt32Type(), 0, false);
@@ -108,6 +114,18 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
 
   if (!out && ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
 	auto var = (ast::Var *)expr->callee.get();
+	if (var->name == "addrof") {
+	  LLVMValueRef indices[2] = {
+		LLVMConstInt(LLVMInt32Type(), 0, false),
+		LLVMConstInt(LLVMInt32Type(), 0, false) };
+	  this->rawPointer = 1;
+	  expr->arguments[0]->accept(this);
+	  this->rawPointer = 0;
+	  // std::cout << "building addrof\n";
+	  // out = LLVMBuildGEP(
+	  // 	builder, out, indices, 0, "addrof");
+	  return;
+	}
 	out = LLVMGetNamedFunction(module, var->name.c_str());
 	if (!out)
 	  out = LLVMAddFunction(
@@ -133,4 +151,13 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Block * expr) {
   for(auto && line : expr->lines) if (line) line->accept(this);
+}
+
+void coral::codegen::LLVMFunctionCompiler::visit(ast::Let * expr) {
+  out = 0;
+  expr->value->accept(this);
+  auto llval = out;
+  auto local = LLVMBuildAlloca(builder, LLVMTypeOf(llval), expr->var->name.c_str());
+  auto store = LLVMBuildStore(builder, llval, local);
+  (*info)[expr] = local;
 }

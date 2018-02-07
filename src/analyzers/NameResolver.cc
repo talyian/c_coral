@@ -30,6 +30,11 @@ namespace coral {
 		m->cond->accept(this);
 		m->ifbody->accept(this);
 		m->elsebody->accept(this); }
+	  void visit(ast::Let * e) {
+		info[e->var->name].expr = e;
+		info[e->var->name].kind = ast::ExprTypeVisitor::of(e);
+		e->value->accept(this);
+	  }
 	  void visit(ast::BinOp * m) { m->lhs->accept(this); m->rhs->accept(this); }
 	  void visit(ast::Return * m) { if (m->val) m->val->accept(this); }
 	  void visit(ast::Call * c) {

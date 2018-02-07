@@ -19,13 +19,7 @@ namespace coral {
 	  LLVMValueRef out = 0;
 	  LLVMBasicBlockRef outBlock = 0;
 
-	  LLVMModuleCompiler(ast::Module * m) {
-		llvmContext = LLVMContextCreate();
-		llvmModule = LLVMModuleCreateWithNameInContext("module", llvmContext);
-		llvmBuilder = LLVMCreateBuilderInContext(llvmContext);
-
-		m->accept(this);
-	  }
+	  LLVMModuleCompiler(ast::Module * m);
 
 	  std::string GetIR() {
 		return std::string(LLVMPrintModuleToString(llvmModule));

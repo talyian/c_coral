@@ -43,17 +43,17 @@ namespace coral {
 	  success += 1;
 	}
 
+#define ASSERT(cond, name) { total++; bool s = cond; success += s; \
+	  if (s) printf("%-20s OK\n", name); else printf("%-20s ERROR\n", name);  }
 	void CodegenTests::RunFactorial() {
-	  total++;
 	  auto factorial = TestFunction<int(*)(int)>("factorial", "tests/cases/simple/factorial.coral");
-	  success += factorial.Call(10) == 3628800 ? 1 : 0;
+	  ASSERT((factorial.Call(10) == 3628800), "Factorial");
 	  return;
 	}
 
 	void CodegenTests::RunCollatz() {
-	  total += 1;
 	  auto collatz = TestFunction<int(*)(int, int)>("collatz", "tests/cases/simple/collatz.coral");
-	  success += collatz.Call(27, 0) == 111 ? 1 : 0;
+	  ASSERT((collatz.Call(27, 0) == 111), "Collatz");
 	}
 
 	TestSuite * run_codegen_tests() {

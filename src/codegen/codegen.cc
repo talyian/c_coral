@@ -10,15 +10,16 @@
 using namespace coral;
 
 void Run(const char * path) {
+  FILE * f = fopen(path, "r");
+  if (!f) { std::cout << "Couldn't Open " << path << "\n"; return; }
+  fclose(f);
   auto parser =  coralParseModule(path);
   auto module = (ast::Module *)_coralModule(parser);
-
-  PrettyPrinter::print(module);
   analyzers::NameResolver resolver(module);
   analyzers::ReturnInserter returner(module);
   PrettyPrinter::print(module);
-
   codegen::LLVMModuleCompiler compiler(module);
+  std::cout << compiler.GetIR() << "\n";
   codegen::LLVMRunJIT(compiler.llvmModule);
   compiler.llvmModule = 0;
   coralDestroyModule(parser);

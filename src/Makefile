@@ -5,8 +5,6 @@ BUILD=obj
 BIN=bin
 .SUFFIXES:
 
-pp: ${BIN}/coral-parse
-	$< tests/cases/features/ifstatements.coral
 run: ${BIN}/coral-jit
 	$<
 debug: ${BIN}/coral-jit
@@ -22,7 +20,7 @@ clean:
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
 ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o
-CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o ${BUILD}/codegen/LLVMJit.o
+CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o  ${BUILD}/codegen/LLVMModuleCompiler.o ${BUILD}/codegen/LLVMJit.o
 ${BIN}/coral-core: ${COREFILES} ${BUILD}/core/main_core.o
 	${LINKCMD}
 ${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_parse.o
@@ -30,7 +28,7 @@ ${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_parse.o
 ${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
 	${LINKCMD}
 ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_jit.o
-	${LINKCMD} $(shell llvm-config-5.0 --libs)
+	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8
 ${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o ${BUILD}/tests/runner/codegen.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs)
 

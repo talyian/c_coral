@@ -16,6 +16,8 @@ namespace coral {
 
 	  LLVMValueRef out = 0;
 	  std::map<ast::BaseExpr *, LLVMValueRef> * info;
+
+	  int rawPointer = 0;
 	  LLVMValueRef compile(ast::BaseExpr * e) {
 		out = 0;
 		e->accept(this);
@@ -40,6 +42,7 @@ namespace coral {
 	  void visit(ast::Return * expr);
 	  void visit(ast::BinOp * expr);
 	  void visit(ast::Block * expr);
+	  void visit(ast::Let * expr);
 	};
   }
 }

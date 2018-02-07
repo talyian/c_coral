@@ -198,8 +198,9 @@ namespace coral {
 
 	class Let : public Statement {
 	public:
-	  unique_ptr<BaseExpr> var, value;
-	  Let(BaseExpr * var, BaseExpr * value) : var(var), value(value) { }
+	  unique_ptr<Var> var;
+	  unique_ptr<BaseExpr> value;
+	  Let(Var * var, BaseExpr * value) : var(var), value(value) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 
