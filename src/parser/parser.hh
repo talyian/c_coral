@@ -11,5 +11,7 @@
 
 extern "C" ParserType coralParseModule(const char * infile);
 extern "C" void coralJsonModule(ParserType m, const char * outfile);
+extern "C" void coralPrintAST(ParserType m);
+extern "C" void coralPrintIR(ParserType m);
 extern "C" void coralDestroyModule(ParserType m);
 extern "C" ModuleType _coralModule(ParserType m);

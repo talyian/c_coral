@@ -24,20 +24,21 @@
 %token IN
 %token IF
 %token ELIF
-%nonassoc ELSE
+%right THEN ELSE
 %token RETURN
 
 // TODO split between Statements and Exprs
 %type <coral::ast::BaseExpr *> Expr Atom Expr2 Expr3 Expr4
 %type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Let Argument
 %type <coral::ast::IfExpr *> IfStatement
-%type <coral::ast::Block *> StatementBlock IfElsePart
+%type <coral::ast::Block *> StatementBlock
 %type <coral::ast::TupleLiteral *> Tuple
 %type <std::vector<coral::ast::BaseExpr *>> StatementLinesRule ArgumentsListInner
 %type <std::vector<std::string>> IdentifierList
 
 %type <coral::ast::Def *> Param
 %type <std::vector<coral::ast::Def *>> ParamsListInner
+
 %%
 
 ModuleRule : StatementLinesRule {
@@ -93,19 +94,18 @@ ModuleLine : { $$ = 0; }
 
 Function
 : FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock {
-    $$ = new ast::Func($2, Type("o"), $4, $6); }
+   $$ = new ast::Func($2, Type("o"), $4, $6); }
 | FUNC IDENTIFIER '(' ')' StatementBlock {
-    $$ = new ast::Func($2, Type("o"), {}, $5); }
+   $$ = new ast::Func($2, Type("o"), {}, $5); }
 
 ForLoop
 : FOR IDENTIFIER IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 | FOR IdentifierList IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 
-IfStatement : IF Expr StatementBlock IfElsePart { $$ = new ast::IfExpr($2, $3, $4); }
-IfElsePart
-: ELSE IfStatement { $$ = new ast::Block({ $2 }); }
-| ELSE StatementBlock { $$ = $2; }
-| /* empty */ { $$ = 0; }
+IfStatement
+: IF Expr StatementBlock %prec THEN { $$ = new ast::IfExpr($2, $3, 0); }
+| IF Expr StatementBlock NEWLINE ELSE StatementBlock %prec ELSE { $$ = new ast::IfExpr($2, $3, $6); }
+| IF Expr StatementBlock NEWLINE ELSE IfStatement %prec ELSE { $$ = new ast::IfExpr($2, $3, new ast::Block({ $6 })); }
 
 Let : LET IDENTIFIER OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
 

@@ -4,15 +4,16 @@ BUILD=obj
 BIN=bin
 .SUFFIXES:
 
-pp: ${BIN}/main-coral-parse
-	$< tests/cases/shootout/fasta.coral
-
-run: ${BIN}/main-coral-jit
+pp: ${BIN}/coral-parse
+	$< tests/cases/features/ifstatements.coral
+run: ${BIN}/coral-jit
 	$<
-debug: ${BIN}/main-coral-jit
+debug: ${BIN}/coral-jit
 	@gdb -ex run -ex quit $<
-mdebug: ${BIN}/main-coral-jit
+mdebug: ${BIN}/coral-jit
 	valgrind --leak-check=full $<
+test: ${BIN}/coral-test
+	$<
 
 clean:
 	@rm -r ${BIN} ${BUILD} parser/flexLexer.cc parser/bisonParser.tab.cc parser/bisonParser.tab.hh
@@ -20,12 +21,16 @@ clean:
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
 ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o
-${BIN}/main-coral-core: ${COREFILES} ${BUILD}/core/main_core.o
+${BIN}/coral-core: ${COREFILES} ${BUILD}/core/main_core.o
 	${LINKCMD}
-${BIN}/main-coral-parse: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_parse.o
+${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_parse.o
 	${LINKCMD}
-${BIN}/main-coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o ${BUILD}/codegen/main_jit.o
+${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
+	${LINKCMD}
+${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o ${BUILD}/codegen/main_jit.o
+${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/tests/actions.o
 	clang++-5.0 $(shell llvm-config-5.0 --libs) -o $@ $^
+
 # # # Bison # # #
 obj/parser/lexer.o: parser/bisonParser.tab.hh
 parser/flexLexer.cc: parser/flexLexer.l

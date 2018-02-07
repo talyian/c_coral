@@ -1,0 +1,14 @@
+if foo:
+  "foo"
+else:
+  "other"
+
+if foo:
+  "only foo"
+
+if foo:
+  "foo"
+else if bar:
+  "bar"
+else:
+  "other"

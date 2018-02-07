@@ -39,3 +39,8 @@ ParserType coralParseModule(const char * infile) { return new coral::Parser(infi
 void coralJsonModule(ParserType m, const char * outfile) { m->writeJson(outfile); }
 void coralDestroyModule(ParserType m) { delete m; }
 ModuleType _coralModule(ParserType m) { return m->module; }
+
+void coralPrintAST(ParserType m) {
+  coral::PrettyPrinter pp;
+  if (m->module) m->module->accept(&pp);
+}

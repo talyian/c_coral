@@ -14,7 +14,7 @@
 #.*                      { STRLVAL; return TOK::COMMENT; }
 \"(\\\"|[^\"])*\"        { STRLVAL; return TOK::STRING; }
 \'(\\\'|[^\'])*\'        { STRLVAL; return TOK::STRING; }
-[_a-zA-Z][_a-zA-Z0-9]*     { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
+[_a-zA-Z][_a-zA-Z0-9]*   { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
 [0-9][0-9]*L?            { STRLVAL; return TOK::INTEGER; }
 [0-9][0-9]*[.][0-9][0-9]*  { STRLVAL; return TOK::INTEGER; }
 [-+*/=><$!|^%@]+         { STRLVAL; return coral::Token::GetOperator(yytext); }
@@ -82,6 +82,15 @@ int Lexer::IndentRead() {
 	return tok;
 }
 
+int Lexer::BasicRead() {
+	int val = yylex(lval, scanner);
+	text = yyget_text(scanner);
+	length = yyget_leng(scanner);
+	pos.start.col = yyget_column(scanner);
+	pos.start.row = yyget_lineno(scanner);
+	return val;
+}
+
 int Lexer::IfElseRead() {
 	static int prev_tok = -1;
 	static Position prev_pos;
@@ -107,15 +116,6 @@ int Lexer::IfElseRead() {
 	length = _text.size();
 	pos = _pos;
 	return prev_tok;
-}
-
-int Lexer::BasicRead() {
-	int val = yylex(lval, scanner);
-	text = yyget_text(scanner);
-	length = yyget_leng(scanner);
-	pos.start.col = yyget_column(scanner);
-	pos.start.row = yyget_lineno(scanner);
-	return val;
 }
 
 int Lexer::Read() {

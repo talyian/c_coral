@@ -3,14 +3,17 @@
 
 #include <cstdio>
 
-void tokens() {
-  auto lexer = lexerCreate("tests/cases/simple/hello_world.coral");
+void showFile(const char * filename) {
+  auto lexer = lexerCreate(filename);
   int tok = 0;
   int length;
   char * s;
   while((tok = lexerRead(lexer, &s, &length, 0)))
-	printf("%s\n", show(tok, s).c_str());
+	printf("%s\n", coral::Token::show(tok, s).c_str());
   lexerDestroy(lexer);
 }
 
-int main() { tokens(); }
+int main(int argc, const char ** argv) {
+    if (argc > 1) { showFile(argv[1]); return 0; }
+	else showFile("tests/cases/simple/hello_world.coral");
+}
