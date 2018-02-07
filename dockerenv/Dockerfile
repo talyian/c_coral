@@ -15,4 +15,10 @@ RUN ln -s /usr/bin/llvm-symbolizer-5.0 /usr/bin/llvm-symbolizer
 RUN cp /usr/bin/lldb-5.0 /usr/bin/lldb
 RUN cp /usr/bin/lldb-server-5.0 /usr/bin/lldb-server-5.0.1
 ENV ASAN_SYMBOLIZER_PATH /usr/bin/llvm-symbolizer
-WORKDIR /work
+
+ENV PATH="/work/src/bin:${PATH}"
+ADD src /work/src
+WORKDIR /work/src
+RUN make bin/coral-test bin/coral-jit
+CMD coral-jit
+

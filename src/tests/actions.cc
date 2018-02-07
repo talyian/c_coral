@@ -27,14 +27,14 @@ public:
 
 int main() {
   ParserTests T;
-  // T.parse_and_print("Hello World", "tests/cases/simple/hello_world.coral");
-  // T.parse_and_print("Factorial", "tests/cases/simple/factorial.coral");
-  // T.parse_and_print("Collatz Function", "tests/cases/simple/collatz.coral");
+  T.parse_and_print("Hello World", "tests/cases/simple/hello_world.coral");
+  T.parse_and_print("Factorial", "tests/cases/simple/factorial.coral");
+  T.parse_and_print("Collatz Function", "tests/cases/simple/collatz.coral");
   T.parse_and_print("If Statement", "tests/cases/features/ifstatements.coral");
-  // parse_and_print("Fasta", "tests/cases/shootout/fasta.coral");
-  // parse_and_print("Knucleotide", "tests/cases/shootout/knucleotide.coral");
-  // parse_and_print("Pidigits", "tests/cases/shootout/pidigits.coral");
-  // parse_and_print("Regex Redux", "tests/cases/shootout/regexredux.coral");
+  T.parse_and_print("Fasta", "tests/cases/shootout/fasta.coral");
+  T.parse_and_print("Knucleotide", "tests/cases/shootout/knucleotide.coral");
+  T.parse_and_print("Pidigits", "tests/cases/shootout/pidigits.coral");
+  T.parse_and_print("Regex Redux", "tests/cases/shootout/regexredux.coral");
   T.finish();
   return T.total - T.success;
 }

@@ -1,0 +1,6 @@
+sudo: enable
+language: c++
+install:
+  - docker build -t coral -f dockerenv/Dockerfile .
+script:
+  - docker run --rm coral coral-test

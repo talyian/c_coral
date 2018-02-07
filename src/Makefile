@@ -28,8 +28,9 @@ ${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_parse.o
 ${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
 	${LINKCMD}
 ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o ${BUILD}/codegen/main_jit.o
+	${LINKCMD} $(shell llvm-config-5.0 --libs)
 ${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/tests/actions.o
-	clang++-5.0 $(shell llvm-config-5.0 --libs) -o $@ $^
+	${LINKCMD} $(shell llvm-config-5.0 --libs)
 
 # # # Bison # # #
 obj/parser/lexer.o: parser/bisonParser.tab.hh
