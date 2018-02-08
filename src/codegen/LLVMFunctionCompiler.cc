@@ -7,9 +7,9 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
   auto paramTypes = new LLVMTypeRef[expr->params.size()];
   for(ulong i=0; i<expr->params.size(); i++) {
     auto ppp = expr->params[i].get();
-    std::cout << ppp->name << " : " 
-	      << (ppp->type ? ppp->type->name: "")
-	      << "\n";
+    // std::cout << ppp->name << " : " 
+    // 	      << (ppp->type ? ppp->type->name: "")
+    // 	      << "\n";
     if (ppp->type && ppp->type->name == "Ptr")
       paramTypes[i] = LLVMPointerType(LLVMInt8Type(), 0);
     else
@@ -100,7 +100,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
 	  out = LLVMBuildLoad(builder, info->find(var->expr)->second, var->name.c_str()) ;
 	return;
   default:
-  	std::cout << "unknown var kind : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
+  	std::cerr << "unknown var kind : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
   	break;
   }
   out = LLVMConstInt(LLVMInt32Type(), 0, false);
@@ -169,7 +169,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
 		module, var->name.c_str(),
 		LLVMFunctionType(LLVMVoidType(), 0, 0, true));
   } else if (!out) {
-	std::cout << "missing var " << ast::ExprNameVisitor::of(expr->callee.get()) << "\n";
+	std::cerr << "missing var " << ast::ExprNameVisitor::of(expr->callee.get()) << "\n";
   }
   auto llvmVarRef = out;
   auto llvmArgs = new LLVMValueRef[expr->arguments.size()];

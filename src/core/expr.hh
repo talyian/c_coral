@@ -33,7 +33,7 @@ namespace coral {
 	public:
 	  virtual std::string visitorName() { return "ExprVisitor"; }
 #define F(E) virtual void visit(__attribute__((unused)) E * expr) { \
-		printf("%s: %s", visitorName().c_str(), #E "\n"); \
+	    fprintf(stderr, "%s: %s", visitorName().c_str(), #E "\n");	\
 	  }
       MAP_ALL_EXPRS(F)
 	  F(BaseExpr)
