@@ -153,6 +153,15 @@ namespace coral {
 	cout << ')' << END();
   }
 
+  void PrettyPrinter::visit(ast::While * w) {
+	cout << IND() << "while ";
+	withline(w->cond);
+	cout << ":" << END();
+	indent++;
+	w->body->accept(this);
+	indent--;
+  }
+
   PrettyPrinter::PrettyPrinter() {
 	indent = 0;
   }

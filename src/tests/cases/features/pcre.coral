@@ -13,7 +13,7 @@ func loop_ovector : Int32 (subject:Ptr, o, rc, ov:Ptr):
    printf("%.*s\n", len, subject + offset)
    # printf("    Match [%d/%d] [%d-%d]: '%.*s'\n", o, rc, offset, len, len, subject + offset)
    return end
-   
+
 func loop_match(regex:Ptr, subject:Ptr, len:Int32, start:Int32):
   let err = 0
   let offset = 0
@@ -24,7 +24,7 @@ func loop_match(regex:Ptr, subject:Ptr, len:Int32, start:Int32):
      let end = loop_ovector(subject, 0, rc, ov)
      loop_match(regex, subject, len, end)
   else:
-     0    
+     0
   return 0
 
 func main():
@@ -42,9 +42,15 @@ func main():
 
 func regex_Pattern_create : Ptr(a): 0
 func regex_matches : Ptr(a, b): 0
+
+func test1():
+  let pattern = regex.Pattern.new "a.(...)"
+  for match in pattern.matches("crabcakes contain abc but not abcde"):
+     print match.Value
+
 func test():
   let subject = "crabcakes contain abc but not abcde"
   let pattern = regex_Pattern_create "(.)abc(.)"
-  for loop in regex_matches(pattern, subject):
-    0
-  0  
+  let matches = regex_matches(pattern, subject)
+  while matches.move():
+     printf("%s", regex_Match_toString matches.Current)

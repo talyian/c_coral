@@ -1,3 +1,4 @@
+
 #include "expr.hh"
 
 #include <iostream>
@@ -47,5 +48,6 @@ namespace coral {
 	virtual void visit(ast::ListLiteral * m);
 	virtual void visit(ast::TupleLiteral * m);
 	virtual void visit(ast::Def * m);
+	virtual void visit(ast::While * m);
   };
 }

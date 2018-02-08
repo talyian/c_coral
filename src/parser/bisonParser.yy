@@ -26,6 +26,7 @@
 %token ELIF
 %token ELSE
 %token RETURN
+%token WHILE CONTINUE MATCH
 %token ENDOFFILE 0
 
 // TODO split between Statements and Exprs
@@ -40,6 +41,7 @@
 
 %type <coral::ast::Def *> Param
 %type <std::vector<coral::ast::Def *>> ParamsListInner
+%type <std::string> GeneralIdentifier
 
 %%
 
@@ -56,8 +58,12 @@ StatementBlock
 : ':' NEWLINE INDENT BlockLines DEDENT { $$ = new ast::Block($4); }
 | ':' ModuleLine { $$ = new ast::Block({ $2 }); }
 
+GeneralIdentifier
+: IDENTIFIER { $$ = $1; }
+| MATCH { $$ = "match"; }
+
 Atom // Expr0 - Can be called without parens
-: IDENTIFIER { $$ = new ast::Var($1); }
+: GeneralIdentifier { $$ = new ast::Var($1); }
 | INTEGER { $$ = new ast::IntLiteral($1); }
 | STRING { $$ = new ast::StringLiteral($1); }
 | '[' ArgumentsListInner ']' { $$ = new ast::ListLiteral($2); }
@@ -97,6 +103,7 @@ ModuleLine
 | Let { $$ = $1; }
 | ForLoop { $$ = $1; }
 | IfStatement { $$ = $1; }
+| WHILE Expr StatementBlock { $$ = new ast::While($2, $3); }
 | RETURN Expr { $$ = new ast::Return($2); }
 
 Function
@@ -107,7 +114,7 @@ Function
 | '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' {
   $$ = new ast::Func($4, $6, $8, 0); }
 ForLoop
-: FOR IDENTIFIER IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
+: FOR GeneralIdentifier IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 | FOR IdentifierList IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 
 IfStatement
@@ -115,9 +122,9 @@ IfStatement
 | IF Expr StatementBlock ELSE StatementBlock %prec ELSE { $$ = new ast::IfExpr($2, $3, $5); }
 | IF Expr StatementBlock ELSE IfStatement %prec ELSE { $$ = new ast::IfExpr($2, $3, new ast::Block({ $5 })); }
 
-Let : LET IDENTIFIER OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
+Let : LET GeneralIdentifier OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
 
-IdentifierList : IDENTIFIER { $$.push_back($1); }
-| IdentifierList ',' IDENTIFIER { $$ = $1; $$.push_back($3); }
+IdentifierList : GeneralIdentifier { $$.push_back($1); }
+| IdentifierList ',' GeneralIdentifier { $$ = $1; $$.push_back($3); }
 
 %%

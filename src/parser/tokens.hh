@@ -34,6 +34,9 @@ namespace coral {
 		s == "elif" ? TOK::ELIF :
 		s == "else" ? TOK::ELSE :
 		s == "return" ? TOK::RETURN :
+		s == "while" ? TOK::WHILE :
+		s == "continue" ? TOK::CONTINUE :
+		s == "match" ? TOK::MATCH:
 		0;
 	}
 	static std::string show(int token, char * text) {
