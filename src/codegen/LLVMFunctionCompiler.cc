@@ -55,9 +55,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::IfExpr * expr) {
   expr->ifbody->accept(this);
   if (!returns) LLVMBuildBr(builder, endblock);
   branchreturns += returns > 0 ? 1 : 0;
+
   returns = 0;
   LLVMPositionBuilderAtEnd(builder, elseblock);
-  expr->elsebody->accept(this);
+  if (expr->elsebody) expr->elsebody->accept(this);
   if (!returns) LLVMBuildBr(builder, endblock);
   branchreturns += returns > 0 ? 1 : 0;
 
@@ -221,7 +222,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
 void coral::codegen::LLVMFunctionCompiler::visit(ast::While * w) {
 
   auto whileblock = LLVMAppendBasicBlock(function, "while");
-  auto body = LLVMAppendBasicBlock(function, "whilebody");
+  auto body = LLVMAppendBasicBlock(function, "do");
   auto endblock = LLVMAppendBasicBlock(function, "end");
   LLVMBuildBr(builder, whileblock);
 

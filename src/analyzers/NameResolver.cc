@@ -29,7 +29,7 @@ namespace coral {
 	  void visit(ast::IfExpr * m) {
 		m->cond->accept(this);
 		m->ifbody->accept(this);
-		m->elsebody->accept(this); }
+		if (m->elsebody) m->elsebody->accept(this); }
 	  void visit(ast::Let * e) {
 		info[e->var->name].expr = e;
 		info[e->var->name].kind = ast::ExprTypeKind::LetKind;

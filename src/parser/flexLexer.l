@@ -94,6 +94,10 @@ int Lexer::IndentRead() {
 }
 
 // this function converts [NEWLINE + ELSE] into [ELSE]
+// TODO:
+//   blank lines
+//
+//   in blocks shoujld be allowed
 int Lexer::IfElseRead() {
 	if (prev_tok && prev_tok != TOK::NEWLINE) { auto v = prev_tok; prev_tok = 0; return v; }
 	auto _tok = IndentRead();
