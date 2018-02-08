@@ -17,7 +17,8 @@ namespace coral {
 	  LLVMValueRef out = 0;
 	  std::map<ast::BaseExpr *, LLVMValueRef> * info;
 
-	  int rawPointer = 0;
+	  int rawPointer = 0; // a hack to implement the derefi intrinsic
+	  int returns = 0; // a hack to track if a block has a terminator
 	  LLVMValueRef compile(ast::BaseExpr * e) {
 		out = 0;
 		e->accept(this);

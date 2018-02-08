@@ -36,6 +36,7 @@
 %type <coral::ast::TupleLiteral *> Tuple
 %type <std::vector<coral::ast::BaseExpr *>> BlockLines ArgumentsListInner
 %type <std::vector<std::string>> IdentifierList
+%type <coral::type::Type *> TypeDef
 
 %type <coral::ast::Def *> Param
 %type <std::vector<coral::ast::Def *>> ParamsListInner
@@ -81,7 +82,10 @@ ArgumentsListInner : Argument { $$.push_back($1); }
 
 Argument : Expr { $$ = $1; } | IDENTIFIER '=' Expr { $$ = $3; }
 
-Param : IDENTIFIER { $$ = new ast::Def($1, 0); }
+Param : IDENTIFIER { $$ = new ast::Def($1, 0, 0); }
+| IDENTIFIER ':' TypeDef { $$ = new ast::Def($1, $3, 0); }
+
+TypeDef : IDENTIFIER { $$ = new coral::type::Type($1); }
 
 ParamsListInner : Param { $$.push_back($1); }
 | ParamsListInner ',' Param { $$ = $1; $$.push_back($3); }
@@ -96,17 +100,18 @@ ModuleLine
 | RETURN Expr { $$ = new ast::Return($2); }
 
 Function
-: FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock {
-   $$ = new ast::Func($2, Type("o"), $4, $6); }
-| FUNC IDENTIFIER '(' ')' StatementBlock {
-   $$ = new ast::Func($2, Type("o"), {}, $5); }
-
+: FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type("o"), $4, $6); }
+| FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' StatementBlock {
+   $$ = new ast::Func($2, $4, $6, $8); }
+| FUNC IDENTIFIER '(' ')' StatementBlock { $$ = new ast::Func($2, new Type("o"), {}, $5); }
+| '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' {
+  $$ = new ast::Func($4, $6, $8, 0); }
 ForLoop
 : FOR IDENTIFIER IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 | FOR IdentifierList IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 
 IfStatement
-: IF Expr StatementBlock %prec THEN { $$ = new ast::IfExpr($2, $3, 0); }
+: IF Expr StatementBlock { $$ = new ast::IfExpr($2, $3, 0); }
 | IF Expr StatementBlock ELSE StatementBlock %prec ELSE { $$ = new ast::IfExpr($2, $3, $5); }
 | IF Expr StatementBlock ELSE IfStatement %prec ELSE { $$ = new ast::IfExpr($2, $3, new ast::Block({ $5 })); }
 

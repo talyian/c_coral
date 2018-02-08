@@ -57,7 +57,7 @@ namespace coral {
 		  info[param->name].expr = param.get();
 		  info[param->name].kind = ast::ExprTypeKind::DefKind;
 		}
-		f->body->accept(this);
+		if (f->body) f->body->accept(this);
 	  }
 
 	  void visit(ast::StringLiteral * e) { }

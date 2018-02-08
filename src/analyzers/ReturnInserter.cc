@@ -64,6 +64,7 @@ void coral::analyzers::ReturnInserter::visit(ast::Block * m) {
 }
 
 void coral::analyzers::ReturnInserter::visit(ast::Func * m) {
+  if (!m->body) return;
   auto block = m->body.get();
   decltype(block->lines)::iterator iter;
   for(auto i = block->lines.begin(); i != block->lines.end(); i++) if (*i) { iter = i; }

@@ -123,11 +123,11 @@ namespace coral {
 	class Func : public Expr {
 	public:
 	  std::string name;
-	  coral::Type type;
+	  std::unique_ptr<coral::Type> type;
 	  vector<unique_ptr<coral::ast::Def>> params;
 	  unique_ptr<Block> body;
 	  Func(std::string name,
-		   Type type,
+		   Type * type,
 		   vector<coral::ast::Def *> params,
 		   Block * body)
 		: name(name), type(type), body(body) {
@@ -207,8 +207,9 @@ namespace coral {
 	class Def : public Expr {
 	public:
 	  std::string name;
+	  std::unique_ptr<type::Type> type;
 	  BaseExpr * value;
-	  Def(std::string name, BaseExpr * value) : name(name), value(value) { }
+	  Def(std::string name, type::Type * t, BaseExpr * value) : name(name), type(t), value(value) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 

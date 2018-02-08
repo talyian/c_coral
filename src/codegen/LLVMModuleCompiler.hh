@@ -22,7 +22,7 @@ namespace coral {
 	  LLVMModuleCompiler(ast::Module * m);
 
 	  std::string GetIR() {
-		return std::string(LLVMPrintModuleToString(llvmModule));
+	    return std::string(LLVMPrintModuleToString(llvmModule));
 	  }
 
 	  ~LLVMModuleCompiler() {

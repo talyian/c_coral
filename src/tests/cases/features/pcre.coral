@@ -1,18 +1,50 @@
+`extern func strlen : Int32 (str:Ptr)
+`extern func pcre2_match_data_create_8 : Ptr (size:Int32, context:Ptr)
+`extern func pcre2_compile_8 : Ptr (pat:Ptr, len:Int32, opt:Int32, err:Ptr, offset:Ptr, context:Ptr)
+`extern func pcre2_get_ovector_pointer_8 : Ptr (data:Ptr)
+`extern func pcre2_match_8 : Int32 (regex:Ptr, subject:Ptr, len:Int32,
+    start:Int32, opt:Int32, data:Ptr, context:Ptr)
+
+func loop_ovector : Int32 (subject:Ptr, o, rc, ov:Ptr):
+   let offset = derefi (ov + 16 * o)
+   let end = derefi (ov + 8 + 16 * o)
+   let len = end - offset
+   let off = offset
+   printf("%.*s\n", len, subject + offset)
+   # printf("    Match [%d/%d] [%d-%d]: '%.*s'\n", o, rc, offset, len, len, subject + offset)
+   return end
+   
+func loop_match(regex:Ptr, subject:Ptr, len:Int32, start:Int32):
+  let err = 0
+  let offset = 0
+  let match_data = pcre2_match_data_create_8(5, 0)
+  let rc = pcre2_match_8(regex, subject, len, start, 0, match_data, 0)
+  if rc > 0:
+     let ov = pcre2_get_ovector_pointer_8(match_data)
+     let end = loop_ovector(subject, 0, rc, ov)
+     loop_match(regex, subject, len, end)
+  else:
+     0    
+  return 0
+
 func main():
-  let subject = "crabcakes contain an abcd"
+  let subject = "crabcakes contain abc but not abcde"
   let error = 5
   let offset = 5
-  let regex =  pcre2_compile_8("abc", 3, 0, addrof error, addrof offset, 0)
-  printf("Error : [%d]\n", error)
-  printf("Offset: [%d]\n", offset)
-  let match_data = pcre2_match_data_create_8(10, 0)
-  let rc = pcre2_match_8(regex, subject, 30, 0, 0, match_data, 0)
-  printf("Result: %d\n", rc)
-  if rc < 0:
-     printf("No Matches\n")
-     return 0
+  let len = strlen subject
+  let regex =  pcre2_compile_8("a.c(.).", 7, 0, addrof error, addrof offset, 0)
+  if error <= 100:
+    loop_match(regex, subject, len, 0)
   else:
-     printf("Matches: %d\n", rc)
-     # let ov = pcre2_get_ovector_count_8(match_data)
-     return 0
-  0
+    0
+  printf("\n")
+  return 0
+
+func regex_Pattern_create : Ptr(a): 0
+func regex_matches : Ptr(a, b): 0
+func test():
+  let subject = "crabcakes contain abc but not abcde"
+  let pattern = regex_Pattern_create "(.)abc(.)"
+  for loop in regex_matches(pattern, subject):
+    0
+  0  

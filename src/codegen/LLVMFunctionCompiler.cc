@@ -6,38 +6,62 @@
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
   auto paramTypes = new LLVMTypeRef[expr->params.size()];
   for(ulong i=0; i<expr->params.size(); i++) {
-	paramTypes[i] = LLVMInt32Type();
+    auto ppp = expr->params[i].get();
+    std::cout << ppp->name << " : " 
+	      << (ppp->type ? ppp->type->name: "")
+	      << "\n";
+    if (ppp->type && ppp->type->name == "Ptr")
+      paramTypes[i] = LLVMPointerType(LLVMInt8Type(), 0);
+    else
+      paramTypes[i] = LLVMInt32Type();
   }
+  auto ret_type = LLVMInt32TypeInContext(context);
+  if (expr->type && expr->type->name == "Ptr")
+    ret_type = LLVMPointerType(LLVMInt8Type(), 0);
+    
   function = LLVMAddFunction(
 	module,
 	expr->name.c_str(),
 	LLVMFunctionType(
-	  LLVMInt32TypeInContext(context),
+ 	  ret_type,
 	  paramTypes,
 	  expr->params.size(),
 	  false));
   (*info)[expr] = function;
+
   for(ulong i=0; i<expr->params.size(); i++) {
 	(*info)[expr->params[i].get()] = LLVMGetParam(function, i);
   }
-  basic_block = LLVMAppendBasicBlock(function, "entry");
-  LLVMPositionBuilderAtEnd(builder, basic_block);
-  expr->body->accept(this);
+  if (expr->body) {
+    basic_block = LLVMAppendBasicBlock(function, "entry");
+    LLVMPositionBuilderAtEnd(builder, basic_block);
+    expr->body->accept(this);
+  }
   delete [] paramTypes;
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::IfExpr * expr) {
-  auto thenblock = LLVMAppendBasicBlock(function, "b");
-  auto elseblock = LLVMAppendBasicBlock(function, "a");
+  auto thenblock = LLVMAppendBasicBlock(function, "then");
+  auto elseblock = LLVMAppendBasicBlock(function, "else");
+  auto endblock = LLVMAppendBasicBlock(function, "end");
   out = LLVMBuildCondBr(
   	builder,
   	compile(expr->cond.get()),
   	thenblock,
   	elseblock);
+  int branchreturns = 0;
+  returns = 0;
   LLVMPositionBuilderAtEnd(builder, thenblock);
   expr->ifbody->accept(this);
+  if (!returns) LLVMBuildBr(builder, endblock);
+  branchreturns += returns > 0 ? 1 : 0;
+  returns = 0;  
   LLVMPositionBuilderAtEnd(builder, elseblock);
   expr->elsebody->accept(this);
+  if (!returns) LLVMBuildBr(builder, endblock);  
+  branchreturns += returns > 0 ? 1 : 0;
+
+  LLVMPositionBuilderAtEnd(builder, endblock);  
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::IntLiteral * expr) {
@@ -82,30 +106,43 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
   out = LLVMConstInt(LLVMInt32Type(), 0, false);
 }
 void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
+  auto lhs = compile(expr->lhs.get());
+  auto rhs = compile(expr->rhs.get());
+  if (LLVMGetTypeKind(LLVMTypeOf(lhs))==LLVMPointerTypeKind) {
+    if (expr->op == "+") {
+      LLVMValueRef indices[1] = { rhs };
+      out = LLVMBuildGEP(builder, lhs, &rhs, 1, "");
+    } else { 
+      std::cerr << "Unknown Operator " << expr->op << " for Pointers\n";
+      out = 0;
+    }
+    return;
+  }
   if (expr->op == "-")
-	out = LLVMBuildSub(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
-  else if (expr->op == "+")
-	out = LLVMBuildAdd(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildSub(builder, lhs, rhs, "");
+  else if (expr->op == "+") 
+	out = LLVMBuildAdd(builder, lhs, rhs, "");
   else if (expr->op == "%")
-	out = LLVMBuildSRem(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildSRem(builder, lhs, rhs, "");
   else if (expr->op == "*")
-	out = LLVMBuildMul(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildMul(builder, lhs, rhs, "");
   else if (expr->op == "/")
-	out = LLVMBuildSDiv(builder, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildSDiv(builder, lhs, rhs, "");
   else if (expr->op == "=")
-	out = LLVMBuildICmp(builder, LLVMIntEQ, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildICmp(builder, LLVMIntEQ, lhs, rhs, "");
   else if (expr->op == "!=")
-	out = LLVMBuildICmp(builder, LLVMIntNE, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildICmp(builder, LLVMIntNE, lhs, rhs, "");
   else if (expr->op == "<")
-	out = LLVMBuildICmp(builder, LLVMIntSLT, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildICmp(builder, LLVMIntSLT, lhs, rhs, "");
   else if (expr->op == "<=")
-	out = LLVMBuildICmp(builder, LLVMIntSLE, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildICmp(builder, LLVMIntSLE, lhs, rhs, "");
   else if (expr->op == ">")
-	out = LLVMBuildICmp(builder, LLVMIntSGT, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildICmp(builder, LLVMIntSGT, lhs, rhs, "");
   else if (expr->op == ">=")
-	out = LLVMBuildICmp(builder, LLVMIntSGE, compile(expr->lhs.get()), compile(expr->rhs.get()), "");
+	out = LLVMBuildICmp(builder, LLVMIntSGE, lhs, rhs, "");
 }
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
+  returns++;
   out = LLVMBuildRet(builder, compile(expr->val.get()));
 }
 
@@ -115,15 +152,15 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   if (!out && ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
 	auto var = (ast::Var *)expr->callee.get();
 	if (var->name == "addrof") {
-	  LLVMValueRef indices[2] = {
-		LLVMConstInt(LLVMInt32Type(), 0, false),
-		LLVMConstInt(LLVMInt32Type(), 0, false) };
 	  this->rawPointer = 1;
 	  expr->arguments[0]->accept(this);
 	  this->rawPointer = 0;
-	  // std::cout << "building addrof\n";
-	  // out = LLVMBuildGEP(
-	  // 	builder, out, indices, 0, "addrof");
+	  return;
+	} else if (var->name == "derefi") {
+	  expr->arguments[0]->accept(this);
+	  auto intval = out;
+	  auto ptrval = LLVMBuildIntToPtr(builder, intval, LLVMPointerType(LLVMInt32Type(), 0), "ptrcast");
+	  out = LLVMBuildLoad(builder, ptrval, var->name.c_str());
 	  return;
 	}
 	out = LLVMGetNamedFunction(module, var->name.c_str());
@@ -158,6 +195,6 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Let * expr) {
   expr->value->accept(this);
   auto llval = out;
   auto local = LLVMBuildAlloca(builder, LLVMTypeOf(llval), expr->var->name.c_str());
-  auto store = LLVMBuildStore(builder, llval, local);
+  LLVMBuildStore(builder, llval, local);
   (*info)[expr] = local;
 }
