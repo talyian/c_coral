@@ -41,7 +41,7 @@ func regex_Matches_current : Ptr (m:Ptr):
 func regex_Match_toString : Ptr (m:Ptr) : 0
 
 func main():
-  let subject = "crabcakes contain abc but not abcde"
+  let subject = "'crabcakes' contains abc but not abcde"
   let pattern = regex_Pattern_new "[\w]([aeiou]*)"
   let matches = regex_matches(pattern, subject)
   while regex_Matches_move(matches):

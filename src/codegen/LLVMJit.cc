@@ -1,6 +1,8 @@
 #include "llvm-c/Core.h"
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm-c/Support.h"
+#include "llvm-c/BitWriter.h"
+#include "llvm-c/TargetMachine.h"
 #include "LLVMModuleCompiler.hh"
 #include "LLVMJit.hh"
 
@@ -17,16 +19,21 @@ namespace coral {
 	  LLVMInitializeNativeTarget();
 	  LLVMInitializeNativeAsmPrinter();
 	  LLVMLinkInMCJIT();
-
-	  LLVMLoadLibraryPermanently("pcre");
-	  LLVMLoadLibraryPermanently(0);
-	  LLVMLoadLibraryPermanently("asdf");
-
 	  triple = LLVMGetDefaultTargetTriple();
 	  if (LLVMGetTargetFromTriple(triple, &target, &err))
 	  { std::cerr << err << "\n"; return; }
 	  if (LLVMCreateExecutionEngineForModule(&engine, module, &err))
 	  { std::cerr << err << "\n"; return; }
+	  this->module = module;
+	}
+
+	void JIT::compileObjectFile(const char * path, const char * triple) {
+	  char * err = 0;
+	  machine = LLVMCreateTargetMachine(
+		target, triple ?: this->triple, "", "",
+		LLVMCodeGenLevelAggressive, LLVMRelocDefault, LLVMCodeModelDefault);
+	  LLVMTargetMachineEmitToFile(
+		machine, module, (char *)path, LLVMObjectFile, &err);
 	}
 
 	void JIT::runMain() {
