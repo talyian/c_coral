@@ -20,24 +20,25 @@ namespace coral {
       T Call;
 
       TestFunction(const char * funcName, const char * file) {
-	this->funcName = funcName;
-	parser =  coralParseModule(file);
-	auto module = (ast::Module *)_coralModule(parser);
-	analyzers::NameResolver resolver(module);
-	analyzers::ReturnInserter returner(module);
-	compiler = new codegen::LLVMModuleCompiler(module);
-	jit = new codegen::JIT(compiler->llvmModule);
-	Call = jit->GetFunctionPointer<T>(funcName);
+		this->funcName = funcName;
+		if (!fopen(file, "r")) return;
+		parser =  coralParseModule(file);
+		auto module = (ast::Module *)_coralModule(parser);
+		analyzers::NameResolver resolver(module);
+		analyzers::ReturnInserter returner(module);
+		compiler = new codegen::LLVMModuleCompiler(module);
+		jit = new codegen::JIT(compiler->llvmModule);
+		Call = jit->GetFunctionPointer<T>(funcName);
       }
       ~TestFunction() {
-	compiler->llvmModule = 0;
-	delete jit;
-	delete compiler;
-	coralDestroyModule(parser);
+		compiler->llvmModule = 0;
+		delete jit;
+		delete compiler;
+		coralDestroyModule(parser);
       }
     };
 
-#define ASSERT(cond, name) { total++; bool s = cond; success += s; \
+#define ASSERT(cond, name) { total++; bool s = cond; success += s;		\
       if (s) printf("%-60s OK\n", name); else printf("%-20s ERROR\n", name);  }
 
     void CodegenTests::Run(const char * path) {
@@ -61,6 +62,17 @@ namespace coral {
       ASSERT((collatz.Call(27, 0) == 111), "Collatz");
     }
 
+    void CodegenTests::RunReturnInserter() {
+	  const char * file = "tests/cases/features/returnInsert.coral";
+      ASSERT((TestFunction<int(*)()>("foo1", file).Call() == 1234), "Return Inserter 1");
+      ASSERT((TestFunction<int(*)()>("foo2", file).Call() == 1234), "Return Inserter 2");
+      ASSERT((TestFunction<int(*)()>("foo3", file).Call() == 1234), "Return Inserter 3");
+      ASSERT((!strcmp(TestFunction<char *(*)()>("foo4", file).Call(), "1234")), "Return Inserter 4");
+      ASSERT((TestFunction<int(*)()>("foo5", file).Call() == 0), "Return Inserter 5");
+	  ASSERT((TestFunction<int(*)()>("foo6", file).Call() == 1234), "Return Inserter 6");
+	  ASSERT((TestFunction<int(*)()>("foo7", file).Call() == 1234), "Return Inserter 7");
+    }
+
     TestSuite * run_codegen_tests() {
       auto T = new CodegenTests();
       T->show_header();
@@ -68,6 +80,7 @@ namespace coral {
       T->RunFactorial();
 	  T->RunFactorialWhile();
       T->RunCollatz();
+	  T->RunReturnInserter();
       T->Run("tests/cases/features/pcre.coral");
       T->show(0);
       return T;

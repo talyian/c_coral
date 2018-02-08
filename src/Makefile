@@ -6,11 +6,11 @@ BIN=bin
 .SUFFIXES:
 
 run: ${BIN}/coral-jit
-	$< tests/cases/simple/while.coral
+	$< tests/cases/features/pcre.coral
 debug: ${BIN}/coral-jit
-	@gdb -ex run -ex quit $<
+	@gdb -ex 'run tests/cases/features/pcre.coral' -ex quit $<
 mdebug: ${BIN}/coral-jit
-	valgrind --leak-check=full $<
+	valgrind --leak-check=full $< tests/cases/features/returnInsert.coral
 test: ${BIN}/coral-test
 	$<
 
@@ -23,9 +23,9 @@ ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o
 CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o  ${BUILD}/codegen/LLVMModuleCompiler.o ${BUILD}/codegen/LLVMJit.o
 ${BIN}/coral-core: ${COREFILES} ${BUILD}/core/main_core.o
 	${LINKCMD}
-${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_parse.o
-	${LINKCMD}
 ${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
+	${LINKCMD}
+${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/parser/main_parse.o
 	${LINKCMD}
 ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_jit.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl

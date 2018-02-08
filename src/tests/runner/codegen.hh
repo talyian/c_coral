@@ -8,6 +8,7 @@ namespace coral {
 	  void Run(const char * path);
 	  void RunFactorial();
 	  void RunFactorialWhile();
+	  void RunReturnInserter();
 	  void RunCollatz();
 	};
 

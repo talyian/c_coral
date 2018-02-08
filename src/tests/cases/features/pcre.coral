@@ -40,17 +40,20 @@ func main():
   printf("\n")
   return 0
 
-func regex_Pattern_create : Ptr(a): 0
-func regex_matches : Ptr(a, b): 0
+func regex_matches : Ptr (a, b): 0
+func regex_Pattern_create : Ptr (a): 0
+func regex_Matches_move : bool (matches: Ptr): 0
+func regex_Matches_current : Ptr (matches: Ptr): 0
+func regex_Match_toString : Ptr (m : Ptr) : 0
 
 # func test1():
 #   let pattern = regex.Pattern.new "a.(...)"
 #   for match in pattern.matches("crabcakes contain abc but not abcde"):
 #      print match.Value
 
-# func test():
-#   let subject = "crabcakes contain abc but not abcde"
-#   let pattern = regex_Pattern_create "(.)abc(.)"
-#   let matches = regex_matches(pattern, subject)
-#   while matches.move():
-#      printf("%s", regex_Match_toString matches.Current)
+func test():
+  let subject = "crabcakes contain abc but not abcde"
+  let pattern = regex_Pattern_create "(.)abc(.)"
+  let matches = regex_matches(pattern, subject)
+  while regex_Matches_move(matches):
+     printf("%s", regex_Match_toString (regex_Matches_current matches))

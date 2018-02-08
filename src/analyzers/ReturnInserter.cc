@@ -3,19 +3,10 @@
 #include "ReturnInserter.hh"
 
 #include <iostream>
+#include <algorithm>
 
 namespace coral {
   namespace analyzers {
-	class FuncFinder : public ast::ExprVisitor {
-	public:
-	  ast::BaseExpr * original;
-	  ast::Func * out;
-	  FuncFinder(ast::BaseExpr * expr) { original = expr; expr->accept(this); }
-	  std::string visitorName() { return "Returnify-Finder"; }
-	  void visit(ast::Module * m) { m->body->accept(this); }
-	  void visit(ast::Block * b) { for(auto && line : b->lines) if (line) line->accept(this); }
-	  void visit(ast::Func * f) { out = f; }
-	};
 
 	class ReturnReplace : public ast::ExprVisitor {
 	public:
@@ -46,8 +37,23 @@ namespace coral {
 		out = e;
 	  }
 	  void visit(ast::Block * e) {
-		auto m = e->lines.back().get();
-		e->lines.back().reset(ReturnReplace::replace(e->lines.back().release()));
+
+		auto last_item = std::find_if(
+		  e->lines.rbegin(), e->lines.rend(),
+		  [] (std::unique_ptr<ast::BaseExpr> & cur) { return (cur && ast::ExprTypeVisitor::of(cur.get()) != ast::ExprTypeKind::CommentKind); });
+
+		if (!e->lines.empty() && last_item != e->lines.rend()) {
+		  auto old_ptr = last_item->release();
+		  auto new_ptr = ReturnReplace::replace(old_ptr);
+		  last_item->reset(new_ptr);
+		  if (new_ptr != old_ptr) { return; }
+		  if (ast::ExprTypeVisitor::of(old_ptr) == ast::ExprTypeKind::ReturnKind) return;
+		  if (ast::ExprTypeVisitor::of(old_ptr) == ast::ExprTypeKind::IfExprKind) return;
+		}
+		e->lines.push_back(
+		  std::unique_ptr<ast::BaseExpr>(
+			new ast::Return(
+			  new ast::IntLiteral("0"))));
 		out = e;
 	  }
 	  void visit(ast::Var * e) { out = new ast::Return(e); }
@@ -55,6 +61,9 @@ namespace coral {
 	  void visit(ast::BinOp * e) { out = new ast::Return(e); }
 	  void visit(ast::IntLiteral * e) { out = new ast::Return(e); }
 	  void visit(ast::StringLiteral * e) { out = new ast::Return(e); }
+	  void visit(ast::While * e) { }
+	  void visit(ast::ForExpr * e) { }
+	  void visit(ast::Return * e) { }
 	};
   }
 }
@@ -69,8 +78,5 @@ void coral::analyzers::ReturnInserter::visit(ast::Block * m) {
 
 void coral::analyzers::ReturnInserter::visit(ast::Func * m) {
   if (!m->body) return;
-  auto block = m->body.get();
-  decltype(block->lines)::iterator iter;
-  for(auto i = block->lines.begin(); i != block->lines.end(); i++) if (*i) { iter = i; }
-  iter->reset(ReturnReplace::replace(iter->release()));
+  ReturnReplace::replace(m->body.get());
 }

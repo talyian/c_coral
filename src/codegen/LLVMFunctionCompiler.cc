@@ -212,6 +212,12 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Set * expr) {
   LLVMBuildStore(builder, llval, local);
 }
 
+void coral::codegen::LLVMFunctionCompiler::visit(ast::Comment * w) { }
+
+void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
+  std::cerr << "Not implemented yet: Member Codegen\n";
+}
+
 void coral::codegen::LLVMFunctionCompiler::visit(ast::While * w) {
 
   auto whileblock = LLVMAppendBasicBlock(function, "while");

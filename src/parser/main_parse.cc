@@ -1,5 +1,6 @@
 #include "parser.hh"
 #include "core/prettyprinter.hh"
+#include "analyzers/ReturnInserter.hh"
 #include <cstdio>
 
 void showFile(const char * filename) {
@@ -7,10 +8,10 @@ void showFile(const char * filename) {
   if (f) {
 	fclose(f);
 	auto parser = coralParseModule(filename);
-	auto module = _coralModule(parser);
+	auto module = (coral::ast::Module *)_coralModule(parser);
 	if (module) {
-	  coral::PrettyPrinter pp;
-	  ((coral::ast::Module *)module)->accept(&pp);
+	  coral::analyzers::ReturnInserter ri(module);
+	  coral::PrettyPrinter::print(module);
 	}
 	coralDestroyModule(parser);
   }

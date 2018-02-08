@@ -7,5 +7,5 @@ int main(int argc, char ** argv) {
   if (argc > 1) { Run(argv[1]); return 0; }
   // Run("tests/cases/simple/hello_world.coral");
   // Run("tests/cases/simple/collatz.coral");
-  Run("tests/cases/features/pcre.coral");
+  Run("tests/cases/features/returnInsert.coral");
 }
