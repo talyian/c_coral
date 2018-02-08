@@ -44,6 +44,8 @@ namespace coral {
 	  void visit(ast::BinOp * expr);
 	  void visit(ast::Block * expr);
 	  void visit(ast::Let * expr);
+	  void visit(ast::While * expr);
+	  void visit(ast::Set * expr);
 	};
   }
 }

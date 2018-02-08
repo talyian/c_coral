@@ -50,6 +50,12 @@ namespace coral {
       return;
     }
 
+    void CodegenTests::RunFactorialWhile() {
+      auto factorial = TestFunction<int(*)(int)>("factorial_while", "tests/cases/simple/while.coral");
+      ASSERT((factorial.Call(10) == 3628800), "Factorial While");
+      return;
+    }
+
     void CodegenTests::RunCollatz() {
       auto collatz = TestFunction<int(*)(int, int)>("collatz", "tests/cases/simple/collatz.coral");
       ASSERT((collatz.Call(27, 0) == 111), "Collatz");
@@ -60,6 +66,7 @@ namespace coral {
       T->show_header();
       T->Run("tests/cases/simple/hello_world.coral");
       T->RunFactorial();
+	  T->RunFactorialWhile();
       T->RunCollatz();
       T->Run("tests/cases/features/pcre.coral");
       T->show(0);

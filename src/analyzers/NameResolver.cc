@@ -32,7 +32,7 @@ namespace coral {
 		m->elsebody->accept(this); }
 	  void visit(ast::Let * e) {
 		info[e->var->name].expr = e;
-		info[e->var->name].kind = ast::ExprTypeVisitor::of(e);
+		info[e->var->name].kind = ast::ExprTypeKind::LetKind;
 		e->value->accept(this);
 	  }
 	  void visit(ast::BinOp * m) { m->lhs->accept(this); m->rhs->accept(this); }
@@ -65,6 +65,18 @@ namespace coral {
       void visit(ast::IntLiteral * i) { }
 
 	  void visit(ast::FloatLiteral * i) { }
+
+	  void visit(ast::Set * s) {
+		s->var->accept(this);
+		s->value->accept(this);
+		// info[s->var->name].expr = s;
+		// info[s->var->name].kind = ast::ExprTypeKind::SetKind;
+	  }
+
+	  void visit(ast::While * w) {
+		w->cond->accept(this);
+		w->body->accept(this);
+	  }
 	};
   }
 }

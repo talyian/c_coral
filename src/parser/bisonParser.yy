@@ -15,23 +15,18 @@
 %token <std::string> STRING
 %token <std::string> IDENTIFIER
 %token <std::string> INTEGER
-%token NEWLINE
-%token INDENT
-%token DEDENT
+%token NEWLINE INDENT DEDENT
 %token FUNC
-%token LET
-%token FOR
-%token IN
-%token IF
-%token ELIF
-%token ELSE
-%token RETURN
+%token LET SET
+%token FOR IN
+%token IF ELIF ELSE
 %token WHILE CONTINUE MATCH
+%token RETURN
 %token ENDOFFILE 0
 
 // TODO split between Statements and Exprs
 %type <coral::ast::BaseExpr *> Expr Atom Expr2 Expr3 Expr4
-%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Let Argument
+%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Argument
 %type <coral::ast::IfExpr *> IfStatement
 %type <coral::ast::Block *> StatementBlock
 %type <coral::ast::TupleLiteral *> Tuple
@@ -100,7 +95,8 @@ ModuleLine
 : COMMENT { $$ = new ast::Comment($1); }
 | Expr { $$ = $1; }
 | Function { $$ = $1; }
-| Let { $$ = $1; }
+| LET GeneralIdentifier OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
+| SET GeneralIdentifier OP_EQ Expr { $$ = new ast::Set(new ast::Var($2), $4); }
 | ForLoop { $$ = $1; }
 | IfStatement { $$ = $1; }
 | WHILE Expr StatementBlock { $$ = new ast::While($2, $3); }
@@ -121,8 +117,6 @@ IfStatement
 : IF Expr StatementBlock { $$ = new ast::IfExpr($2, $3, 0); }
 | IF Expr StatementBlock ELSE StatementBlock %prec ELSE { $$ = new ast::IfExpr($2, $3, $5); }
 | IF Expr StatementBlock ELSE IfStatement %prec ELSE { $$ = new ast::IfExpr($2, $3, new ast::Block({ $5 })); }
-
-Let : LET GeneralIdentifier OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
 
 IdentifierList : GeneralIdentifier { $$.push_back($1); }
 | IdentifierList ',' GeneralIdentifier { $$ = $1; $$.push_back($3); }

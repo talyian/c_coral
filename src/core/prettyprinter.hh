@@ -16,6 +16,8 @@ namespace coral {
 	std::string IND() { return line ? "" : std::string(indent * 3, ' '); }
 	std::string END() { return line ? "" : "\n"; }
 
+	std::string visitorName() { return "PrettyPrinter"; }
+
 	static void print(ast::BaseExpr * e) { PrettyPrinter pp; e->accept(&pp); }
 
 	template <typename Tn>
@@ -49,5 +51,6 @@ namespace coral {
 	virtual void visit(ast::TupleLiteral * m);
 	virtual void visit(ast::Def * m);
 	virtual void visit(ast::While * m);
+	virtual void visit(ast::Set * m);
   };
 }

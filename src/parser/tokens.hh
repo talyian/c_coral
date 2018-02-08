@@ -28,6 +28,7 @@ namespace coral {
 	static int GetKeyword(std::string s) {
 	  return s == "func" ? TOK::FUNC :
 		s == "let" ? TOK::LET :
+		s == "set" ? TOK::SET :
 		s == "for" ? TOK::FOR :
 		s == "in" ? TOK::IN :
 		s == "if" ? TOK::IF :

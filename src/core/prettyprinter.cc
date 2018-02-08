@@ -121,6 +121,14 @@ namespace coral {
 	cout << END();
   }
 
+  void PrettyPrinter::visit(ast::Set * e) {
+	cout << IND() << "set ";
+	withline(e->var);
+	cout << " = ";
+	withline(e->value);
+	cout << END();
+  }
+
   void PrettyPrinter::visit(ast::Module * m) {
 	if (m->body) m->body->accept(this);
   }

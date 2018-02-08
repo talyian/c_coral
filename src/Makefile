@@ -6,7 +6,7 @@ BIN=bin
 .SUFFIXES:
 
 run: ${BIN}/coral-jit
-	$<
+	$< tests/cases/simple/while.coral
 debug: ${BIN}/coral-jit
 	@gdb -ex run -ex quit $<
 mdebug: ${BIN}/coral-jit

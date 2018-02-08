@@ -11,6 +11,7 @@ namespace coral {
 	  ast::BaseExpr * original;
 	  ast::Func * out;
 	  FuncFinder(ast::BaseExpr * expr) { original = expr; expr->accept(this); }
+	  std::string visitorName() { return "Returnify-Finder"; }
 	  void visit(ast::Module * m) { m->body->accept(this); }
 	  void visit(ast::Block * b) { for(auto && line : b->lines) if (line) line->accept(this); }
 	  void visit(ast::Func * f) { out = f; }
@@ -20,12 +21,15 @@ namespace coral {
 	public:
 	  ast::BaseExpr * original;
 	  ast::BaseExpr * out = 0;
+
 	  ReturnReplace(ast::BaseExpr * expr) {
 		original = expr;
 		out = expr;
 		if (expr)
 		  expr->accept(this);
 	  }
+
+	  std::string visitorName() { return "Returnify"; }
 
 	  static ast::BaseExpr * replace(ast::BaseExpr * original) {
 		ReturnReplace rr(original);

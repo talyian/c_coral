@@ -20,7 +20,7 @@ namespace coral {
 	using std::unique_ptr;
 	using std::map;
 
-#define MAP_ALL_EXPRS(F) F(Module) F(Extern) F(Import) F(Let) F(Func) F(Block) F(Var) F(Call) F(StringLiteral) F(IntLiteral) F(FloatLiteral) F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member) F(ListLiteral) F(TupleLiteral) F(Def) F(While)
+#define MAP_ALL_EXPRS(F) F(Module) F(Extern) F(Import) F(Let) F(Func) F(Block) F(Var) F(Call) F(StringLiteral) F(IntLiteral) F(FloatLiteral) F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member) F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set)
 
 	// Forward-declare all Expr classes
 #define F(E) class E;
@@ -201,6 +201,14 @@ namespace coral {
 	  unique_ptr<Var> var;
 	  unique_ptr<BaseExpr> value;
 	  Let(Var * var, BaseExpr * value) : var(var), value(value) { }
+	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+	};
+
+	class Set : public Statement {
+	public:
+	  unique_ptr<Var> var;
+	  unique_ptr<BaseExpr> value;
+	  Set(Var * var, BaseExpr * value) : var(var), value(value) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 

@@ -1,0 +1,16 @@
+`extern func printf : Void (fmt:Ptr)
+
+func factorial_while(m):
+  let s = 1
+  let n = m
+  while n > 1:
+    set s = s * n
+    set n = n - 1
+  s
+
+func main():
+  let i = 0
+  while i < 10:
+    printf("%3d! = %d\n", i, factorial_while(i))
+    set i = i + 1
+  0

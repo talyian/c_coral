@@ -7,6 +7,7 @@ namespace coral {
 	  const char * getName() { return "Codegen Tests"; }
 	  void Run(const char * path);
 	  void RunFactorial();
+	  void RunFactorialWhile();
 	  void RunCollatz();
 	};
 

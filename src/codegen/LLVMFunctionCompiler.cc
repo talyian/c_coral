@@ -7,7 +7,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
   auto paramTypes = new LLVMTypeRef[expr->params.size()];
   for(ulong i=0; i<expr->params.size(); i++) {
     auto ppp = expr->params[i].get();
-    // std::cout << ppp->name << " : " 
+    // std::cout << ppp->name << " : "
     // 	      << (ppp->type ? ppp->type->name: "")
     // 	      << "\n";
     if (ppp->type && ppp->type->name == "Ptr")
@@ -18,7 +18,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
   auto ret_type = LLVMInt32TypeInContext(context);
   if (expr->type && expr->type->name == "Ptr")
     ret_type = LLVMPointerType(LLVMInt8Type(), 0);
-    
+
   function = LLVMAddFunction(
 	module,
 	expr->name.c_str(),
@@ -55,13 +55,13 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::IfExpr * expr) {
   expr->ifbody->accept(this);
   if (!returns) LLVMBuildBr(builder, endblock);
   branchreturns += returns > 0 ? 1 : 0;
-  returns = 0;  
+  returns = 0;
   LLVMPositionBuilderAtEnd(builder, elseblock);
   expr->elsebody->accept(this);
-  if (!returns) LLVMBuildBr(builder, endblock);  
+  if (!returns) LLVMBuildBr(builder, endblock);
   branchreturns += returns > 0 ? 1 : 0;
 
-  LLVMPositionBuilderAtEnd(builder, endblock);  
+  LLVMPositionBuilderAtEnd(builder, endblock);
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::IntLiteral * expr) {
@@ -112,7 +112,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
     if (expr->op == "+") {
       LLVMValueRef indices[1] = { rhs };
       out = LLVMBuildGEP(builder, lhs, &rhs, 1, "");
-    } else { 
+    } else {
       std::cerr << "Unknown Operator " << expr->op << " for Pointers\n";
       out = 0;
     }
@@ -120,7 +120,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
   }
   if (expr->op == "-")
 	out = LLVMBuildSub(builder, lhs, rhs, "");
-  else if (expr->op == "+") 
+  else if (expr->op == "+")
 	out = LLVMBuildAdd(builder, lhs, rhs, "");
   else if (expr->op == "%")
 	out = LLVMBuildSRem(builder, lhs, rhs, "");
@@ -197,4 +197,36 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Let * expr) {
   auto local = LLVMBuildAlloca(builder, LLVMTypeOf(llval), expr->var->name.c_str());
   LLVMBuildStore(builder, llval, local);
   (*info)[expr] = local;
+}
+
+void coral::codegen::LLVMFunctionCompiler::visit(ast::Set * expr) {
+  out = 0;
+  expr->value->accept(this);
+  auto llval = out;
+  auto local = (*info)[expr->var->expr];
+  if (ast::ExprTypeVisitor::of(expr->var->expr) == ast::ExprTypeKind::DefKind) {
+	std::cerr << "Warning: writing to a parameter is not currently supported\n";
+	out = 0;
+	return;
+  }
+  LLVMBuildStore(builder, llval, local);
+}
+
+void coral::codegen::LLVMFunctionCompiler::visit(ast::While * w) {
+
+  auto whileblock = LLVMAppendBasicBlock(function, "while");
+  auto body = LLVMAppendBasicBlock(function, "whilebody");
+  auto endblock = LLVMAppendBasicBlock(function, "end");
+  LLVMBuildBr(builder, whileblock);
+
+  LLVMPositionBuilderAtEnd(builder, whileblock);
+  out = 0;
+  w->cond->accept(this);
+  LLVMBuildCondBr(builder, out, body, endblock);
+
+  LLVMPositionBuilderAtEnd(builder, body);
+  w->body->accept(this);
+  LLVMBuildBr(builder, whileblock);
+
+  LLVMPositionBuilderAtEnd(builder, endblock);
 }
