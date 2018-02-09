@@ -147,23 +147,47 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
   out = LLVMBuildRet(builder, compile(expr->val.get()));
 }
 
-void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
-  expr->callee->accept(this);
+namespace coral {
+  LLVMValueRef ParseStruct(coral::codegen::LLVMFunctionCompiler * cc, coral::ast::Call * expr) {
+	auto size = expr->arguments.size();
+	LLVMTypeRef fieldTypes[size];
+	LLVMValueRef fieldValues[size];
+	int i=0;
+	for(auto && arg : expr->arguments) {
+	  if (ast::ExprTypeVisitor::of(arg.get()) != ast::ExprTypeKind::BinOpKind) return 0;
+	  auto binop = (ast::BinOp *)arg.get();
+	  if (binop->op != "=") return 0;
+	  fieldValues[i] = cc->compile(binop->rhs.get());
+	  fieldTypes[i++] = LLVMTypeOf(fieldValues[i]);
+	}
+	auto type = LLVMStructType(fieldTypes, size, true);
+	auto val = LLVMBuildAlloca(cc->builder, type, "");
+	return val;
+  }
+}
 
-  if (!out && ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
+void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
+  if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
+	expr->callee->accept(this);
 	auto var = (ast::Var *)expr->callee.get();
+	// TODO: make this an actual operator
 	if (var->name == "addrof") {
 	  this->rawPointer = 1;
 	  expr->arguments[0]->accept(this);
 	  this->rawPointer = 0;
 	  return;
 	} else if (var->name == "derefi") {
+	  // TODO typed pointers should eliminate the need for a "deref-as-integer" builtin
 	  expr->arguments[0]->accept(this);
 	  auto intval = out;
 	  auto ptrval = LLVMBuildIntToPtr(builder, intval, LLVMPointerType(LLVMInt32Type(), 0), "ptrcast");
 	  out = LLVMBuildLoad(builder, ptrval, var->name.c_str());
 	  return;
+	} else if (var->name == "struct") {
+	  out = ParseStruct(this, expr);
+	  return;
 	}
+
 	out = LLVMGetNamedFunction(module, var->name.c_str());
 	if (!out)
 	  out = LLVMAddFunction(

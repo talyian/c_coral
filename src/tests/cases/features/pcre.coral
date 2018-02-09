@@ -2,14 +2,13 @@
 `extern func pcre2_match_data_create_8 : Ptr (size:Int32, context:Ptr)
 `extern func pcre2_compile_8 : Ptr (pat:Ptr, len:Int32, opt:Int32, err:Ptr, offset:Ptr, context:Ptr)
 `extern func pcre2_get_ovector_pointer_8 : Ptr (data:Ptr)
-`extern func pcre2_match_8 : Int32 (regex:Ptr, subject:Ptr, len:Int32,
-    start:Int32, opt:Int32, data:Ptr, context:Ptr)
+`extern func pcre2_match_8 : Int32 (regex:Ptr, subject:Ptr, len:Int32, start:Int32, opt:Int32, data:Ptr, context:Ptr)
 
 func regex_Pattern_new : Ptr (pattern:Ptr):
   let error = 5
   let offset = 5
   let len = strlen pattern
-  let regex =  pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, 0)
+  let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, 0)
   if error <= 100:
     return regex
   else:
@@ -20,24 +19,10 @@ func regex_matches (regex:Ptr, subject:Ptr):
   let len = strlen subject
   let pos = 0
   let matchdata = pcre2_match_data_create_8(10, 0)
-  let rc = 1
-  while rc > 0:
-    set rc = pcre2_match_8(regex, subject, len, pos, 0, matchdata, 0)
-    if rc > 0:
-      let ov = pcre2_get_ovector_pointer_8(matchdata)
-      let start = derefi ov
-      let end = derefi (ov + 8)
-      set pos = end
-      printf("%.*s | ", end - start, subject + start)
-  printf "\n"
+  struct(regex=regex, subject=subject, len=len, matchdata=matchdata, pos=0)
 
-func regex_Matches_move : bool (m:Ptr):
-  # set m.rc = pcre2_match_8(m.regex, m.subject, m.len, m.pos, 0, m.matchdata, 0)
-  # m.rc > 0
-
-func regex_Matches_current : Ptr (m:Ptr):
-  # let ov = pcre2_get_ovector_pointer_8(m.matchdata)
-
+func regex_Matches_move : bool (m:Ptr): 0
+func regex_Matches_current : Ptr (m:Ptr): 0
 func regex_Match_toString : Ptr (m:Ptr) : 0
 
 func main():
@@ -46,3 +31,5 @@ func main():
   let matches = regex_matches(pattern, subject)
   while regex_Matches_move(matches):
      printf("%s", regex_Match_toString (regex_Matches_current matches))
+  printf("done")
+  0

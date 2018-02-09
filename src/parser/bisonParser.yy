@@ -103,10 +103,10 @@ ModuleLine
 | RETURN Expr { $$ = new ast::Return($2); }
 
 Function
-: FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type("o"), $4, $6); }
+: FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type(""), $4, $6); }
 | FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' StatementBlock {
    $$ = new ast::Func($2, $4, $6, $8); }
-| FUNC IDENTIFIER '(' ')' StatementBlock { $$ = new ast::Func($2, new Type("o"), {}, $5); }
+| FUNC IDENTIFIER '(' ')' StatementBlock { $$ = new ast::Func($2, new Type(""), {}, $5); }
 | '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' {
   $$ = new ast::Func($4, $6, $8, 0); }
 ForLoop

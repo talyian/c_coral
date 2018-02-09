@@ -11,14 +11,19 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Func * e) {
-	cout << IND() << "func " << e->name << "(";
+	cout << IND() << "func " << e->name;
+    if (e->type && e->type->params.size()) cout << " : " << e->type->params.back();
+    cout << "(";
 	for(auto && def : e->params) {
 	  if (def != e->params.front()) cout << ", ";
 	  if (def) def->accept(this);
 	}
 	cout << "):\n";
 	indent++;
-	if (e->body) e->body->accept(this);
+	if (e->body) {
+      e->body->accept(this);
+      cout << "\n";
+    }
 	indent--;
   }
   void PrettyPrinter::visit(ast::Block * e) {
@@ -116,6 +121,10 @@ namespace coral {
   void PrettyPrinter::visit(ast::Let * e) {
 	cout << IND() << "let ";
 	withline(e->var);
+    if (e->type.name != "") {
+      cout << " : ";
+      cout << e->type;
+    }
 	cout << " = ";
 	withline(e->value);
 	cout << END();

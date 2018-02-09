@@ -9,8 +9,14 @@ namespace coral {
 	class Type {
 	public:
 	  std::string name;
+	  std::vector<Type> params;
 	  Type(std::string name) : name(name) { }
+	  Type(std::string name, std::vector<Type> params) : name(name), params(params) { }
+	  bool operator != (Type & other) { return name != other.name; }
+	  bool operator == (Type & other) { return name == other.name; }
+	  Type returnType();
 	};
+	std::ostream & operator << (std::ostream &os, Type & tt);
   }
 
   using Type = type::Type;
@@ -105,6 +111,7 @@ namespace coral {
 	  Block(std::vector<coral::ast::BaseExpr *> lines) {
 		for(auto && ptr : lines) if (ptr) this->lines.push_back(unique_ptr<coral::ast::BaseExpr>(ptr));
 	  }
+	  BaseExpr * LastLine();
 	  virtual void accept(ExprVisitor * v) {
 		v->visit(this);
 	  }
@@ -200,7 +207,8 @@ namespace coral {
 	public:
 	  unique_ptr<Var> var;
 	  unique_ptr<BaseExpr> value;
-	  Let(Var * var, BaseExpr * value) : var(var), value(value) { }
+      Type type;
+	  Let(Var * var, BaseExpr * value) : var(var), value(value), type("") { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 

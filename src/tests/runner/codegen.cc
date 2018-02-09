@@ -2,7 +2,8 @@
 #include "codegen/LLVMModuleCompiler.hh"
 #include "codegen/LLVMFunctionCompiler.hh"
 #include "codegen/LLVMJit.hh"
-#include "analyzers/NameResolver.cc"
+#include "analyzers/NameResolver.hh"
+#include "analyzers/TypeResolver.hh"
 #include "analyzers/ReturnInserter.hh"
 #include "parser/parser.hh"
 
@@ -24,7 +25,8 @@ namespace coral {
 		if (!fopen(file, "r")) return;
 		parser =  coralParseModule(file);
 		auto module = (ast::Module *)_coralModule(parser);
-		analyzers::NameResolver resolver(module);
+		analyzers::NameResolver nresolver(module);
+		analyzers::TypeResolver tresolver(module);
 		analyzers::ReturnInserter returner(module);
 		compiler = new codegen::LLVMModuleCompiler(module);
 		jit = new codegen::JIT(compiler->llvmModule);
