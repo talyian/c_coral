@@ -24,7 +24,7 @@ void analyzers::NameResolver::visit(ast::Call * c) {
 
 void analyzers::NameResolver::visit(ast::Var * v) {
   auto expr = info[v->name].expr;
-  // std::cout << "Var! " << v->name
+  // std::cerr << "Var! " << v->name
   // 		  << " ("  << (void *) expr << ") "
   // 		  << ast::ExprNameVisitor::of(expr) << std::endl;
   v->expr = info[v->name].expr;

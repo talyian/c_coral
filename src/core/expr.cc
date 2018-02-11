@@ -1,6 +1,7 @@
 #include "expr.hh"
 
 #include <cstdio>
+#include <iostream>
 #include <regex>
 
 namespace coral {
@@ -10,6 +11,12 @@ namespace coral {
 	  if (name == "Func") return params.back();
 	  return Type("");
 	}
+
+	std::ostream & operator << (std::ostream &os, Type * tt)	{
+      if (tt == 0) os << "(nulltype)";
+      else os << *tt;
+      return os;
+    }
 
 	std::ostream & operator << (std::ostream &os, Type & tt)	{
 	  os << tt.name;
@@ -30,6 +37,23 @@ namespace coral {
 	Module::Module() { }
 
 	std::regex string_unescape("\\\\n");
+
+    Func::Func(
+      std::string name,
+      Type * rtype,
+      vector<coral::ast::Def *> params,
+      Block * body) : name(name), body(body) {
+
+      this->type = std::unique_ptr<coral::type::Type>(new Type("Func"));
+      for(auto && p : params) {
+        if (p->type)
+          this->type->params.push_back(*(p->type));
+        else
+          this->type->params.push_back(Type(""));
+        this->params.push_back(std::unique_ptr<Def>(p));
+      }
+      this->type->params.push_back(*rtype);
+    }
 
 	std::string StringLiteral::getString() {
 	  auto s = value.substr(1, value.size() - 2);

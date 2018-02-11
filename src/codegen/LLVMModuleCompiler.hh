@@ -20,7 +20,7 @@ namespace coral {
 	  LLVMBasicBlockRef outBlock = 0;
 
 	  LLVMModuleCompiler(ast::Module * m);
-
+      std::string visitorName() { return "ModuleCompiler"; }
 	  std::string GetIR() {
 	    return std::string(LLVMPrintModuleToString(llvmModule));
 	  }
@@ -34,6 +34,14 @@ namespace coral {
 	  void visit(ast::Module * m) {
 		for (auto && line : m->body->lines) if (line) line->accept(this);
 	  }
+      void visit(ast::Let * e) {
+        e->value->accept(this);
+        info[e] = out;
+      }
+      void visit(ast::IntLiteral * e) {
+        out = LLVMConstInt(LLVMIntType(32), std::stol(e->value), false);
+        info[e] = out;
+      }
 	  void visit(ast::Comment * c) { }
 	  void visit(ast::Func * f) {
 		LLVMFunctionCompiler fcc(

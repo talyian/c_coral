@@ -35,8 +35,13 @@ void analyzers::TypeResolver::visit(ast::IfExpr * m) {
 	m->elsebody->accept(this);
 	t3 = info[m->elsebody.get()];
   }
+  // TODO: this logic isn't robust
   info[m].expr = m;
-  info[m].type = t2.type;
+  info[m].type = t3.type;
+  if (t2.type.name != "") {
+    info[m].type = t2.type;
+    return;
+  }
   if (t2.type != t3.type) {
 	// warning: ifblock and elseblock have different types!
 	std::cerr << "Warning: if block has inferred different block types: ["
@@ -49,11 +54,11 @@ void analyzers::TypeResolver::visit(ast::Let * e) {
   e->var->accept(this);
   if (info[e->var.get()].type.name == "") {
     info[e].type = e->type = info[e->var.get()].type = info[e->value.get()].type;
-    std::cout << " [" << ((ast::Var *)e->var.get())->name;
-    std::cout << "]  = " << e->type << "\n";
+    // std::cout << " [" << ((ast::Var *)e->var.get())->name;
+    // std::cout << "]  = " << e->type << "\n";
   } else {
-    std::cout << " [" << ((ast::Var *)e->var.get())->name << "] ";
-    std::cout << " skipping: " << info[e->var.get()].type << "\n";
+    // std::cout << " [" << ((ast::Var *)e->var.get())->name << "] ";
+    // std::cout << " skipping: " << info[e->var.get()].type << "\n";
   }
 }
 void analyzers::TypeResolver::visit(ast::BinOp * e) {
@@ -102,7 +107,6 @@ void analyzers::TypeResolver::visit(ast::Call * c) {
 }
 
 void analyzers::TypeResolver::visit(ast::Var * v) {
-  // std::cerr << "Var [" << v->name << "] :: " << info[v->expr].type << "\n";
   info[v].expr = v;
   info[v].type = info[v->expr].type;
 }
@@ -110,33 +114,39 @@ void analyzers::TypeResolver::visit(ast::Var * v) {
 using namespace coral::type;
 void analyzers::TypeResolver::visit(ast::Func * f) {
   info[f].expr = f;
-  Type ret_type = *(f->type);
+  Type ret_type = f->type->returnType();
   auto np = f->params.size();
   Type ftype("Func");
   for(ulong i=0; i < np; i++) {
 	f->params[i]->accept(this);
 	ftype.params.push_back(info[f->params[i].get()].type);
   }
-  ftype.params.push_back(ret_type);
 
+  //  ftype.params.push_back(ret_type);
+  ftype.params.push_back(ret_type);
   if (f->body) {
-    f->body->accept(this);
+    // TODO: TypeResolver isn't recursion-safe.
+    // This is a hack to get recursive references to a function to not
+    // halt the type-check
+    auto body = f->body.release();
+    body->accept(this);
+    f->body.reset(body);
     if (ret_type.name == "") ftype.params.back() = info[f->body.get()].type;
     // std::cerr << "           inferring return type " << info[f->body.get()].type << "\n";
   }
-  std::cerr << COL_RED << std::setw(30) << f->name << COL_CLEAR << " :: " << ftype << "\n";
+  // std::cerr << COL_RED << std::setw(30) << f->name << COL_CLEAR << " :: " << ftype << "\n";
   info[f].type = ftype;
-  f->type = std::unique_ptr<Type>(new Type(ftype));
+  f->type.reset(new Type(ftype));
 }
 
 void analyzers::TypeResolver::visit(ast::Def * e) {
   info[e].expr = e;
-  info[e].type = *(e->type);
+  if (e->type) info[e].type = *(e->type);
 }
 
 void analyzers::TypeResolver::visit(ast::StringLiteral * e) {
   info[e].expr = e;
-  info[e].type = Type("String");
+  info[e].type = Type("Ptr");
 }
 
 void analyzers::TypeResolver::visit(ast::IntLiteral * e) {

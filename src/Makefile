@@ -3,14 +3,15 @@ CC=clang++-5.0 -std=c++11 -Wall -Wextra -I.
 LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
 BUILD=obj
 BIN=bin
-TESTFILE=tests/cases/features/pcre.coral
+#TESTFILE=tests/cases/features/pcre.coral
+TESTFILE=tests/cases/features/typeInference.coral
 .SUFFIXES:
 
-run: ${BIN}/coral-jit
+run: ${BIN}/coral-test
 	$< ${TESTFILE}
-debug: ${BIN}/coral-jit
+debug: ${BIN}/coral-test
 	@gdb -ex 'run ${TESTFILE}' -ex quit $<
-mdebug: ${BIN}/coral-jit
+mdebug: ${BIN}/coral-test
 	valgrind --leak-check=full $< ${TESTFILE}
 test: ${BIN}/coral-test
 	$<
@@ -31,7 +32,7 @@ ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/c
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
 ${BIN}/coral-compile: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_compile.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
-${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o ${BUILD}/tests/runner/codegen.o
+${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o ${BUILD}/tests/runner/codegen.o ${BUILD}/tests/runner/parser.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -ldl -rdynamic -lpcre2-8
 
 # # # Bison # # #

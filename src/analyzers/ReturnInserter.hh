@@ -14,7 +14,7 @@ namespace coral {
 	  std::string name;
 
 	  ReturnInserter(ast::Module * m) : module(m) { visit(m); }
-	  virtual std::string visitorName() { return "NameResolver"; }
+	  virtual std::string visitorName() { return "ReturnInserter"; }
 
 	  void visit(ast::Module * m);
 	  void visit(ast::Func * f);

@@ -1,32 +1,37 @@
 #include "llvm-c/Core.h"
 
-#include "LLVMFunctionCompiler.hh"
-#include "../core/expr.hh"
+#include "codegen/LLVMFunctionCompiler.hh"
+#include "core/expr.hh"
+#include "utils/ansicolor.hh"
+
+LLVMTypeRef LLVMTypeFromCoral(coral::type::Type * t) {
+  if (!t) return LLVMVoidType();
+  if (t->name == "Void") return LLVMVoidType();
+  if (t->name == "Ptr") return LLVMPointerType(LLVMInt8Type(), 0);
+  if (t->name == "Int32") return LLVMInt32Type();
+  if (t->name == "Func") {
+    // std::cout << "LLVMTyping: " << *t << "\n";
+    auto ret_type = LLVMTypeFromCoral(&t->params.back());
+    auto nparam = t->params.size() - 1;
+    auto params = new LLVMTypeRef[nparam];
+    for(ulong i=0; i<nparam; i++)
+      params[i] = LLVMTypeFromCoral(&t->params[i]);
+	auto ftype = LLVMFunctionType(
+ 	  ret_type,
+      params, nparam,
+	  false);
+    delete params;
+    return ftype;
+  }
+  std::cerr << COL_RED << "Warning: Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
+  return LLVMInt64Type();
+}
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
-  auto paramTypes = new LLVMTypeRef[expr->params.size()];
-  for(ulong i=0; i<expr->params.size(); i++) {
-    auto ppp = expr->params[i].get();
-    // std::cout << ppp->name << " : "
-    // 	      << (ppp->type ? ppp->type->name: "")
-    // 	      << "\n";
-    if (ppp->type && ppp->type->name == "Ptr")
-      paramTypes[i] = LLVMPointerType(LLVMInt8Type(), 0);
-    else
-      paramTypes[i] = LLVMInt32Type();
-  }
-  auto ret_type = LLVMInt32TypeInContext(context);
-  if (expr->type && expr->type->name == "Ptr")
-    ret_type = LLVMPointerType(LLVMInt8Type(), 0);
-
   function = LLVMAddFunction(
 	module,
 	expr->name.c_str(),
-	LLVMFunctionType(
- 	  ret_type,
-	  paramTypes,
-	  expr->params.size(),
-	  false));
+	LLVMTypeFromCoral(expr->type.get()));
   (*info)[expr] = function;
 
   for(ulong i=0; i<expr->params.size(); i++) {
@@ -37,7 +42,6 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
     LLVMPositionBuilderAtEnd(builder, basic_block);
     expr->body->accept(this);
   }
-  delete [] paramTypes;
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::IfExpr * expr) {
@@ -95,10 +99,17 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
 	out = info->find(var->expr)->second;
 	return;
   case ast::ExprTypeKind::LetKind:
-	if (this->rawPointer)
+	if (this->rawPointer) {
 	  out = info->find(var->expr)->second;
-	else
-	  out = LLVMBuildLoad(builder, info->find(var->expr)->second, var->name.c_str()) ;
+    } else {
+      // A Let-expr usually generates a local -> Alloca
+      // but
+      std::cerr << "Loading " << var->name << " = "
+                << LLVMPrintValueToString(info->find(var->expr)->second) << " | "
+                << LLVMPrintTypeToString(LLVMTypeOf(info->find(var->expr)->second))
+                << "\n";
+      out = LLVMBuildLoad(builder, info->find(var->expr)->second, var->name.c_str()) ;
+    }
 	return;
   default:
   	std::cerr << "unknown var kind : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
@@ -150,8 +161,8 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
 namespace coral {
   LLVMValueRef ParseStruct(coral::codegen::LLVMFunctionCompiler * cc, coral::ast::Call * expr) {
 	auto size = expr->arguments.size();
-	LLVMTypeRef fieldTypes[size];
-	LLVMValueRef fieldValues[size];
+	LLVMTypeRef * fieldTypes = new LLVMTypeRef[size];
+	LLVMValueRef * fieldValues = new LLVMValueRef[size];
 	int i=0;
 	for(auto && arg : expr->arguments) {
 	  if (ast::ExprTypeVisitor::of(arg.get()) != ast::ExprTypeKind::BinOpKind) return 0;
@@ -167,6 +178,7 @@ namespace coral {
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
+
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
 	expr->callee->accept(this);
 	auto var = (ast::Var *)expr->callee.get();

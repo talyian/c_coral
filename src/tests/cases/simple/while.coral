@@ -1,6 +1,6 @@
 `extern func printf : Void (fmt:Ptr)
 
-func factorial_while(m):
+func factorial_while(m: Int32):
   let s = 1
   let n = m
   while n > 1:

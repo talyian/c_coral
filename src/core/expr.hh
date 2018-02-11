@@ -12,8 +12,8 @@ namespace coral {
 	  std::vector<Type> params;
 	  Type(std::string name) : name(name) { }
 	  Type(std::string name, std::vector<Type> params) : name(name), params(params) { }
-	  bool operator != (Type & other) { return name != other.name; }
-	  bool operator == (Type & other) { return name == other.name; }
+	  bool operator != (Type const & other) { return name != other.name; }
+	  bool operator == (Type const & other) { return name == other.name; }
 	  Type returnType();
 	};
 	std::ostream & operator << (std::ostream &os, Type & tt);
@@ -136,10 +136,7 @@ namespace coral {
 	  Func(std::string name,
 		   Type * type,
 		   vector<coral::ast::Def *> params,
-		   Block * body)
-		: name(name), type(type), body(body) {
-		for(auto && p : params) this->params.push_back(std::unique_ptr<Def>(p));
-	  }
+		   Block * body);
 
 	  virtual void accept(ExprVisitor * v) {
 		v->visit(this);

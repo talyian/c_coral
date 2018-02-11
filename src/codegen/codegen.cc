@@ -12,7 +12,9 @@ namespace coral {
 
   void Run(const char * path) {
     CodeProcessingUnit cc(path);
+    cc.showSource();
     cc.showIR();
+    std::cout << "Running: " << path << "\n";
     cc.runJIT();
   }
 
@@ -34,6 +36,7 @@ namespace coral {
   }
 
   void CodeProcessingUnit::runJIT() {
-
+    codegen::JIT jit(compiler->llvmModule);
+    jit.runMain();
   }
 }

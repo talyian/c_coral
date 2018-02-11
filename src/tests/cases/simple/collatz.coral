@@ -1,11 +1,12 @@
-func collatz(n, m):
+func collatz(n: Int32, m: Int32):
   if n = 1: m
   else if n % 2 = 0: collatz(n / 2, m + 1)
   else: collatz(3 * n + 1, m + 1)
 
-func collatz_loop(a, b):
+func collatz_loop(a: Int32, b: Int32):
   if a = b:
     printf("done\n")
+    return 0
   else:
     printf("collatz %d = %d\n", a, collatz(a, 0))
     collatz_loop(a + 1, b)

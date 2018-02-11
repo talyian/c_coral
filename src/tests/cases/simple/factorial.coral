@@ -1,11 +1,11 @@
 # Basic example
-func factorial(n):
+func factorial (n: Int32):
   if n < 2:
     1
   else:
     n * factorial(n - 1)
 
-func main():
+func main ():
   printf("%d! = %d\n", 4, factorial 4)
   printf("%d! = %d\n", 6, factorial 6)
   printf("%d! = %d\n", 8, factorial 8)
