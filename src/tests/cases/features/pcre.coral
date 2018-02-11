@@ -8,15 +8,12 @@ func regex_Pattern_new : Ptr (pattern:Ptr):
   let error = 5
   let offset = 5
   let len = strlen pattern
-  let context = 0
-  printf("pcre-compile: %p %p (%d, %s)\n", addrof error, addrof offset, len, pattern)
-  pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, addrof context)
-  let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, addrof context)
+  let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, 0)
   if error <= 100:
     return regex
   else:
     printf("[Pos %d] Error: %d\n", offset, error)
-  return 0
+    return 0
 
 func regex_matches (regex:Ptr, subject:Ptr):
   let len = strlen subject
@@ -30,8 +27,10 @@ func regex_Match_toString : Ptr (m:Ptr) : 0
 
 func main():
   let subject = "'crabcakes' contains abc but not abcde"
-  let pp = regex_Pattern_new "[\w]([aeiou]*)"
-  # let matches = regex_matches(pattern, subject)
+  let pattern = regex_Pattern_new "a"
+  let matches = regex_matches(pattern, subject)
+  printf("Matches: %p \n", matches)
+  printf("Pattern: %p \n", pattern)
   # while regex_Matches_move(matches):
   #    printf("%s", regex_Match_toString (regex_Matches_current matches))
   printf("done")
