@@ -2,13 +2,19 @@
 
 #include "codegen/LLVMFunctionCompiler.hh"
 #include "core/expr.hh"
+#include "core/prettyprinter.hh"
 #include "utils/ansicolor.hh"
+#include <algorithm>
 
 LLVMTypeRef LLVMTypeFromCoral(coral::type::Type * t) {
   if (!t) return LLVMVoidType();
   if (t->name == "Void") return LLVMVoidType();
   if (t->name == "Ptr") return LLVMPointerType(LLVMInt8Type(), 0);
+  if (t->name == "Bool") return LLVMInt1Type();
+  if (t->name == "Int8") return LLVMInt8Type();
+  if (t->name == "Int16") return LLVMInt16Type();
   if (t->name == "Int32") return LLVMInt32Type();
+  if (t->name == "Int64") return LLVMInt64Type();
   if (t->name == "Func") {
     // std::cout << "LLVMTyping: " << *t << "\n";
     auto ret_type = LLVMTypeFromCoral(&t->params.back());
@@ -20,10 +26,17 @@ LLVMTypeRef LLVMTypeFromCoral(coral::type::Type * t) {
       ret_type,
       params, nparam,
       false);
-    delete params;
+    delete [] params;
     return ftype;
   }
-  std::cerr << COL_RED << "Warning: Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
+  if (t->name == "Struct") {
+    auto params = new LLVMTypeRef[t->params.size()];
+    for(size_t i=0; i<t->params.size(); i++) {
+      params[i] = LLVMTypeFromCoral(&t->params[i]);
+    }
+    return LLVMStructType(params, t->params.size(), true);
+  }
+  std::cerr << COL_LIGHT_BLUE << "Warning: Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
   return LLVMInt64Type();
 }
 
@@ -103,11 +116,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
       out = info->find(var->expr)->second;
     } else {
       // A Let-expr usually generates a local -> Alloca
-      // but
-      std::cerr << "Loading " << var->name << " = "
-                << LLVMPrintValueToString(info->find(var->expr)->second) << " | "
-                << LLVMPrintTypeToString(LLVMTypeOf(info->find(var->expr)->second))
-                << "\n";
+      // std::cerr << "Loading " << var->name << " = "
+      //           << LLVMPrintValueToString(info->find(var->expr)->second) << " | "
+      //           << LLVMPrintTypeToString(LLVMTypeOf(info->find(var->expr)->second))
+      //           << "\n";
       out = LLVMBuildLoad(builder, info->find(var->expr)->second, var->name.c_str()) ;
     }
     return;
@@ -122,7 +134,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
   auto rhs = compile(expr->rhs.get());
   if (LLVMGetTypeKind(LLVMTypeOf(lhs))==LLVMPointerTypeKind) {
     if (expr->op == "+") {
-      LLVMValueRef indices[1] = { rhs };
+      // LLVMValueRef indices[1] = { rhs };
       out = LLVMBuildGEP(builder, lhs, &rhs, 1, "");
     } else {
       std::cerr << "Unknown Operator " << expr->op << " for Pointers\n";
@@ -176,18 +188,22 @@ namespace coral {
       }
       fieldNames[i] = lhs->name;
       fieldValues[i] = cc->compile(binop->rhs.get());
-      fieldTypes[i++] = LLVMTypeOf(fieldValues[i]);
+      fieldTypes[i] = LLVMTypeOf(fieldValues[i]);
+      i++;
     }
     auto type = LLVMStructType(fieldTypes, size, true);
     auto val = LLVMBuildAlloca(cc->builder, type, "");
     LLVMValueRef index[2] = {
       LLVMConstInt(LLVMInt32Type(), 0, false),
       LLVMConstInt(LLVMInt32Type(), 0, false) };
-    for(int j=0; j<expr->arguments.size(); j++) {
+    for(size_t j=0; j<expr->arguments.size(); j++) {
       index[1] = LLVMConstInt(LLVMInt32Type(), j, false);
       auto ptr = LLVMBuildGEP(cc->builder, val, index, 2, fieldNames[j].c_str());
       LLVMBuildStore(cc->builder, fieldValues[j], ptr);
     }
+    // std::cerr << COL_LIGHT_RED;
+    // std::cerr << "Struct Expression: " << LLVMPrintValueToString(val);
+    // std::cerr << COL_CLEAR << "\n";
     return val;
   }
 }
@@ -212,6 +228,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
       return;
     } else if (var->name == "struct") {
       out = ParseStruct(this, expr);
+      out = LLVMBuildLoad(builder, out, "");
       return;
     }
 
@@ -247,6 +264,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Let * expr) {
   expr->value->accept(this);
   auto llval = out;
   auto local = LLVMBuildAlloca(builder, LLVMTypeOf(llval), expr->var->name.c_str());
+  // std::cerr << COL_LIGHT_BLUE;
+  // PrettyPrinter::print(expr->var.get());
+  // std::cerr << " -- " << LLVMPrintTypeToString(LLVMTypeOf(llval))
+  //           << COL_CLEAR << "\n";
   LLVMBuildStore(builder, llval, local);
   (*info)[expr] = local;
 }
@@ -267,7 +288,19 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Set * expr) {
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Comment * w) { }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
-  std::cerr << "Not implemented yet: Member Codegen\n";
+  this->rawPointer = 1;
+  w->base->accept(this);
+  this->rawPointer = 0;
+  auto baseinstr = out;
+  auto n = std::stoi(w->member.substr(5));
+  LLVMValueRef index[2] = {
+    LLVMConstInt(LLVMInt32Type(), 0, false),
+    LLVMConstInt(LLVMInt32Type(), n, false)};
+  out = LLVMBuildGEP(builder, baseinstr, index, 2, w->member.c_str());
+  out = LLVMBuildLoad(builder, out, w->member.c_str());
+  // std::cerr << LLVMPrintValueToString(baseinstr) << "\n";
+  // std::cerr << LLVMPrintValueToString(out) << "\n";
+  // std::cerr << "Not implemented yet: Member Codegen\n";
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::While * w) {

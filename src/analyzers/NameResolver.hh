@@ -38,6 +38,7 @@ namespace coral {
 	  void visit(ast::FloatLiteral * i);
 	  void visit(ast::Set * s);
 	  void visit(ast::While * w);
+	  void visit(ast::Member * w);
 	};
   }
 }

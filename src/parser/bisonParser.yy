@@ -33,6 +33,7 @@
 %type <std::vector<coral::ast::BaseExpr *>> BlockLines ArgumentsListInner
 %type <std::vector<std::string>> IdentifierList
 %type <coral::type::Type *> TypeDef
+%type <std::vector<coral::type::Type>> TypeDefList
 
 %type <coral::ast::Def *> Param
 %type <std::vector<coral::ast::Def *>> ParamsListInner
@@ -87,6 +88,9 @@ Param : IDENTIFIER { $$ = new ast::Def($1, 0, 0); }
 | IDENTIFIER ':' TypeDef { $$ = new ast::Def($1, $3, 0); }
 
 TypeDef : IDENTIFIER { $$ = new coral::type::Type($1); }
+| IDENTIFIER '[' TypeDefList ']' { $$ = new coral::type::Type($1, $3); }
+TypeDefList : TypeDef { $$.push_back(*$1); }
+| TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); }
 
 ParamsListInner : Param { $$.push_back($1); }
 | ParamsListInner ',' Param { $$ = $1; $$.push_back($3); }
@@ -96,6 +100,8 @@ ModuleLine
 | Expr { $$ = $1; }
 | Function { $$ = $1; }
 | LET GeneralIdentifier OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
+| LET GeneralIdentifier ':' TypeDef OP_EQ Expr {
+    $$ = new ast::Let(new ast::Var($2), $6); ((ast::Let *)$$)->type = *$4; }
 | SET GeneralIdentifier OP_EQ Expr { $$ = new ast::Set(new ast::Var($2), $4); }
 | ForLoop { $$ = $1; }
 | IfStatement { $$ = $1; }

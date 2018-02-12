@@ -76,6 +76,7 @@ void analyzers::TypeResolver::visit(ast::Return * m) {
 }
 
 void analyzers::TypeResolver::visit(ast::Call * c) {
+  // special handling for struct
   if (ast::ExprTypeVisitor::of(c->callee.get()) == ast::ExprTypeKind::VarKind) {
     ast::Var * var = (ast::Var *)c->callee.get();
     if (var->name == "struct") {
@@ -102,8 +103,6 @@ void analyzers::TypeResolver::visit(ast::Call * c) {
   for(auto && a : c->arguments) a->accept(this);
   info[c].expr = c;
   info[c].type = info[c->callee.get()].type.returnType();
-  Type tt = info[c->callee.get()].type;
-  // std::cerr << "returntype " << tt << "\n";
 }
 
 void analyzers::TypeResolver::visit(ast::Var * v) {
@@ -172,4 +171,8 @@ void analyzers::TypeResolver::visit(ast::While * w) {
   w->body->accept(this);
   info[w].expr = w;
   info[w].type = Type("");
+}
+
+void analyzers::TypeResolver::visit(ast::Member * w) {
+  w->base->accept(this);
 }

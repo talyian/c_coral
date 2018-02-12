@@ -3,11 +3,12 @@ CC=clang++-5.0 -std=c++11 -Wall -Wextra -I.
 LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
 BUILD=obj
 BIN=bin
-#TESTFILE=tests/cases/features/pcre.coral
-TESTFILE=tests/cases/features/typeInference.coral
+TESTFILE=tests/cases/features/pcre.coral
+# TESTFILE=tests/cases/features/struct.coral
+# TESTFILE=tests/cases/features/typeInference.coral
 .SUFFIXES:
 
-run: ${BIN}/coral-test
+run: ${BIN}/coral-jit
 	$< ${TESTFILE}
 debug: ${BIN}/coral-test
 	@gdb -ex 'run ${TESTFILE}' -ex quit $<

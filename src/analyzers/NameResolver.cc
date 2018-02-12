@@ -11,9 +11,10 @@ void analyzers::NameResolver::visit(ast::IfExpr * m) {
   m->ifbody->accept(this);
   if (m->elsebody) m->elsebody->accept(this); }
 void analyzers::NameResolver::visit(ast::Let * e) {
+  // if we recurse before setting the name, this lets let a = foo a work
+  e->value->accept(this);
   info[e->var->name].expr = e;
   info[e->var->name].kind = ast::ExprTypeKind::LetKind;
-  e->value->accept(this);
 }
 void analyzers::NameResolver::visit(ast::BinOp * m) { m->lhs->accept(this); m->rhs->accept(this); }
 void analyzers::NameResolver::visit(ast::Return * m) { if (m->val) m->val->accept(this); }
@@ -56,4 +57,8 @@ void analyzers::NameResolver::visit(ast::Set * s) {
 void analyzers::NameResolver::visit(ast::While * w) {
   w->cond->accept(this);
   w->body->accept(this);
+}
+
+void analyzers::NameResolver::visit(ast::Member * w) {
+  w->base->accept(this);
 }
