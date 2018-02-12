@@ -16,10 +16,10 @@ LLVMTypeRef LLVMTypeFromCoral(coral::type::Type * t) {
     auto params = new LLVMTypeRef[nparam];
     for(ulong i=0; i<nparam; i++)
       params[i] = LLVMTypeFromCoral(&t->params[i]);
-	auto ftype = LLVMFunctionType(
- 	  ret_type,
+    auto ftype = LLVMFunctionType(
+      ret_type,
       params, nparam,
-	  false);
+      false);
     delete params;
     return ftype;
   }
@@ -29,13 +29,13 @@ LLVMTypeRef LLVMTypeFromCoral(coral::type::Type * t) {
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
   function = LLVMAddFunction(
-	module,
-	expr->name.c_str(),
-	LLVMTypeFromCoral(expr->type.get()));
+    module,
+    expr->name.c_str(),
+    LLVMTypeFromCoral(expr->type.get()));
   (*info)[expr] = function;
 
   for(ulong i=0; i<expr->params.size(); i++) {
-	(*info)[expr->params[i].get()] = LLVMGetParam(function, i);
+    (*info)[expr->params[i].get()] = LLVMGetParam(function, i);
   }
   if (expr->body) {
     basic_block = LLVMAppendBasicBlock(function, "entry");
@@ -49,10 +49,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::IfExpr * expr) {
   auto elseblock = LLVMAppendBasicBlock(function, "else");
   auto endblock = LLVMAppendBasicBlock(function, "end");
   out = LLVMBuildCondBr(
-  	builder,
-  	compile(expr->cond.get()),
-  	thenblock,
-  	elseblock);
+    builder,
+    compile(expr->cond.get()),
+    thenblock,
+    elseblock);
   int branchreturns = 0;
   returns = 0;
   LLVMPositionBuilderAtEnd(builder, thenblock);
@@ -85,22 +85,22 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::StringLiteral * expr) {
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
   out = 0;
   if (info->find(var->expr) == info->end()) {
-	// std::cerr << "Not Found: " << var->name << "\n";
-	return;
+    // std::cerr << "Not Found: " << var->name << "\n";
+    return;
   }
   switch (ast::ExprTypeVisitor::of(var->expr)) {
   case ast::ExprTypeKind::DefKind:
-	out = info->find(var->expr)->second;
-  	// std::cout << "codegening: var def " << ((ast::Def *)var->expr)->name << "\n";
-	// std::cout << "saved: " << LLVMPrintValueToString(out) << "\n";
-	return;
+    out = info->find(var->expr)->second;
+    // std::cout << "codegening: var def " << ((ast::Def *)var->expr)->name << "\n";
+    // std::cout << "saved: " << LLVMPrintValueToString(out) << "\n";
+    return;
   case ast::ExprTypeKind::FuncKind:
-  	// std::cout << "codegening: var fun " << ((ast::Func *)var->expr)->name << "\n";
-	out = info->find(var->expr)->second;
-	return;
+    // std::cout << "codegening: var fun " << ((ast::Func *)var->expr)->name << "\n";
+    out = info->find(var->expr)->second;
+    return;
   case ast::ExprTypeKind::LetKind:
-	if (this->rawPointer) {
-	  out = info->find(var->expr)->second;
+    if (this->rawPointer) {
+      out = info->find(var->expr)->second;
     } else {
       // A Let-expr usually generates a local -> Alloca
       // but
@@ -110,10 +110,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
                 << "\n";
       out = LLVMBuildLoad(builder, info->find(var->expr)->second, var->name.c_str()) ;
     }
-	return;
+    return;
   default:
-  	std::cerr << "unknown var kind : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
-  	break;
+    std::cerr << "unknown var kind : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
+    break;
   }
   out = LLVMConstInt(LLVMInt32Type(), 0, false);
 }
@@ -131,27 +131,27 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
     return;
   }
   if (expr->op == "-")
-	out = LLVMBuildSub(builder, lhs, rhs, "");
+    out = LLVMBuildSub(builder, lhs, rhs, "");
   else if (expr->op == "+")
-	out = LLVMBuildAdd(builder, lhs, rhs, "");
+    out = LLVMBuildAdd(builder, lhs, rhs, "");
   else if (expr->op == "%")
-	out = LLVMBuildSRem(builder, lhs, rhs, "");
+    out = LLVMBuildSRem(builder, lhs, rhs, "");
   else if (expr->op == "*")
-	out = LLVMBuildMul(builder, lhs, rhs, "");
+    out = LLVMBuildMul(builder, lhs, rhs, "");
   else if (expr->op == "/")
-	out = LLVMBuildSDiv(builder, lhs, rhs, "");
+    out = LLVMBuildSDiv(builder, lhs, rhs, "");
   else if (expr->op == "=")
-	out = LLVMBuildICmp(builder, LLVMIntEQ, lhs, rhs, "");
+    out = LLVMBuildICmp(builder, LLVMIntEQ, lhs, rhs, "");
   else if (expr->op == "!=")
-	out = LLVMBuildICmp(builder, LLVMIntNE, lhs, rhs, "");
+    out = LLVMBuildICmp(builder, LLVMIntNE, lhs, rhs, "");
   else if (expr->op == "<")
-	out = LLVMBuildICmp(builder, LLVMIntSLT, lhs, rhs, "");
+    out = LLVMBuildICmp(builder, LLVMIntSLT, lhs, rhs, "");
   else if (expr->op == "<=")
-	out = LLVMBuildICmp(builder, LLVMIntSLE, lhs, rhs, "");
+    out = LLVMBuildICmp(builder, LLVMIntSLE, lhs, rhs, "");
   else if (expr->op == ">")
-	out = LLVMBuildICmp(builder, LLVMIntSGT, lhs, rhs, "");
+    out = LLVMBuildICmp(builder, LLVMIntSGT, lhs, rhs, "");
   else if (expr->op == ">=")
-	out = LLVMBuildICmp(builder, LLVMIntSGE, lhs, rhs, "");
+    out = LLVMBuildICmp(builder, LLVMIntSGE, lhs, rhs, "");
 }
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
   returns++;
@@ -160,66 +160,81 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
 
 namespace coral {
   LLVMValueRef ParseStruct(coral::codegen::LLVMFunctionCompiler * cc, coral::ast::Call * expr) {
-	auto size = expr->arguments.size();
-	LLVMTypeRef * fieldTypes = new LLVMTypeRef[size];
-	LLVMValueRef * fieldValues = new LLVMValueRef[size];
-	int i=0;
-	for(auto && arg : expr->arguments) {
-	  if (ast::ExprTypeVisitor::of(arg.get()) != ast::ExprTypeKind::BinOpKind) return 0;
-	  auto binop = (ast::BinOp *)arg.get();
-	  if (binop->op != "=") return 0;
-	  fieldValues[i] = cc->compile(binop->rhs.get());
-	  fieldTypes[i++] = LLVMTypeOf(fieldValues[i]);
-	}
-	auto type = LLVMStructType(fieldTypes, size, true);
-	auto val = LLVMBuildAlloca(cc->builder, type, "");
-	return val;
+    auto size = expr->arguments.size();
+    LLVMTypeRef * fieldTypes = new LLVMTypeRef[size];
+    LLVMValueRef * fieldValues = new LLVMValueRef[size];
+    std::string * fieldNames  = new std::string[size];
+    int i=0;
+    for(auto && arg : expr->arguments) {
+      if (ast::ExprTypeVisitor::of(arg.get()) != ast::ExprTypeKind::BinOpKind) return 0;
+      auto binop = (ast::BinOp *)arg.get();
+      if (binop->op != "=") return 0;
+      auto lhs = dynamic_cast<ast::Var *>(binop->lhs.get());
+      if (lhs == 0) {
+        std::cerr << "FAIL " << ast::ExprNameVisitor::of(binop->lhs.get()) << "\n";
+        return 0;
+      }
+      fieldNames[i] = lhs->name;
+      fieldValues[i] = cc->compile(binop->rhs.get());
+      fieldTypes[i++] = LLVMTypeOf(fieldValues[i]);
+    }
+    auto type = LLVMStructType(fieldTypes, size, true);
+    auto val = LLVMBuildAlloca(cc->builder, type, "");
+    LLVMValueRef index[2] = {
+      LLVMConstInt(LLVMInt32Type(), 0, false),
+      LLVMConstInt(LLVMInt32Type(), 0, false) };
+    for(int j=0; j<expr->arguments.size(); j++) {
+      index[1] = LLVMConstInt(LLVMInt32Type(), j, false);
+      auto ptr = LLVMBuildGEP(cc->builder, val, index, 2, fieldNames[j].c_str());
+      LLVMBuildStore(cc->builder, fieldValues[j], ptr);
+    }
+    return val;
   }
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
 
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
-	expr->callee->accept(this);
-	auto var = (ast::Var *)expr->callee.get();
-	// TODO: make this an actual operator
-	if (var->name == "addrof") {
-	  this->rawPointer = 1;
-	  expr->arguments[0]->accept(this);
-	  this->rawPointer = 0;
-	  return;
-	} else if (var->name == "derefi") {
-	  // TODO typed pointers should eliminate the need for a "deref-as-integer" builtin
-	  expr->arguments[0]->accept(this);
-	  auto intval = out;
-	  auto ptrval = LLVMBuildIntToPtr(builder, intval, LLVMPointerType(LLVMInt32Type(), 0), "ptrcast");
-	  out = LLVMBuildLoad(builder, ptrval, var->name.c_str());
-	  return;
-	} else if (var->name == "struct") {
-	  out = ParseStruct(this, expr);
-	  return;
-	}
+    expr->callee->accept(this);
+    auto var = (ast::Var *)expr->callee.get();
+    // TODO: make this an actual operator
+    if (var->name == "addrof") {
+      this->rawPointer = 1;
+      expr->arguments[0]->accept(this);
+      this->rawPointer = 0;
+      return;
+    } else if (var->name == "derefi") {
+      // TODO typed pointers should eliminate the need for a "deref-as-integer" builtin
+      expr->arguments[0]->accept(this);
+      auto intval = out;
+      auto ptrval = LLVMBuildIntToPtr(builder, intval, LLVMPointerType(LLVMInt32Type(), 0), "ptrcast");
+      out = LLVMBuildLoad(builder, ptrval, var->name.c_str());
+      return;
+    } else if (var->name == "struct") {
+      out = ParseStruct(this, expr);
+      return;
+    }
 
-	out = LLVMGetNamedFunction(module, var->name.c_str());
-	if (!out)
-	  out = LLVMAddFunction(
-		module, var->name.c_str(),
-		LLVMFunctionType(LLVMVoidType(), 0, 0, true));
+    out = LLVMGetNamedFunction(module, var->name.c_str());
+    if (!out)
+      out = LLVMAddFunction(
+        module, var->name.c_str(),
+        LLVMFunctionType(LLVMVoidType(), 0, 0, true));
   } else if (!out) {
-	std::cerr << "missing var " << ast::ExprNameVisitor::of(expr->callee.get()) << "\n";
+    std::cerr << "missing var " << ast::ExprNameVisitor::of(expr->callee.get()) << "\n";
   }
   auto llvmVarRef = out;
   auto llvmArgs = new LLVMValueRef[expr->arguments.size()];
   // std::cerr << "Function " << expr->callee.get() << "\n";
   // std::cerr << LLVMPrintValueToString(llvmVarRef) << "\n";
   for(ulong i=0; i<expr->arguments.size(); i++) {
-	// std::cerr << "  arg[" << i << "]"<< expr->arguments[i].get() << "\n";
-	expr->arguments[i]->accept(this);
-	llvmArgs[i] = out;
+    // std::cerr << "  arg[" << i << "]"<< expr->arguments[i].get() << "\n";
+    expr->arguments[i]->accept(this);
+    llvmArgs[i] = out;
   }
   out = LLVMBuildCall(
-	builder, llvmVarRef,
-	llvmArgs, expr->arguments.size(), "");
+    builder, llvmVarRef,
+    llvmArgs, expr->arguments.size(), "");
   delete [] llvmArgs;
 }
 
@@ -242,9 +257,9 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Set * expr) {
   auto llval = out;
   auto local = (*info)[expr->var->expr];
   if (ast::ExprTypeVisitor::of(expr->var->expr) == ast::ExprTypeKind::DefKind) {
-	std::cerr << "Warning: writing to a parameter is not currently supported\n";
-	out = 0;
-	return;
+    std::cerr << "Warning: writing to a parameter is not currently supported\n";
+    out = 0;
+    return;
   }
   LLVMBuildStore(builder, llval, local);
 }
