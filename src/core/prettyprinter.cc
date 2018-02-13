@@ -1,18 +1,25 @@
 #include "prettyprinter.hh"
 #include "expr.hh"
+#include "utils/ansicolor.hh"
 
 #include <iostream>
 
 using std::cout;
 
 namespace coral {
+  const auto COL_KEYWORD = COL_CYAN;
+  const auto COL_NORMAL = COL_CLEAR;
+  const auto COL_STRING = COL_LIGHT_GREEN;
+  const auto COL_TYPE = COL_YELLOW;
+
   void coral::PrettyPrinter::visit(ast::Extern * e) {
 	cout << IND() << "extern 'C' " << e->name << " : " << e->type.name << END();
   }
 
   void PrettyPrinter::visit(ast::Func * e) {
-	cout << IND() << "func " << e->name;
-    if (e->type && e->type->params.size()) cout << " : " << e->type->params.back();
+	cout << IND() << COL_KEYWORD << "func " << COL_NORMAL << e->name;
+    if (e->type && e->type->params.size() && e->type->params.back().name != "")
+      cout << ": " << COL_TYPE << e->type->params.back() << COL_NORMAL;
     cout << "(";
 	for(auto && def : e->params) {
 	  if (def != e->params.front()) cout << ", ";
@@ -73,7 +80,7 @@ namespace coral {
   void PrettyPrinter::visit(ast::Var * v) { cout << IND() << v->name << END(); }
 
   void PrettyPrinter::visit(ast::Return * e) {
-	cout << IND() << "return ";
+	cout << IND() << COL_KEYWORD << "return " << COL_NORMAL;
 	line = true;
 	if (e->val) e->val->accept(this);
 	line = false;
@@ -84,17 +91,17 @@ namespace coral {
 	cout << IND() << e->value << END(); }
 
   void PrettyPrinter::visit(ast::StringLiteral * s) {
-	cout << IND()  << s->value << END(); }
+	cout << IND()  << COL_STRING << s->value << COL_NORMAL << END(); }
 
   void PrettyPrinter::visit(ast::IfExpr * s) {
-	cout << IND() << "if ";
+	cout << IND() <<COL_KEYWORD<< "if " << COL_NORMAL;
 	withline(s->cond);
 	cout << ":" << END();
 	indent++;
 	s->ifbody->accept(this);
 	indent--;
 	if (s->elsebody) {
-	  cout << IND() << "else:" << END();
+	  cout << IND() << COL_KEYWORD << "else:" << COL_NORMAL << END();
 	  indent++;
 	  s->elsebody->accept(this);
 	  indent--;
@@ -102,7 +109,7 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::ForExpr * s) {
-	cout << IND() << "for ";
+	cout << IND() << COL_KEYWORD << "for " << COL_NORMAL;
 	withline(s->var);
 	cout << " in ";
 	withline(s->sequence);
@@ -113,17 +120,17 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Comment * c) {
-	cout << "\033[32m";
+	cout << COL_GREEN;
 	cout << IND() << c->value << END();
-	cout << "\033[0m";
+	cout << COL_NORMAL;
   }
 
   void PrettyPrinter::visit(ast::Let * e) {
-	cout << IND() << "let ";
+	cout << IND() << COL_KEYWORD << "let " << COL_NORMAL;
 	withline(e->var);
     if (e->type.name != "") {
       cout << " : ";
-      cout << e->type;
+      cout << COL_TYPE << e->type << COL_NORMAL;
     }
 	cout << " = ";
 	withline(e->value);
@@ -131,7 +138,7 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Set * e) {
-	cout << IND() << "set ";
+	cout << IND() << COL_LIGHT_CYAN << "set " << COL_NORMAL;
 	withline(e->var);
 	cout << " = ";
 	withline(e->value);
@@ -158,7 +165,13 @@ namespace coral {
 	cout << ']' << END();
   }
 
-  void PrettyPrinter::visit(ast::Def * d) { cout << d->name; }
+  void PrettyPrinter::visit(ast::Def * d) {
+    cout << d->name;
+    if (d->type && d->type->name != "") {
+      cout << ":";
+      cout << COL_TYPE << *(d->type) << COL_NORMAL;
+    }
+  }
 
   void PrettyPrinter::visit(ast::TupleLiteral * m) {
 	cout << IND() << '(';
@@ -171,7 +184,7 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::While * w) {
-	cout << IND() << "while ";
+	cout << IND() << COL_KEYWORD << "while " << COL_NORMAL;
 	withline(w->cond);
 	cout << ":" << END();
 	indent++;

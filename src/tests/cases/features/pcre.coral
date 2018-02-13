@@ -4,6 +4,7 @@
 `extern func pcre2_get_ovector_pointer_8 : Ptr (data:Ptr)
 `extern func pcre2_match_8 : Int32 (regex:Ptr, subject:Ptr, len:Int64, start:Int64, opt:Int32, data:Ptr, context:Ptr)
 
+# Construct a Pattern object
 func regex_Pattern_new : Ptr (pattern:Ptr):
   let error = 5
   let offset = 5
@@ -14,12 +15,14 @@ func regex_Pattern_new : Ptr (pattern:Ptr):
   else:
     printf("[Pos %d] Error: %d\n", offset, error)
 
+# Construct a Matches object
 func regex_matches (regex:Ptr, subject:Ptr):
   let len = strlen subject
   let pos = 0
   let matchdata = pcre2_match_data_create_8(10, 0)
   struct(regex=regex, subject=subject, len=len, matchdata=matchdata, pos=0, ov=addrof pos)
 
+# Move the matches object
 func regex_Matches_move (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
   let m = m
   let matchdata = m.field3
@@ -37,6 +40,7 @@ func regex_Matches_printCurrent (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
   let end = derefi (ov + 8)
   if start >= 0:
     printf("  Match: %.*s\n", end - start, (m.field1 + start))
+  return void
 
 func main():
   let pattern = regex_Pattern_new "\b\w+?\b"

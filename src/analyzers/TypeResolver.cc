@@ -82,6 +82,19 @@ void analyzers::TypeResolver::visit(ast::Call * c) {
   // special handling for struct
   if (ast::ExprTypeVisitor::of(c->callee.get()) == ast::ExprTypeKind::VarKind) {
     ast::Var * var = (ast::Var *)c->callee.get();
+    if (var->name == "addrof") {
+      info[c].type = Type("Ptr");
+      return;
+    }
+    if (var->name == "derefi") {
+      info[c].type = Type("Int32");
+      return;
+    }
+    if (var->name == "printf") {
+      info[c].type = Type("Void");
+      return;
+    }
+
     if (var->name == "struct") {
       info[c].expr = c;
       info[c].type = Type("Struct");
@@ -178,4 +191,11 @@ void analyzers::TypeResolver::visit(ast::While * w) {
 
 void analyzers::TypeResolver::visit(ast::Member * w) {
   w->base->accept(this);
+  if (w->member.substr(0, 5) == "field") {
+    int i = std::stoi(w->member.substr(5));
+    info[w].expr = w;
+    info[w].type = info[w->base.get()].type.params[i];
+    return;
+  }
+  std::cerr << COL_LIGHT_RED << "warning: type resolving member " << w->member << "\n" << COL_CLEAR;
 }

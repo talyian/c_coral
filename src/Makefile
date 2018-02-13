@@ -4,7 +4,7 @@ LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(sh
 BUILD=obj
 BIN=bin
 # TESTFILE=tests/cases/features/pcre.coral
-TESTFILE=tests/cases/simple/collatz.coral
+# TESTFILE=tests/cases/simple/collatz.coral
 # ifstatements.coral
 # pcre.coral
 # returnInsert.coral
@@ -19,6 +19,8 @@ debug: ${BIN}/coral-test
 	@gdb -ex 'run ${TESTFILE}' -ex quit $<
 mdebug: ${BIN}/coral-test
 	valgrind --leak-check=full $< ${TESTFILE}
+parse: ${BIN}/coral-parse
+	$< ${TESTFILE}
 test: ${BIN}/coral-test
 	$<
 clean:
