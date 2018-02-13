@@ -11,7 +11,8 @@ namespace coral {
 	public:
 	  ParserTests() : TestSuite() { }
 	  void parse_and_print(const char * name, const char * path);
-      void checkTypeInference();
+      void checkTypeInferenceParam();
+      void checkTypeInferenceReturn();
 	  const char * getName() { return "Parser Tests"; }
 	};
 	ParserTests * run_parser_tests();

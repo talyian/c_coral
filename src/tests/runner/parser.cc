@@ -1,4 +1,5 @@
 #include "core/expr.hh"
+#include "core/prettyprinter.hh"
 #include "parser/parser.hh"
 #include "analyzers/NameResolver.hh"
 #include "analyzers/TypeResolver.hh"
@@ -24,12 +25,30 @@ namespace coral {
       coralDestroyModule(parser);
     }
 
-    void ParserTests::checkTypeInference() {
-      auto parser = coralParseModule("tests/cases/features/typeInference.coral");
+    void ParserTests::checkTypeInferenceParam() {
+      auto parser = coralParseModule("tests/cases/features/typeInference-parameter.coral");
+      auto module = (ast::Module *)_coralModule(parser);
+      analyzers::NameResolver nresolve(module);
+      analyzers::TypeResolver tresolve(module);
+      PrettyPrinter::print(module);
+      BeginTest("Parameter Type Inference");
+      for(auto &&expr: module->body->lines) {
+        auto func = dynamic_cast<ast::Func *>(expr.get());
+        if (!func) continue;
+        if (func->name == "StringParameter") {
+          Assert(func->type->params[0] == coral::type::Type("Ptr"));
+        } else if (func->name == "IntegerAddition") {
+          Assert(func->type->params[0] == coral::type::Type("Int32"));
+        }
+      }
+      EndTest();
+    }
+    void ParserTests::checkTypeInferenceReturn() {
+      auto parser = coralParseModule("tests/cases/features/typeInference-return.coral");
       auto module = (ast::Module *)_coralModule(parser);
       analyzers::NameResolver nresolve(module);
       analyzers::TypeResolver treslve(module);
-      BeginTest("Type Inference");
+      BeginTest("Return Type Inference");
       for(auto && expr : module->body->lines) {
         auto func = dynamic_cast<ast::Func *>(expr.get());
         if (!func) continue;
@@ -64,7 +83,8 @@ namespace coral {
 	  T->parse_and_print("Knucleotide", "tests/cases/shootout/knucleotide.coral");
 	  T->parse_and_print("Pidigits", "tests/cases/shootout/pidigits.coral");
 	  T->parse_and_print("Regex Redux", "tests/cases/shootout/regexredux.coral");
-      T->checkTypeInference();
+      T->checkTypeInferenceReturn();
+      T->checkTypeInferenceParam();
 	  return T;
 	}
 
