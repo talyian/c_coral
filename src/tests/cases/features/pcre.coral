@@ -10,10 +10,9 @@ func regex_Pattern_new : Ptr (pattern:Ptr):
   let len = strlen pattern
   let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, 0)
   if error <= 100:
-    return regex
+    regex
   else:
     printf("[Pos %d] Error: %d\n", offset, error)
-    return 0
 
 func regex_matches (regex:Ptr, subject:Ptr):
   let len = strlen subject
@@ -31,18 +30,16 @@ func regex_Matches_move (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
   else:
     struct(r=0,t=0,l=0,m=0,s=1,a=0)
 
-func regex_Matches_current (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
+func regex_Matches_printCurrent (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
   let m = m
   let start = derefi (m.field5)
   let end = derefi ((m.field5) + 8)
   if start >= 0:
     printf("  Match: %.*s\n", end - start, (m.field1 + start))
-  else:
-    0
 
 func main():
   let pattern = regex_Pattern_new "\b\w+?\b"
   let matches = regex_matches(pattern, "'crabcakes' contains abc but not abcde!!!")
   while matches.field4 < matches.field2:
     set matches = regex_Matches_move matches
-    regex_Matches_current matches
+    regex_Matches_printCurrent matches
