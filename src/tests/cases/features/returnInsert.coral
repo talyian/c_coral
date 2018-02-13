@@ -12,6 +12,7 @@ func foo5():
   foo1()
   while 1 = 0:
     return 4321
+  return 0
 
 func foo6():
   foo1()
@@ -22,3 +23,7 @@ func foo6():
 
 func foo7():
   return 1234
+
+func main():
+  printf("While Test -- call functions manually\n")
+  0

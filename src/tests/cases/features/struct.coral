@@ -1,13 +1,9 @@
-func returnsStruct(i, j, k):
-  let a = struct(x=i, y=j, z=k)
-  printf("A: %p\n", a.field0)
-  printf("A: %p\n", a.field1)
-  printf("A: %p\n", a.field2)
-  a
+func returnsStruct(i:Int32, j:Int32, k:Int32):
+  struct(x=i, y=j, z=k)
 
 func main():
   let b = returnsStruct(10, 20, 30)
-  printf("B: %p\n", b.field0)
-  printf("B: %p\n", b.field1)
-  printf("B: %p\n", b.field2)
+  printf("B: %ld\n", b.field0)
+  printf("B: %ld\n", b.field1)
+  printf("B: %ld\n", b.field2)
   0

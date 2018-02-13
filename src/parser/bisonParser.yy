@@ -1,5 +1,6 @@
-%language "c++"
 %define api.value.type variant
+%define parse.error verbose
+%language "c++"
 %lex-param {pp}
 %name-prefix "coral"
 %parse-param {ParserParam pp}
@@ -112,6 +113,8 @@ Function
 : FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type(""), $4, $6); }
 | FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' StatementBlock {
    $$ = new ast::Func($2, $4, $6, $8); }
+| FUNC IDENTIFIER ':' TypeDef '(' ')' StatementBlock {
+   $$ = new ast::Func($2, $4, {}, $7); }
 | FUNC IDENTIFIER '(' ')' StatementBlock { $$ = new ast::Func($2, new Type(""), {}, $5); }
 | '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' {
   $$ = new ast::Func($4, $6, $8, 0); }

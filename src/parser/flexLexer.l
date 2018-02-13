@@ -44,78 +44,88 @@ Lexer::~Lexer() {
 // This function tracks parentheses and if we're not in a top-level context
 // then whitespace is not significant
 int Lexer::InlineRead() {
-	int tok = BasicRead();
-	if (!strcmp(text, "(") || !strcmp(text, "[") || !strcmp(text, "{"))
-		parens.push_back(text);
-	if (!strcmp(text, ")") || !strcmp(text, "]") || !strcmp(text, "}"))
-		parens.pop_back();
-	if (!parens.empty() && tok == TOK::NEWLINE) return InlineRead();
-	return tok;
+    int tok = BasicRead();
+    if (!strcmp(text, "(") || !strcmp(text, "[") || !strcmp(text, "{"))
+        parens.push_back(text);
+    if (!strcmp(text, ")") || !strcmp(text, "]") || !strcmp(text, "}"))
+        parens.pop_back();
+    if (!parens.empty() && tok == TOK::NEWLINE) return InlineRead();
+    return tok;
 }
 
 int Lexer::BasicRead() {
-	int val = yylex(lval, scanner);
-	text = yyget_text(scanner);
-	length = yyget_leng(scanner);
-	pos.start.col = yyget_column(scanner);
-	pos.start.row = yyget_lineno(scanner);
-	return val;
+    int val = yylex(lval, scanner);
+    text = yyget_text(scanner);
+    length = yyget_leng(scanner);
+    pos.start.col = yyget_column(scanner);
+    pos.start.row = yyget_lineno(scanner);
+    return val;
 }
 
 // this function tracks newlines and issues indents and dedent tokens
 int Lexer::IndentRead() {
-	if (!tokenQueue.empty()) {
-		int val = tokenQueue.front();
-		tokenQueue.erase(tokenQueue.begin());
-		return val;
-	}
-	int tok = InlineRead();
-	if (tok == TOK::NEWLINE) {
-		auto newIndent = (int) yyget_leng(scanner) - 1;
-		auto curIndent = indents.back();
-		if (newIndent > curIndent) {
-			indents.push_back(newIndent);
-			tokenQueue.push_back(TOK::NEWLINE);
-			tokenQueue.push_back(TOK::INDENT);
-		} else if (newIndent < curIndent) {
-			while (newIndent < curIndent) {
-				indents.pop_back();
-				tokenQueue.push_back(TOK::NEWLINE);
-				tokenQueue.push_back(TOK::DEDENT);
-				curIndent = indents.back();
-			}
-			tokenQueue.push_back(TOK::NEWLINE);
-		} else {
-			tokenQueue.push_back(TOK::NEWLINE);
-		}
-		return IndentRead();
-	}
-	return tok;
+    if (!tokenQueue.empty()) {
+        int val = tokenQueue.front();
+        tokenQueue.erase(tokenQueue.begin());
+        return val;
+    }
+    int tok = InlineRead();
+    if (tok == TOK::NEWLINE) {
+        auto newIndent = (int) yyget_leng(scanner) - 1;
+        auto curIndent = indents.back();
+        if (newIndent > curIndent) {
+            indents.push_back(newIndent);
+            tokenQueue.push_back(TOK::NEWLINE);
+            tokenQueue.push_back(TOK::INDENT);
+        } else if (newIndent < curIndent) {
+            while (newIndent < curIndent) {
+                indents.pop_back();
+                tokenQueue.push_back(TOK::NEWLINE);
+                tokenQueue.push_back(TOK::DEDENT);
+                curIndent = indents.back();
+            }
+            tokenQueue.push_back(TOK::NEWLINE);
+        } else {
+            tokenQueue.push_back(TOK::NEWLINE);
+        }
+        return IndentRead();
+    } else if (tok == TOK::ENDOFFILE) {
+        if (indents.size() <= 1) return tok;
+        while(indents.size() > 1) {
+            indents.pop_back();
+            tokenQueue.push_back(TOK::NEWLINE);
+            tokenQueue.push_back(TOK::DEDENT);
+        }
+        tokenQueue.push_back(TOK::NEWLINE);
+        tokenQueue.push_back(TOK::ENDOFFILE);
+        return IndentRead();
+    }
+    return tok;
 }
 
 // this function converts [NEWLINE + ELSE] into [ELSE]
 // TODO:
 //   blank lines
 //
-//   in blocks shoujld be allowed
+//   in blocks should be allowed
 int Lexer::IfElseRead() {
-	if (prev_tok && prev_tok != TOK::NEWLINE) { auto v = prev_tok; prev_tok = 0; return v; }
-	auto _tok = IndentRead();
-	if (_tok == TOK::ELSE) {
-		if (prev_tok) { prev_tok = 0; return _tok; }
-		else { prev_tok = _tok; return _tok; }
-	} else if (_tok == TOK::NEWLINE) {
-		if (prev_tok) { return _tok; }
-		prev_tok = _tok;
-		return IfElseRead();
-	} else {
-		if (prev_tok) { prev_tok = _tok; return TOK::NEWLINE; }
-		return _tok;
-	}
+    if (prev_tok && prev_tok != TOK::NEWLINE) { auto v = prev_tok; prev_tok = 0; return v; }
+    auto _tok = IndentRead();
+    if (_tok == TOK::ELSE) {
+        if (prev_tok) { prev_tok = 0; return _tok; }
+        else { prev_tok = _tok; return _tok; }
+    } else if (_tok == TOK::NEWLINE) {
+        if (prev_tok) { return _tok; }
+        prev_tok = _tok;
+        return IfElseRead();
+    } else {
+        if (prev_tok) { prev_tok = _tok; return TOK::NEWLINE; }
+        return _tok;
+    }
 }
 
 int Lexer::Read() {
-	return IfElseRead();
+    return IfElseRead();
 }
 
 LexerHandle lexerCreate(const char * filename) { return new Lexer(filename); }

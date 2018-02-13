@@ -52,7 +52,10 @@ void analyzers::TypeResolver::visit(ast::Let * e) {
   info[e].expr = e;
   e->value->accept(this);
   e->var->accept(this);
-  if (info[e->var.get()].type.name == "") {
+  if (e->type.name != "") {
+    info[e].type = e->type;
+  }
+  else if (info[e->var.get()].type.name == "") {
     info[e].type = e->type = info[e->var.get()].type = info[e->value.get()].type;
     // std::cout << " [" << ((ast::Var *)e->var.get())->name;
     // std::cout << "]  = " << e->type << "\n";

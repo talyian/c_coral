@@ -7,7 +7,7 @@
 func regex_Pattern_new : Ptr (pattern:Ptr):
   let error = 5
   let offset = 5
-  let len = strlen pattern
+  let len : Int64 = strlen pattern
   let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, 0)
   if error <= 100:
     regex
@@ -32,8 +32,9 @@ func regex_Matches_move (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
 
 func regex_Matches_printCurrent (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
   let m = m
-  let start = derefi (m.field5)
-  let end = derefi ((m.field5) + 8)
+  let ov : Ptr = m.field5
+  let start = derefi ov
+  let end = derefi (ov + 8)
   if start >= 0:
     printf("  Match: %.*s\n", end - start, (m.field1 + start))
 

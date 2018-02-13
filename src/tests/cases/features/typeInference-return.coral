@@ -10,22 +10,6 @@ func returnsIntCall(n: Int32): returnsIntVar()
 func returnsAddition(): returnsInt() + returnsIntCall(3)
 func returnsString() : "asdf"
 
-# Argument Type Inference is where you can propagate a known
-# Parameter type of a function or operator to an unknown argument / operand
-`extern func strlen : Int32 (s:Ptr)
-# Returns Func[Ptr, Int32]
-func StringParameter(s: Ptr):
-  return strlen(s)
-# Returns Func[Int32, Int32] -- currently doesn't compile
-# func IntegerAddition(n):
-#   return 1 + n
-
-# Parametric Inference is where a function has free Type variables
-# Returns Func[A, A]
-# func id(n): n
-# Returns Func[A, B, B]
-# func foo(a, b): b
-
 func main():
   printf ("%d\n", returnsInt())
   printf ("%d\n", returnsIntParam(100))

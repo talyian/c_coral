@@ -40,32 +40,38 @@ namespace coral {
       }
     };
 
-#define ASSERT(cond, name) { total++; bool s = cond; success += s;		\
-      if (s) printf("%-60s OK\n", name); else printf("%-20s ERROR\n", name);  }
+#define ASSERT(cond, name) { Assert(cond); }
 
     void CodegenTests::Run(const char * path) {
+      BeginTest(path);
       ASSERT((TestFunction<int(*)()>("main", path).Call(), 1), path);
+      EndTest();
     }
 
     void CodegenTests::RunFactorial() {
       auto factorial = TestFunction<int(*)(int)>("factorial", "tests/cases/simple/factorial.coral");
+      BeginTest("Factorial");
       ASSERT((factorial.Call(10) == 3628800), "Factorial");
-      return;
+      EndTest();
     }
 
     void CodegenTests::RunFactorialWhile() {
       auto factorial = TestFunction<int(*)(int)>("factorial_while", "tests/cases/simple/while.coral");
+      BeginTest("Factorial While");
       ASSERT((factorial.Call(10) == 3628800), "Factorial While");
-      return;
+      EndTest();
     }
 
     void CodegenTests::RunCollatz() {
       auto collatz = TestFunction<int(*)(int, int)>("collatz", "tests/cases/simple/collatz.coral");
+      BeginTest("Collatz");
       ASSERT((collatz.Call(27, 0) == 111), "Collatz");
+      EndTest();
     }
 
     void CodegenTests::RunReturnInserter() {
 	  const char * file = "tests/cases/features/returnInsert.coral";
+      BeginTest("Return Inserter");
       ASSERT((TestFunction<int(*)()>("foo1", file).Call() == 1234), "Return Inserter 1");
       ASSERT((TestFunction<int(*)()>("foo2", file).Call() == 1234), "Return Inserter 2");
       ASSERT((TestFunction<int(*)()>("foo3", file).Call() == 1234), "Return Inserter 3");
@@ -73,6 +79,7 @@ namespace coral {
       ASSERT((TestFunction<int(*)()>("foo5", file).Call() == 0), "Return Inserter 5");
 	  ASSERT((TestFunction<int(*)()>("foo6", file).Call() == 1234), "Return Inserter 6");
 	  ASSERT((TestFunction<int(*)()>("foo7", file).Call() == 1234), "Return Inserter 7");
+      EndTest();
     }
 
     TestSuite * run_codegen_tests() {

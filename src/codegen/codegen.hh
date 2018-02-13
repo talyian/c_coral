@@ -22,6 +22,7 @@ namespace coral {
     analyzers::TypeResolver * typeResolver;
     analyzers::ReturnInserter * returner;
     codegen::LLVMModuleCompiler * compiler;
+    LLVMModuleRef llvmModule;
     CodeProcessingUnit(const char * path) ;
     void showSource();
     void showIR();

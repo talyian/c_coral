@@ -1,12 +1,12 @@
 `extern func itoa : Ptr(n: Int32)
 
-func fizzbuzz : Ptr(n):
+func fizzbuzz : Ptr(n: Int32):
   if n % 15 = 0: "fizzbuzz"
   else if n % 5 = 0: "buzz"
   else if n % 3 = 0: "fizz"
   else: itoa n
 
-func main():
+func main : Int32 ():
   let i = 0
   while i < 100:
     printf("%s ", fizzbuzz(i))

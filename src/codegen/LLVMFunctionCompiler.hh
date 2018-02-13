@@ -32,9 +32,11 @@ namespace coral {
 		std::map<ast::BaseExpr *, LLVMValueRef> * info,
 		ast::Func * func)
 		: context(context), module(module), builder(builder), info(info) { }
-	  virtual std::string visitorName() { return "FunctionCompiler"; }
 
-	  void visit(ast::Func * expr);
+	  virtual std::string visitorName() { return "FunctionCompiler"; }
+      LLVMTypeRef LLVMTypeFromCoral(coral::type::Type * t);
+
+      void visit(ast::Func * expr);
 	  void visit(ast::IfExpr * expr);
 	  void visit(ast::Call * expr);
 	  void visit(ast::IntLiteral * expr);

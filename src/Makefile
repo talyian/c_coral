@@ -3,9 +3,14 @@ CC=clang++-5.0 -std=c++11 -Wall -Wextra -I.
 LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
 BUILD=obj
 BIN=bin
+# TESTFILE=tests/cases/features/pcre.coral
+TESTFILE=tests/cases/simple/collatz.coral
+# ifstatements.coral
+# pcre.coral
+# returnInsert.coral
+# struct.coral
+# typeInference.coral
 TESTFILE=tests/cases/features/pcre.coral
-# TESTFILE=tests/cases/features/struct.coral
-# TESTFILE=tests/cases/features/typeInference.coral
 .SUFFIXES:
 
 run: ${BIN}/coral-jit
@@ -44,6 +49,7 @@ parser/flexLexer.cc: parser/flexLexer.l
 parser/bisonParser.tab.hh: parser/bisonParser.tab.cc
 parser/bisonParser.tab.cc: parser/bisonParser.yy
 	bison -d -o $@ $<
+
 # # # Autodeps # # #
 ${BUILD}/%.o: %.cc
 	@mkdir -p $(dir $@)

@@ -38,6 +38,25 @@ namespace coral {
 					<< "--------------------\n";
 		}
 	  }
+
+      std::string currentTest;
+      int failCounter = 0;
+      void BeginTest(std::string testName) {
+        currentTest = testName;
+        total++;
+        failCounter = 0;
+      }
+      void EndTest() {
+        if (!failCounter) {
+          printf("%-60s OK\n", currentTest.c_str());
+          success++;
+        } else {
+          printf("%-60s ERROR\n", currentTest.c_str());
+          failCounter = 0;
+        }
+      }
+      void Assert(bool val) { if (!val) failCounter++; }
+
 	};
   }
 }
