@@ -25,12 +25,12 @@ namespace coral {
 	  if (def != e->params.front()) cout << ", ";
 	  if (def) def->accept(this);
 	}
-	cout << "):\n";
+	cout << ")";
 	indent++;
 	if (e->body) {
+      cout << ":\n";
       e->body->accept(this);
-      cout << "\n";
-    }
+    } else cout << "\n";
 	indent--;
   }
   void PrettyPrinter::visit(ast::Block * e) {

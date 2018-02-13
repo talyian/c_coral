@@ -49,7 +49,7 @@ ModuleRule : BlockLines ENDOFFILE {
 
 BlockLines : { }
 | BlockLines ModuleLine NEWLINE { $$ = $1; $$.push_back($2); }
-| BlockLines NEWLINE { $$ = $1; }
+| BlockLines NEWLINE { $$ = $1; $$.push_back(0); }
 
 StatementBlock
 : ':' NEWLINE INDENT BlockLines DEDENT { $$ = new ast::Block($4); }

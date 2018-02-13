@@ -109,7 +109,7 @@ namespace coral {
 	public:
 	  std::vector<unique_ptr<coral::ast::BaseExpr>> lines;
 	  Block(std::vector<coral::ast::BaseExpr *> lines) {
-		for(auto && ptr : lines) if (ptr) this->lines.push_back(unique_ptr<coral::ast::BaseExpr>(ptr));
+		for(auto && ptr : lines) this->lines.push_back(unique_ptr<coral::ast::BaseExpr>(ptr));
 	  }
 	  BaseExpr * LastLine();
 	  virtual void accept(ExprVisitor * v) {

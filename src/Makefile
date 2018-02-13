@@ -3,14 +3,7 @@ CC=clang++-5.0 -std=c++11 -Wall -Wextra -I.
 LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
 BUILD=obj
 BIN=bin
-# TESTFILE=tests/cases/features/pcre.coral
-# TESTFILE=tests/cases/simple/collatz.coral
-# ifstatements.coral
-# pcre.coral
-# returnInsert.coral
-# struct.coral
-# typeInference.coral
-TESTFILE=tests/cases/features/pcre.coral
+TESTFILE?=tests/cases/features/pcre.coral
 .SUFFIXES:
 
 run: ${BIN}/coral-jit

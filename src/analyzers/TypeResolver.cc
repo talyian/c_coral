@@ -121,6 +121,7 @@ void analyzers::TypeResolver::visit(ast::Call * c) {
   info[c].type = info[c->callee.get()].type.returnType();
 }
 
+
 void analyzers::TypeResolver::visit(ast::Var * v) {
   info[v].expr = v;
   info[v].type = info[v->expr].type;
