@@ -1,3 +1,0 @@
-printf()
-printf "Hello, World\n"
-printf("%s%s%s\n", "Hello", " ", "World")

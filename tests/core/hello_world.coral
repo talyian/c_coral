@@ -1,3 +1,0 @@
-# Output: "Hello, World!"
-printf("Hello, %s", "World")
-printf "!"
