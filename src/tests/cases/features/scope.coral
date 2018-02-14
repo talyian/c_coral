@@ -1,0 +1,12 @@
+func barbar : Int32(a0: Int32, a1: Int32):
+  printf("barbar %d %d\n", a0, a1)
+  0
+func foobar : Int32(a0: Int32):
+  printf("foobar %d\n", a0)
+  0
+
+func main : Int32():
+  foobar 1
+  barbar(2, 3)
+  foobar 4
+  0

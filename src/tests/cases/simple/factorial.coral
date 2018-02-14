@@ -1,5 +1,5 @@
 # Basic example
-func factorial (n: Int32):
+func factorial (n):
   if n < 2:
     1
   else:

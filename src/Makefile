@@ -15,7 +15,7 @@ mdebug: ${BIN}/coral-test
 parse: ${BIN}/coral-parse
 	$< ${TESTFILE}
 test: ${BIN}/coral-test
-	$<
+	$< ${TESTARGS}
 clean:
 	@rm -r ${BIN} ${BUILD} parser/flexLexer.cc parser/bisonParser.tab.cc parser/bisonParser.tab.hh
 

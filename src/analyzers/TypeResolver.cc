@@ -6,218 +6,350 @@
 #include <iostream>
 #include <iomanip>
 
+
 using namespace coral;
 
-void analyzers::TypeResolver::visit(ast::Module * m) {
-  m->body->accept(this);
-}
-void analyzers::TypeResolver::visit(ast::Block * m) {
-  for(auto && line : m->lines) if (line) line->accept(this);
-  info[m].expr = m;
-  info[m].type = info[m->LastLine()].type;
-  // std::cerr << "getting last expressoin " << ast::ExprNameVisitor::of(m->LastLine()) << "\n";
-}
-void analyzers::TypeResolver::visit(ast::Comment * m) {
-  // no type, not even Void Type
-  info[m].expr = m;
-  info[m].type.name = "";
-  // std::swap(info[m].type, 0);
-  // info[m].type.name = "asdf";
-}
+namespace frobnob {
+  using std::unique_ptr;
+  using std::ostream;
 
-void analyzers::TypeResolver::visit(ast::IfExpr * m) {
-  m->cond->accept(this);
-  auto t1 = info[m->cond.get()];
-  m->ifbody->accept(this);
-  auto t2 = info[m->ifbody.get()];
-  TypeInfo t3;
-  if (m->elsebody) {
-	m->elsebody->accept(this);
-	t3 = info[m->elsebody.get()];
-  }
-  // TODO: this logic isn't robust
-  info[m].expr = m;
-  info[m].type = t3.type;
-  if (t2.type.name != "") {
-    info[m].type = t2.type;
-    return;
-  }
-  if (t2.type != t3.type) {
-	// warning: ifblock and elseblock have different types!
-	std::cerr << "Warning: if block has inferred different block types: ["
-			  << t2.type.name << ", " << t3.type.name << "]\n";
-  }
-}
-void analyzers::TypeResolver::visit(ast::Let * e) {
-  info[e].expr = e;
-  e->value->accept(this);
-  e->var->accept(this);
-  if (e->type.name != "") {
-    info[e].type = e->type;
-  }
-  else if (info[e->var.get()].type.name == "") {
-    info[e].type = e->type = info[e->var.get()].type = info[e->value.get()].type;
-    // std::cout << " [" << ((ast::Var *)e->var.get())->name;
-    // std::cout << "]  = " << e->type << "\n";
-  } else {
-    // std::cout << " [" << ((ast::Var *)e->var.get())->name << "] ";
-    // std::cout << " skipping: " << info[e->var.get()].type << "\n";
-  }
-}
-void analyzers::TypeResolver::visit(ast::BinOp * e) {
-  e->lhs->accept(this);
-  e->rhs->accept(this);
-  info[e].expr = e;
-  // TODO: this isn't quite right though
-  info[e].type = info[e->lhs.get()].type;
-}
+  class TypeConstraint;
 
-void analyzers::TypeResolver::visit(ast::Return * m) {
-  m->val->accept(this);
-  info[m].expr = m;
-  info[m].type = info[m->val.get()].type;
-}
+  class TypeNode {
+  public:
+    // the expr that this node comes from
+    ast::BaseExpr * expr;
+    // a pretty name for the node
+    std::string name;
+  };
 
-void analyzers::TypeResolver::visit(ast::Call * c) {
-  // special handling for struct
-  if (ast::ExprTypeVisitor::of(c->callee.get()) == ast::ExprTypeKind::VarKind) {
-    ast::Var * var = (ast::Var *)c->callee.get();
-    if (var->name == "addrof") {
-      info[c].type = Type("Ptr");
-      return;
+  class TypeConstraint {
+  public:
+    virtual std::ostream& print(std::ostream &out) { return out << "???"; }
+    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) { return this; }
+    virtual bool is_equal(TypeConstraint & other) { return this == &other; }
+  };
+
+  std::ostream & operator << (std::ostream &out, TypeConstraint & tt) { return tt.print(out); }
+
+  class Type : public TypeConstraint {
+  public:
+    std::string name;
+    Type(std::string name) : name(name) { }
+    virtual std::ostream& print(std::ostream &out) { return out << name; }
+    bool is_equal(TypeConstraint & other) {
+      auto o = dynamic_cast<Type *>(&other);
+      return o && o->name == this->name; }
+  };
+
+  class Variable : public TypeConstraint {
+  public:
+    TypeNode * var;
+    Variable(TypeNode * n) : var(n) { }
+    virtual std::ostream& print(std::ostream &out) {
+      return out << COL_RGB(5, 3, 4) << var->name << COL_CLEAR; }
+    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) {
+      return (this->var == var) ? tt : this;
     }
-    if (var->name == "derefi") {
-      info[c].type = Type("Int32");
-      return;
-    }
-    if (var->name == "printf") {
-      info[c].type = Type("Void");
-      return;
-    }
+    bool is_equal(TypeConstraint & other) {
+      auto o = dynamic_cast<Variable *>(&other);
+      return o && o->var->name == this->var->name; }
+  };
 
-    if (var->name == "struct") {
-      info[c].expr = c;
-      info[c].type = Type("Struct");
-      int i = 0;
-      for(auto && arg : c->arguments) {
-        auto binop = dynamic_cast<ast::BinOp *>(arg.get());
-        if (!binop) return;
-        if (binop->op != "=") return;
-        auto lhs = dynamic_cast<ast::Var *>(binop->lhs.get());
-        if (!lhs) return;
-        binop->lhs->accept(this);
-        binop->rhs->accept(this);
-        info[lhs].expr = lhs;
-        info[lhs].type = info[binop->rhs.get()].type;
-        info[c].type.params.push_back(info[binop->rhs.get()].type);
-        lhs->accept(this);
+  class And : public TypeConstraint {
+  public:
+    unique_ptr<TypeConstraint> lhs, rhs;
+    And(TypeConstraint * lhs, TypeConstraint * rhs) : lhs(lhs), rhs(rhs) { }
+  };
+
+  class Or : public TypeConstraint {
+  public:
+    unique_ptr<TypeConstraint> lhs, rhs;
+    Or(TypeConstraint * lhs, TypeConstraint * rhs) : lhs(lhs), rhs(rhs) { }
+    virtual std::ostream& print(std::ostream &out) {
+      return out << "Union(" << *lhs << ", " << *rhs << ")";
+    }
+    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) {
+      auto lvarnode = dynamic_cast<Variable *>(lhs.get());
+      if (lvarnode && lvarnode->var == var) lhs.reset(tt);
+      auto rvarnode = dynamic_cast<Variable *>(rhs.get());
+      if (rvarnode && rvarnode->var == var) rhs.reset(tt);
+      return this->Simplify();
+    }
+    TypeConstraint * Simplify() { return lhs->is_equal(*rhs) ? lhs.get() : this; }
+  };
+
+  class Call : public TypeConstraint {
+  public:
+    TypeConstraint * callee;
+    std::vector<TypeConstraint *> operands;
+    Call(TypeConstraint * callee, std::vector<TypeConstraint *> operands)
+      : callee(callee), operands(operands) { }
+    virtual std::ostream& print(std::ostream &out) {
+      out << "Call(" << *callee << ", ";
+      for(auto &&op: operands) {
+        if (op != operands.front()) out << ", ";
+        out << *op;
       }
-      return;
+      return out << ")";
     }
-  }
-  c->callee->accept(this);
-  for(size_t i = 0; i<c->arguments.size(); i++) {
-    auto && a = c->arguments[i];
-    a->accept(this);
-    // Parameter Type Inference
-    // TODO: Type resolution is a graph exploration process.
-    // we need to keep a worklist of nodes to update
-    if (info[a.get()].type.name == ""
-        && info[c->callee.get()].type.name == "Func"
-        && info[c->callee.get()].type.params.size() > i) {
-      auto var = dynamic_cast<ast::Var *>(a.get());
-      if (var) {
-        info[var].type = info[c->callee.get()].type.params[i];
-        info[var].expr = var;
-        info[var->expr].type = info[c->callee.get()].type.params[i];
-        auto def = dynamic_cast<ast::Def *>(var->expr);
-        if (def) { def->type.reset(new Type(info[c->callee.get()].type.params[i])); }
-        std::cerr << "setting type of " << ast::ExprNameVisitor::of(var->expr) << "\n";
+    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) {
+      for(auto & operand: operands) {
+        auto varnode = dynamic_cast<Variable *>(operand);
+        if (varnode && varnode->var == var) {
+          operand = tt;
+        }
+      }
+      return this;
+    }
+  };
+  class TypeSolver : public ast::ExprVisitor {
+  public:
+    std::string visitorName() { return "TypeSolver"; }
+    TypeSolver(ast::BaseExpr * m) {
+      m->accept(this);
+      std::cerr << COL_RGB(5, 2, 2)
+                << " -------------------- "
+                << "Type Solver"
+                << " -------------------- "
+                << COL_CLEAR << "\n";
+      ShowConstraints();
+      std::cerr << "-------------------------------------------------------\n";
+      SolveConstraints();
+      ShowConstraints();
+      // std::cerr << "-------------------------------------------------------\n";
+      ApplyConstraints();
+
+
+      // for(auto &&name : nodekeys) { std::cerr << COL_RGB(5, 3, 4) << "   Tvar " << name << COL_CLEAR << "\n"; }
+    }
+
+    void update(ast::BaseExpr * e) {
+      // when an expression e is updated
+      // all its dependencies have to be updated too
+    }
+
+    std::map<std::string, TypeNode *> nodes;
+    std::vector<std::string> nodekeys;
+    TypeNode * out;
+    TypeNode * GetVariable(ast::BaseExpr * expr, std::string name) {
+      for(auto && pair: nodes) {
+        if (pair.second->expr == expr) {
+          return pair.second;
+        }
+      }
+      return 0;
+    }
+
+    TypeNode * AddVariable(std::string origname, ast::BaseExpr * expr) {
+      auto name = origname;
+      for(int i=0; i<9999999; i++) {
+        if (nodes.find(name) == nodes.end()) {
+          nodekeys.push_back(name);
+          nodes[name] = new TypeNode();
+          nodes[name]->expr = expr;
+          nodes[name]->name = name;
+          break;
+        }
+        name = origname + ":" + std::to_string(i);
+      }
+      return nodes[name];
+    }
+
+    // std::vector<std::pair<TypeNode *, TypeConstraint *>> constraints;
+    std::map<TypeNode *, TypeConstraint *> constraints;
+    void AddConstraint(TypeNode * term, TypeConstraint * rule) {
+      // constraints.push_back(std::make_pair(term, rule));
+      constraints.insert(std::make_pair(term, rule));
+    }
+
+    void ShowConstraints() {
+      for(auto &&pair: constraints) {
+        auto term = pair.first;
+        auto rule = pair.second;
+        std::cerr << COL_RGB(5, 3, 4) << std::setw(20) << term->name
+                  << COL_RGB(5, 5, 5) << " == "
+                  << *rule
+                  << COL_CLEAR << "\n";
+      }
+    }
+
+    void ApplyConstraints() {
+      for(auto && pair : constraints) {
+        auto expr = pair.first->expr;
+        auto type = dynamic_cast<Type *>(pair.second);
+        if (type) {
+          auto func = dynamic_cast<ast::Func *>(expr);
+          if (func) {
+            func->type->params.back() = coral::type::Type(type->name);
+            continue;
+          }
+          auto def = dynamic_cast<ast::Def *>(expr);
+          if (def) {
+            def->type.reset(new coral::type::Type(type->name));
+            continue;
+          }
+        }
+      }
+    }
+    void SolveConstraints() { SolveConstraints(10); }
+    void SolveConstraints(int n) {
+      // subsitute terminal rules
+      std::vector<std::pair<TypeNode *, TypeConstraint *>> pairs;
+      for(auto && pair : constraints) {
+        if (dynamic_cast<Type *>(pair.second)) {
+          pairs.push_back(pair);
+          // constraints.erase(constraints.find(pair.first));
+        }
+      }
+      for(auto && to_replace: pairs)
+        for(auto && other: constraints)
+          other.second = other.second->ReplaceVariable(to_replace.first, to_replace.second);
+
+      // Call-Return-Type rule
+      for(auto && pair : constraints) {
+        Call * rule;
+        if ((rule = dynamic_cast<Call *>(pair.second))) {
+          auto c = dynamic_cast<Type *>(rule->callee);
+          if (c) {
+            if (c->name == "'op:<'") {
+              constraints[pair.first] = new Type("Int1");
+              Unify(rule->operands[0], rule->operands[1]);
+              continue;
+            }
+            if (c->name == "'op:+'") {
+              constraints[pair.first] = rule->operands[0];
+              continue;
+            }
+            if (c->name == "'op:-'") {
+              constraints[pair.first] = rule->operands[0];
+              // if (rule->operands[0].equals(rule->operands[1])) {
+              //   constraints[pair.first] = rule->operands[0];
+              // }
+              // rule->operands[0], rule->operands[1]);
+              continue;
+            }
+            if (c->name == "'op:*'") {
+              constraints[pair.first] = rule->operands[0];
+              continue;
+            }
+            std::cerr << COL_LIGHT_RED << c->name << COL_CLEAR << "\n";
+          }
+        }
+      }
+      if (n) SolveConstraints(n - 1);
+    }
+
+    void Unify(TypeConstraint * a, TypeConstraint * b) {
+      auto var_a = dynamic_cast<Variable *>(a);
+      if (var_a) {
+        AddConstraint(var_a->var, b);
       } else {
-        std::cerr << "NO VAR\n";
+        std::cerr << ":( \n";
       }
     }
+
+    void visit(__attribute__((unused)) ast::Comment * c) { }
+    void visit(ast::Module * m) { m->body->accept(this); }
+    void visit(ast::Block * b) {
+      for(auto && line:b->lines) if (line) line->accept(this);
+    }
+    void visit(ast::IfExpr * f) {
+      f->cond->accept(this);
+      f->ifbody->accept(this);
+      auto ifv = out;
+      if (f->elsebody) {
+        f->elsebody->accept(this);
+        auto elsev = out;
+        out = AddVariable("if", f);
+        AddConstraint(out, new Or(new Variable(ifv), new Variable(elsev)));
+      } else {
+        out = AddVariable("if", f);
+        AddConstraint(out, new Variable(ifv));
+      }
+    }
+    void visit(ast::Let * let) {
+      let->var->accept(this);
+      auto varnode = out;
+      let->value->accept(this);
+      auto valuenode = out;
+      AddConstraint(varnode, new Variable(valuenode));
+    }
+    void visit(ast::While * w) {
+      w->cond->accept(this);
+      w->body->accept(this);
+      out = 0;
+    }
+    void visit(ast::Return * r) {
+
+    }
+    void visit(ast::IntLiteral * i) {
+      out = AddVariable("Int{" + i->value+"}", i);
+      AddConstraint(out, new Type("Int32"));
+    }
+
+    void visit(ast::StringLiteral * i) {
+      out = AddVariable("String{" + i->value+"}", i);
+      AddConstraint(out, new Type("Ptr"));
+    }
+
+    void visit(ast::BinOp * o) {
+      o->lhs->accept(this);
+      auto lv = out;
+      o->rhs->accept(this);
+      auto rv = out;
+      out = AddVariable("Op{" + o->op + "}", o);
+      AddConstraint(
+        out,
+        new Call(new Type("'op:" + o->op + "'"), { new Variable(lv), new Variable(rv) }));
+    }
+    void visit(ast::Var * v) {
+      out = GetVariable(v->expr, v->name);
+      if (!out) {
+        out = new TypeNode();
+        out->expr = v;
+        out->name = v->name;
+        // std::cerr << COL_LIGHT_RED << "Warning - Not found: " << v->name << COL_CLEAR << "\n";
+      }
+    }
+    void visit(ast::Call * f) {
+      std::vector<TypeConstraint *> argnodes;
+      for(auto &&arg: f->arguments) {
+        arg->accept(this);
+        argnodes.push_back(new Variable(out));
+      }
+      f->callee->accept(this);
+      auto calleenode = out;
+      out = AddVariable("call." + calleenode->name, f);
+      AddConstraint(
+        out,
+        new Call(new Variable(calleenode), argnodes));
+    }
+    void visit(ast::Def * d) {
+      out = AddVariable(d->name, d);
+    }
+    void visit(ast::Func * f) {
+      out = AddVariable(f->name, f);
+      auto funcout = out;
+      for(auto &&param: f->params) {
+        param->accept(this);
+      }
+      if (f->body) {
+        f->body->accept(this);
+        auto bodyVariable = out;
+        auto retval = AddVariable(funcout->name + ".return", 0);
+        AddConstraint(
+          funcout,
+          new Variable(bodyVariable));
+      }
+    }
+  };
+}
+
+coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
+  for(auto && line: m->body->lines) {
+    auto func = dynamic_cast<ast::Func *>(line.get());
+    if (func)
+      frobnob::TypeSolver x(func);
   }
-  info[c].expr = c;
-  info[c].type = info[c->callee.get()].type.returnType();
-}
-
-
-void analyzers::TypeResolver::visit(ast::Var * v) {
-  info[v].expr = v;
-  info[v].type = info[v->expr].type;
-}
-
-using namespace coral::type;
-void analyzers::TypeResolver::visit(ast::Func * f) {
-  info[f].expr = f;
-  Type ret_type = f->type->returnType();
-  auto np = f->params.size();
-  Type ftype("Func");
-  for(ulong i=0; i < np; i++) {
-	f->params[i]->accept(this);
-	ftype.params.push_back(info[f->params[i].get()].type);
-  }
-
-  //  ftype.params.push_back(ret_type);
-  ftype.params.push_back(ret_type);
-  if (f->body) {
-    // TODO: TypeResolver isn't recursion-safe.
-    // This is a hack to get recursive references to a function to not
-    // halt the type-check
-    auto body = f->body.release();
-    body->accept(this);
-    f->body.reset(body);
-    if (ret_type.name == "") ftype.params.back() = info[f->body.get()].type;
-    // std::cerr << "           inferring return type " << info[f->body.get()].type << "\n";
-  }
-  // std::cerr << COL_RED << std::setw(30) << f->name << COL_CLEAR << " :: " << ftype << "\n";
-  info[f].type = ftype;
-  f->type.reset(new Type(ftype));
-}
-
-void analyzers::TypeResolver::visit(ast::Def * e) {
-  info[e].expr = e;
-  if (e->type) info[e].type = *(e->type);
-}
-
-void analyzers::TypeResolver::visit(ast::StringLiteral * e) {
-  info[e].expr = e;
-  info[e].type = Type("Ptr");
-}
-
-void analyzers::TypeResolver::visit(ast::IntLiteral * e) {
-  info[e].expr = e;
-  info[e].type = Type("Int32");
-}
-
-void analyzers::TypeResolver::visit(ast::FloatLiteral * e) {
-  info[e].expr = e;
-  info[e].type = Type("Float");
-}
-
-void analyzers::TypeResolver::visit(ast::Set * s) {
-  s->var->accept(this);
-  s->value->accept(this);
-  info[s].type = Type("");
-  info[s].expr = s;
-  info[s->var.get()].type = info[s->value.get()].type;
-}
-
-void analyzers::TypeResolver::visit(ast::While * w) {
-  w->cond->accept(this);
-  w->body->accept(this);
-  info[w].expr = w;
-  info[w].type = Type("");
-}
-
-void analyzers::TypeResolver::visit(ast::Member * w) {
-  w->base->accept(this);
-  if (w->member.substr(0, 5) == "field") {
-    int i = std::stoi(w->member.substr(5));
-    info[w].expr = w;
-    info[w].type = info[w->base.get()].type.params[i];
-    return;
-  }
-  std::cerr << COL_LIGHT_RED << "warning: type resolving member " << w->member << "\n" << COL_CLEAR;
 }

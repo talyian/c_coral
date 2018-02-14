@@ -41,6 +41,7 @@ namespace coral {
           Assert(func->type->params[0] == coral::type::Type("Int32"));
         }
       }
+      if (this->failCounter) PrettyPrinter::print(module);
       EndTest();
     }
     void ParserTests::checkTypeInferenceReturn() {
@@ -49,6 +50,7 @@ namespace coral {
       analyzers::NameResolver nresolve(module);
       analyzers::TypeResolver treslve(module);
       BeginTest("Return Type Inference");
+
       for(auto && expr : module->body->lines) {
         auto func = dynamic_cast<ast::Func *>(expr.get());
         if (!func) continue;
@@ -70,6 +72,7 @@ namespace coral {
           Assert(func->type->params.back() == coral::type::Type("Ptr"));
         }
       }
+      if (this->failCounter) PrettyPrinter::print(module);
       EndTest();
     }
 
