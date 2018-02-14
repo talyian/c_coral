@@ -7,7 +7,7 @@
 using std::cout;
 
 namespace coral {
-  const auto COL_KEYWORD = COL_CYAN;
+  const auto COL_KEYWORD = COL_LIGHT_BLUE;
   const auto COL_NORMAL = COL_CLEAR;
   const auto COL_STRING = COL_LIGHT_GREEN;
   const auto COL_TYPE = COL_YELLOW;

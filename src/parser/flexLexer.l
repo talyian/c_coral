@@ -9,12 +9,22 @@
 
 #define STRLVAL yylval->build(std::string(yytext, yyleng))
 %}
+
+ASC     [\x00-\x7f]
+ASCN    [\x00-\t\v-\x7f]
+U       [\x80-\xbf]
+U2      [\xc2-\xdf]
+U3      [\xe0-\xef]
+U4      [\xf0-\xf4]
+
+UNICODE {U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
+
 %%
 
 #.*                      { STRLVAL; return TOK::COMMENT; }
 \"(\\\"|[^\"])*\"        { STRLVAL; return TOK::STRING; }
 \'(\\\'|[^\'])*\'        { STRLVAL; return TOK::STRING; }
-[_a-zA-Z][_a-zA-Z0-9]*   { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
+([_a-zA-Z]|{UNICODE})([_a-zA-Z0-9]|{UNICODE})* { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
 [0-9][0-9]*L?            { STRLVAL; return TOK::INTEGER; }
 [0-9][0-9]*[.][0-9][0-9]*  { STRLVAL; return TOK::INTEGER; }
 [-+*/=><$!|^%@]+         { STRLVAL; return coral::Token::GetOperator(yytext); }

@@ -10,8 +10,6 @@ namespace coral {
       coral::Type type = coral::Type("");
     };
 
-    // Populates all ast::Var var nodes with a pointer to
-    // the expression that it is referring to
     class TypeResolver : public ast::ExprVisitor {
     public:
       ast::Module * module = 0;

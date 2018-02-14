@@ -1,0 +1,16 @@
+func Hallå():
+  "swedish - Hallå"
+
+func こんにちは():
+  "japanese - こんにちは"
+
+# นี่เป็นข้อคิดเห็น comments
+func main():
+  let 你好 = "chinese - 你好"
+  let 💩= "emoji - 💩"
+  printf "Hello\n"
+  printf("%s\n", Hallå())
+  printf("%s\n", こんにちは())
+  printf("%s\n", 你好)
+  printf("%s\n", 💩)
+  0

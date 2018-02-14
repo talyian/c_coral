@@ -116,7 +116,28 @@ void analyzers::TypeResolver::visit(ast::Call * c) {
     }
   }
   c->callee->accept(this);
-  for(auto && a : c->arguments) a->accept(this);
+  for(size_t i = 0; i<c->arguments.size(); i++) {
+    auto && a = c->arguments[i];
+    a->accept(this);
+    // Parameter Type Inference
+    // TODO: Type resolution is a graph exploration process.
+    // we need to keep a worklist of nodes to update
+    if (info[a.get()].type.name == ""
+        && info[c->callee.get()].type.name == "Func"
+        && info[c->callee.get()].type.params.size() > i) {
+      auto var = dynamic_cast<ast::Var *>(a.get());
+      if (var) {
+        info[var].type = info[c->callee.get()].type.params[i];
+        info[var].expr = var;
+        info[var->expr].type = info[c->callee.get()].type.params[i];
+        auto def = dynamic_cast<ast::Def *>(var->expr);
+        if (def) { def->type.reset(new Type(info[c->callee.get()].type.params[i])); }
+        std::cerr << "setting type of " << ast::ExprNameVisitor::of(var->expr) << "\n";
+      } else {
+        std::cerr << "NO VAR\n";
+      }
+    }
+  }
   info[c].expr = c;
   info[c].type = info[c->callee.get()].type.returnType();
 }
