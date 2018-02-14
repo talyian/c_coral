@@ -2,13 +2,23 @@
 
 [![Build Status](https://travis-ci.org/talyian/coral.svg?branch=coral)](https://travis-ci.org/talyian/coral)
 
-A toy LLVM-based language. 
-A Kaleidoscope tutorial project that gained sentience.
-A Playground to experiment with language features.
+A toy LLVM-based language.  
+A Kaleidoscope tutorial project that gained sentience.  
+A Playground to experiment with language features.  
+
+## Show me some Code!
+
+    printf "Hello, World!\n"
+
+    func factorial(n):
+       if n < 2:
+          1
+       else:
+          n * factorial(n - 1)
 
 ## Getting Started
 
-Easiest way is to build the docker container that has the dependencies (llvm/clang/flex/bison) installed. (`make docker` will build the container and then dump you inside the container in a shell)
+Easiest way is to build the docker container that has the dependencies (llvm/clang/flex/bison) installed.
 
 ```
 $ docker build -t coral -f dockerenv/Dockerfile .
@@ -21,4 +31,4 @@ Hello, World!
 
 ## Dependencies
 
-If you'd prefer to build Coral without using docker, make sure you have `make`, `llvm` 5, `clang` 5, `flex`, `bison` installed at a minimum.
+If you'd prefer to build Coral without using docker, make sure you have `make`, `llvm` 5, `clang` 5, `flex`, `bison` installed at a minimum. Additional libraries such as `libpcre2` or `libuv` may be required to build.
