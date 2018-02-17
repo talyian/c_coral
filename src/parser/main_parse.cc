@@ -1,8 +1,10 @@
 #include "parser.hh"
+#include "utils/ansicolor.hh"
 #include "core/prettyprinter.hh"
 #include "analyzers/ReturnInserter.hh"
 #include "analyzers/NameResolver.hh"
 #include "analyzers/TypeResolver.hh"
+
 #include <cstdio>
 
 void showFile(const char * filename) {
@@ -18,7 +20,7 @@ void showFile(const char * filename) {
 	  coral::PrettyPrinter::print(module);
 	}
 	coralDestroyModule(parser);
-  }
+  } else { printf("%sNot found: %s%s\n", COL_LIGHT_RED, filename, COL_CLEAR); }
   printf("\n");
 }
 

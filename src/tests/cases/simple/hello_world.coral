@@ -1,4 +1,4 @@
-func main():
+func main : Int32 ():
   printf("Hello, %s!\n", "World")
   printf("Goodbye, World!\n")
   0

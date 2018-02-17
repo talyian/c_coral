@@ -43,6 +43,7 @@ namespace coral {
       }
       if (this->failCounter) PrettyPrinter::print(module);
       EndTest();
+      coralDestroyModule(parser);
     }
     void ParserTests::checkTypeInferenceReturn() {
       auto parser = coralParseModule("tests/cases/features/typeInference-return.coral");
@@ -74,6 +75,7 @@ namespace coral {
       }
       if (this->failCounter) PrettyPrinter::print(module);
       EndTest();
+      coralDestroyModule(parser);
     }
 
 	ParserTests * run_parser_tests() {

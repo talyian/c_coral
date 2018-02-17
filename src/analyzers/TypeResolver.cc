@@ -5,351 +5,197 @@
 
 #include <iostream>
 #include <iomanip>
+#include <set>
 
 
 using namespace coral;
 
 namespace frobnob {
-  using std::unique_ptr;
-  using std::ostream;
-
-  class TypeConstraint;
-
-  class TypeNode {
+  // A TypeTerm is a variable we're solving for in the constraint system
+  class TypeTerm {
   public:
-    // the expr that this node comes from
-    ast::BaseExpr * expr;
-    // a pretty name for the node
     std::string name;
+    ast::BaseExpr * expr;
+    TypeTerm(std::string name, ast::BaseExpr * expr) : name(name), expr(expr) { }
   };
 
+  // A typeconstraint is a formula on TypeTerms
   class TypeConstraint {
   public:
-    virtual std::ostream& print(std::ostream &out) { return out << "???"; }
-    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) { return this; }
-    virtual bool is_equal(TypeConstraint & other) { return this == &other; }
+    virtual void print_to(std::ostream& out) { out << "(constraint)"; }
   };
+  class Term;
+  class Type;
+  class Call;
+  class FreeType;
 
-  std::ostream & operator << (std::ostream &out, TypeConstraint & tt) { return tt.print(out); }
+  std::ostream & operator<<(std::ostream &out, TypeTerm &tptr) {
+    return out << COL_RGB(5, 3, 4) << tptr.name << COL_CLEAR; }
+  std::ostream & operator<<(std::ostream &out, TypeTerm * tptr) { return out << *tptr; }
+
+  std::ostream & operator<<(std::ostream &out, TypeConstraint &tc) {
+    tc.print_to(out); return out;
+  }
+  std::ostream & operator<<(std::ostream &out, TypeConstraint *tc) { return out << *tc; }
+  std::ostream & operator<<(std::ostream &out, std::vector<TypeConstraint *> &vv) {
+    for(auto &&tc : vv) {
+      if (&tc != &vv.front()) out << ", ";
+      out << tc;
+    }
+    return out;
+  }
 
   class Type : public TypeConstraint {
   public:
     std::string name;
+    std::vector<std::unique_ptr<TypeConstraint>> params;
     Type(std::string name) : name(name) { }
-    virtual std::ostream& print(std::ostream &out) { return out << name; }
-    bool is_equal(TypeConstraint & other) {
-      auto o = dynamic_cast<Type *>(&other);
-      return o && o->name == this->name; }
+    Type(std::string name, std::vector<TypeConstraint *> pp) : name(name) {
+      for(auto &&p:pp) params.emplace_back(p);
+    }
+    virtual void print_to(std::ostream& out) {
+      out << name;
+      if (params.size()) {
+        out << "(";
+        for(auto &&p: params) {
+          if (&p != &params.front()) out << ", ";
+          p->print_to(out);
+        }
+        out << ")"; }
+    }
   };
 
-  class Variable : public TypeConstraint {
-  public:
-    TypeNode * var;
-    Variable(TypeNode * n) : var(n) { }
-    virtual std::ostream& print(std::ostream &out) {
-      return out << COL_RGB(5, 3, 4) << var->name << COL_CLEAR; }
-    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) {
-      return (this->var == var) ? tt : this;
+  class Term : public TypeConstraint {
+  public: TypeTerm * term;
+    Term(TypeTerm * term) : term(term) { }
+    virtual void print_to(std::ostream &out) {
+      out << COL_RGB(5, 3, 4) << term->name << COL_CLEAR;
     }
-    bool is_equal(TypeConstraint & other) {
-      auto o = dynamic_cast<Variable *>(&other);
-      return o && o->var->name == this->var->name; }
-  };
-
-  class And : public TypeConstraint {
-  public:
-    unique_ptr<TypeConstraint> lhs, rhs;
-    And(TypeConstraint * lhs, TypeConstraint * rhs) : lhs(lhs), rhs(rhs) { }
-  };
-
-  class Or : public TypeConstraint {
-  public:
-    unique_ptr<TypeConstraint> lhs, rhs;
-    Or(TypeConstraint * lhs, TypeConstraint * rhs) : lhs(lhs), rhs(rhs) { }
-    virtual std::ostream& print(std::ostream &out) {
-      return out << "Union(" << *lhs << ", " << *rhs << ")";
-    }
-    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) {
-      auto lvarnode = dynamic_cast<Variable *>(lhs.get());
-      if (lvarnode && lvarnode->var == var) lhs.reset(tt);
-      auto rvarnode = dynamic_cast<Variable *>(rhs.get());
-      if (rvarnode && rvarnode->var == var) rhs.reset(tt);
-      return this->Simplify();
-    }
-    TypeConstraint * Simplify() { return lhs->is_equal(*rhs) ? lhs.get() : this; }
   };
 
   class Call : public TypeConstraint {
   public:
     TypeConstraint * callee;
-    std::vector<TypeConstraint *> operands;
-    Call(TypeConstraint * callee, std::vector<TypeConstraint *> operands)
-      : callee(callee), operands(operands) { }
-    virtual std::ostream& print(std::ostream &out) {
-      out << "Call(" << *callee << ", ";
-      for(auto &&op: operands) {
-        if (op != operands.front()) out << ", ";
-        out << *op;
-      }
-      return out << ")";
-    }
-    virtual TypeConstraint * ReplaceVariable(TypeNode * var, TypeConstraint * tt) {
-      for(auto & operand: operands) {
-        auto varnode = dynamic_cast<Variable *>(operand);
-        if (varnode && varnode->var == var) {
-          operand = tt;
-        }
-      }
-      return this;
+    std::vector<TypeConstraint *> args;
+    Call(TypeConstraint * callee, std::vector<TypeConstraint *> args)
+      : callee(callee), args(args) { }
+    virtual void print_to(std::ostream &out) {
+      out << "Call(" << callee << ", " << args << ")";
     }
   };
-  class TypeSolver : public ast::ExprVisitor {
+
+
+
+  class TypeEnvironment : ast::ExprVisitor {
   public:
-    std::string visitorName() { return "TypeSolver"; }
-    TypeSolver(ast::BaseExpr * m) {
-      m->accept(this);
-      std::cerr << COL_RGB(5, 2, 2)
-                << " -------------------- "
-                << "Type Solver"
-                << " -------------------- "
-                << COL_CLEAR << "\n";
-      ShowConstraints();
-      std::cerr << "-------------------------------------------------------\n";
-      SolveConstraints();
-      ShowConstraints();
-      // std::cerr << "-------------------------------------------------------\n";
-      ApplyConstraints();
+    TypeEnvironment(ast::Module * m) { m->accept(this); }
+    std::string visitorName() { return "TypeEnvironment"; }
 
-
-      // for(auto &&name : nodekeys) { std::cerr << COL_RGB(5, 3, 4) << "   Tvar " << name << COL_CLEAR << "\n"; }
-    }
-
-    void update(ast::BaseExpr * e) {
-      // when an expression e is updated
-      // all its dependencies have to be updated too
-    }
-
-    std::map<std::string, TypeNode *> nodes;
-    std::vector<std::string> nodekeys;
-    TypeNode * out;
-    TypeNode * GetVariable(ast::BaseExpr * expr, std::string name) {
-      for(auto && pair: nodes) {
-        if (pair.second->expr == expr) {
-          return pair.second;
-        }
+    void Solve() {
+      for(auto && tt : terms)
+        std::cerr << tt << "\n";
+      for(auto &&pair: constraints) {
+        TypeTerm * term = pair.first;
+        std::cerr << COL_RGB(5, 3, 4) << std::setw(15) << pair.first->name << COL_CLEAR
+                  << " :: " << pair.second.get() << "\n";
       }
+    }
+
+
+    std::set<std::string> names;
+    std::vector<TypeTerm *> terms;
+    TypeTerm * AddTerm(std::string name, ast::BaseExpr * expr) {
+      int i = 0; std::string name0 = name;
+      while (names.find(name) != names.end())
+        name = name0 + "." + std::to_string(i++);
+      names.insert(name);
+      terms.push_back(new TypeTerm(name, expr));
+      return terms.back();
+    }
+    TypeTerm * FindTerm(ast::BaseExpr * expr) {
+      for(auto &&term: terms) if (term->expr == expr) return term;
       return 0;
     }
 
-    TypeNode * AddVariable(std::string origname, ast::BaseExpr * expr) {
-      auto name = origname;
-      for(int i=0; i<9999999; i++) {
-        if (nodes.find(name) == nodes.end()) {
-          nodekeys.push_back(name);
-          nodes[name] = new TypeNode();
-          nodes[name]->expr = expr;
-          nodes[name]->name = name;
-          break;
-        }
-        name = origname + ":" + std::to_string(i);
-      }
-      return nodes[name];
+    std::map<TypeTerm *, std::unique_ptr<TypeConstraint>> constraints;
+    void AddConstraint(TypeTerm * term, TypeConstraint * tcons) {
+      if (constraints.find(term) != constraints.end())
+        std::cerr << COL_LIGHT_RED << "WARNING: overwritting constraint on " << term << COL_CLEAR << "\n";
+      constraints[term] = std::unique_ptr<TypeConstraint>(tcons);
     }
 
-    // std::vector<std::pair<TypeNode *, TypeConstraint *>> constraints;
-    std::map<TypeNode *, TypeConstraint *> constraints;
-    void AddConstraint(TypeNode * term, TypeConstraint * rule) {
-      // constraints.push_back(std::make_pair(term, rule));
-      constraints.insert(std::make_pair(term, rule));
+    // Visitor Parts
+    TypeTerm * out;
+
+    void visit(ast::Module * m) { for(auto && line: m->body->lines) if (line) line->accept(this); }
+
+    void visit(ast::Func * m) {
+      auto func_term = AddTerm(m->name, m);
+      auto func_type = new Type("Func");
+      AddConstraint(func_term, func_type);
+
+      for(auto && p: m->params) {
+        out = AddTerm(m->name + "." + p->name, p.get());
+        func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
+      }
+
+      m->body->accept(this);
+      func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
+      out = func_term;
     }
 
-    void ShowConstraints() {
-      for(auto &&pair: constraints) {
-        auto term = pair.first;
-        auto rule = pair.second;
-        std::cerr << COL_RGB(5, 3, 4) << std::setw(20) << term->name
-                  << COL_RGB(5, 5, 5) << " == "
-                  << *rule
-                  << COL_CLEAR << "\n";
-      }
-    }
-
-    void ApplyConstraints() {
-      for(auto && pair : constraints) {
-        auto expr = pair.first->expr;
-        auto type = dynamic_cast<Type *>(pair.second);
-        if (type) {
-          auto func = dynamic_cast<ast::Func *>(expr);
-          if (func) {
-            func->type->params.back() = coral::type::Type(type->name);
-            continue;
-          }
-          auto def = dynamic_cast<ast::Def *>(expr);
-          if (def) {
-            def->type.reset(new coral::type::Type(type->name));
-            continue;
-          }
-        }
-      }
-    }
-    void SolveConstraints() { SolveConstraints(10); }
-    void SolveConstraints(int n) {
-      // subsitute terminal rules
-      std::vector<std::pair<TypeNode *, TypeConstraint *>> pairs;
-      for(auto && pair : constraints) {
-        if (dynamic_cast<Type *>(pair.second)) {
-          pairs.push_back(pair);
-          // constraints.erase(constraints.find(pair.first));
-        }
-      }
-      for(auto && to_replace: pairs)
-        for(auto && other: constraints)
-          other.second = other.second->ReplaceVariable(to_replace.first, to_replace.second);
-
-      // Call-Return-Type rule
-      for(auto && pair : constraints) {
-        Call * rule;
-        if ((rule = dynamic_cast<Call *>(pair.second))) {
-          auto c = dynamic_cast<Type *>(rule->callee);
-          if (c) {
-            if (c->name == "'op:<'") {
-              constraints[pair.first] = new Type("Int1");
-              Unify(rule->operands[0], rule->operands[1]);
-              continue;
-            }
-            if (c->name == "'op:+'") {
-              constraints[pair.first] = rule->operands[0];
-              continue;
-            }
-            if (c->name == "'op:-'") {
-              constraints[pair.first] = rule->operands[0];
-              // if (rule->operands[0].equals(rule->operands[1])) {
-              //   constraints[pair.first] = rule->operands[0];
-              // }
-              // rule->operands[0], rule->operands[1]);
-              continue;
-            }
-            if (c->name == "'op:*'") {
-              constraints[pair.first] = rule->operands[0];
-              continue;
-            }
-            std::cerr << COL_LIGHT_RED << c->name << COL_CLEAR << "\n";
-          }
-        }
-      }
-      if (n) SolveConstraints(n - 1);
-    }
-
-    void Unify(TypeConstraint * a, TypeConstraint * b) {
-      auto var_a = dynamic_cast<Variable *>(a);
-      if (var_a) {
-        AddConstraint(var_a->var, b);
-      } else {
-        std::cerr << ":( \n";
-      }
-    }
-
-    void visit(__attribute__((unused)) ast::Comment * c) { }
-    void visit(ast::Module * m) { m->body->accept(this); }
     void visit(ast::Block * b) {
-      for(auto && line:b->lines) if (line) line->accept(this);
+      for(auto &&line: b->lines)
+        if (line)
+          line->accept(this);
     }
-    void visit(ast::IfExpr * f) {
-      f->cond->accept(this);
-      f->ifbody->accept(this);
-      auto ifv = out;
-      if (f->elsebody) {
-        f->elsebody->accept(this);
-        auto elsev = out;
-        out = AddVariable("if", f);
-        AddConstraint(out, new Or(new Variable(ifv), new Variable(elsev)));
-      } else {
-        out = AddVariable("if", f);
-        AddConstraint(out, new Variable(ifv));
+
+    void visit(ast::BinOp * op) {
+      op->lhs->accept(this);
+      auto lvar = out;
+      op->rhs->accept(this);
+      auto rvar = out;
+      out = AddTerm("op:" + op->op, op);
+      AddConstraint(out, new Call(new Type(op->op), {new Term(lvar), new Term(rvar)}));
+    }
+
+    void visit(ast::Var * var) {
+      out = FindTerm(var->expr);
+    }
+
+    void visit(ast::IfExpr * e) {
+      e->cond->accept(this);
+      e->ifbody->accept(this);
+      if (e->elsebody) {
+        auto if_var = out;
+        e->elsebody->accept(this);
+        auto else_var = out;
+        out = AddTerm("if", e);
+        AddConstraint(out, new Type("UNION", {new Term(if_var), new Term(else_var)}));
       }
     }
-    void visit(ast::Let * let) {
-      let->var->accept(this);
-      auto varnode = out;
-      let->value->accept(this);
-      auto valuenode = out;
-      AddConstraint(varnode, new Variable(valuenode));
-    }
-    void visit(ast::While * w) {
-      w->cond->accept(this);
-      w->body->accept(this);
-      out = 0;
-    }
-    void visit(ast::Return * r) {
 
-    }
-    void visit(ast::IntLiteral * i) {
-      out = AddVariable("Int{" + i->value+"}", i);
+    void visit(ast::IntLiteral * e) {
+      out = AddTerm("i" + e->value, e);
       AddConstraint(out, new Type("Int32"));
     }
 
-    void visit(ast::StringLiteral * i) {
-      out = AddVariable("String{" + i->value+"}", i);
-      AddConstraint(out, new Type("Ptr"));
-    }
-
-    void visit(ast::BinOp * o) {
-      o->lhs->accept(this);
-      auto lv = out;
-      o->rhs->accept(this);
-      auto rv = out;
-      out = AddVariable("Op{" + o->op + "}", o);
-      AddConstraint(
-        out,
-        new Call(new Type("'op:" + o->op + "'"), { new Variable(lv), new Variable(rv) }));
-    }
-    void visit(ast::Var * v) {
-      out = GetVariable(v->expr, v->name);
-      if (!out) {
-        out = new TypeNode();
-        out->expr = v;
-        out->name = v->name;
-        // std::cerr << COL_LIGHT_RED << "Warning - Not found: " << v->name << COL_CLEAR << "\n";
-      }
-    }
-    void visit(ast::Call * f) {
-      std::vector<TypeConstraint *> argnodes;
-      for(auto &&arg: f->arguments) {
+    void visit(ast::Call * c) {
+      c->callee->accept(this);
+      auto callee_term = out;
+      auto c_out = AddTerm("call." + callee_term->name, c);
+      auto call_con = new Call(new Term(callee_term), {});
+      for(auto &&arg: c->arguments) {
         arg->accept(this);
-        argnodes.push_back(new Variable(out));
+        call_con->args.push_back(new Term(out));
       }
-      f->callee->accept(this);
-      auto calleenode = out;
-      out = AddVariable("call." + calleenode->name, f);
-      AddConstraint(
-        out,
-        new Call(new Variable(calleenode), argnodes));
-    }
-    void visit(ast::Def * d) {
-      out = AddVariable(d->name, d);
-    }
-    void visit(ast::Func * f) {
-      out = AddVariable(f->name, f);
-      auto funcout = out;
-      for(auto &&param: f->params) {
-        param->accept(this);
-      }
-      if (f->body) {
-        f->body->accept(this);
-        auto bodyVariable = out;
-        auto retval = AddVariable(funcout->name + ".return", 0);
-        AddConstraint(
-          funcout,
-          new Variable(bodyVariable));
-      }
+      AddConstraint(c_out, call_con);
     }
   };
+
 }
 
 coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
-  for(auto && line: m->body->lines) {
-    auto func = dynamic_cast<ast::Func *>(line.get());
-    if (func)
-      frobnob::TypeSolver x(func);
-  }
+  frobnob::TypeEnvironment env(m);
+  env.Solve();
 }

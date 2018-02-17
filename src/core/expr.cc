@@ -53,6 +53,8 @@ namespace coral {
         this->params.push_back(std::unique_ptr<Def>(p));
       }
       this->type->params.push_back(*rtype);
+      // our contract is we own all constructor pointers;
+      delete rtype;
     }
 
 	std::string StringLiteral::getString() {

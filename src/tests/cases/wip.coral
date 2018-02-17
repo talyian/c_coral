@@ -1,0 +1,5 @@
+func plus(a, b): a + b
+
+func fib(n):
+  if n < 1: 1
+  else: n * fib(n - 1)

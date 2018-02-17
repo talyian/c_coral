@@ -16,6 +16,8 @@ parse: ${BIN}/coral-parse
 	$< ${TESTFILE}
 test: ${BIN}/coral-test
 	$< ${TESTARGS}
+types: ${BIN}/coral-types
+	$<
 clean:
 	@rm -r ${BIN} ${BUILD} parser/flexLexer.cc parser/bisonParser.tab.cc parser/bisonParser.tab.hh
 
@@ -31,10 +33,12 @@ ${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/parser/mai
 	${LINKCMD}
 ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_jit.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
-${BIN}/coral-compile: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_compile.o
+${BIN}/coralc: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_compile.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
 ${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o ${BUILD}/tests/runner/codegen.o ${BUILD}/tests/runner/parser.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -ldl -rdynamic -lpcre2-8
+${BIN}/coral-types: ${COREFILES} ${BUILD}/core/type.o
+	${LINKCMD}
 
 # # # Bison # # #
 obj/parser/lexer.o: parser/bisonParser.tab.hh
