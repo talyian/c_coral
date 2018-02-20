@@ -11,6 +11,21 @@
 namespace frobnob {
   class TypeEnvironment {
   public:
+    int subcount;
+    std::set<std::string> names;
+    std::vector<TypeTerm *> terms;
+    std::map<TypeTerm *, std::unique_ptr<TypeConstraint>> constraints;
+    std::multimap<TypeTerm *, TypeConstraint *> mconstraints;
+
+    TypeTerm * AddTerm(std::string name, coral::ast::BaseExpr * expr);
+    TypeTerm * FindTerm(coral::ast::BaseExpr * expr);
+    void AddConstraint(TypeTerm * term, TypeConstraint * tcons);
+    void AddConstraint(
+      std::map<TypeTerm *, TypeConstraint *> &constraints,
+      TypeTerm * term,
+      TypeConstraint * tcons);
+
+
     void Solve();
 
     TypeConstraint * SubstituteTerm(TypeConstraint * subject, TypeTerm * search, TypeConstraint * replacement);
@@ -35,23 +50,9 @@ namespace frobnob {
       return items;
     };
 
-    int subcount;
     bool DoSubstitutions(std::map<TypeTerm *, TypeConstraint *> &constraints);
 
     bool DoInstantiations(std::map<TypeTerm *, TypeConstraint *> &constraints);
 
-    //////////////////////////////////////// Terms
-    std::set<std::string> names;
-    std::vector<TypeTerm *> terms;
-    TypeTerm * AddTerm(std::string name, coral::ast::BaseExpr * expr);
-    TypeTerm * FindTerm(coral::ast::BaseExpr * expr);
-
-    //////////////////////////////////////// Constraints
-    std::map<TypeTerm *, std::unique_ptr<TypeConstraint>> constraints;
-    void AddConstraint(TypeTerm * term, TypeConstraint * tcons);
-    void AddConstraint(
-      std::map<TypeTerm *, TypeConstraint *> &constraints,
-      TypeTerm * term,
-      TypeConstraint * tcons);
   };
 }

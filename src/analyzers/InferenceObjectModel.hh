@@ -15,6 +15,10 @@ namespace frobnob {
   class TypeConstraint {
   public:
     virtual void print_to(std::ostream& out) { out << "(constraint)"; }
+    virtual TypeConstraint * findTerm(__attribute__((unused)) TypeTerm * t) { return 0; }
+    virtual TypeConstraint * replaceTerm(
+      __attribute__((unused)) TypeTerm * tt,
+      __attribute__((unused)) TypeConstraint * tc) { return this; }
   };
   class Term;
   class Type;
@@ -38,6 +42,19 @@ namespace frobnob {
     Type(std::string name, std::vector<TypeConstraint *> pp) : name(name) {
       for(auto &&p:pp) params.emplace_back(p);
     }
+    virtual TypeConstraint * findTerm(TypeTerm * t) {
+      for(auto && p: params)
+        if(p->findTerm(t)) return this;
+      return 0;
+    }
+    virtual TypeConstraint * replaceTerm(
+      TypeTerm * tt,
+      TypeConstraint * tc) {
+      for(auto &p: params)
+        p.reset(p.release()->replaceTerm(tt, tc));
+      return this;
+    }
+
     virtual void print_to(std::ostream& out) {
       out << name;
       if (params.size()) {
@@ -56,6 +73,15 @@ namespace frobnob {
     virtual void print_to(std::ostream &out) {
       out << COL_RGB(5, 3, 4) << term->name << COL_CLEAR;
     }
+    virtual TypeConstraint * findTerm(TypeTerm * t) {
+      if (this->term == t) return this;
+      else return 0; }
+    virtual TypeConstraint * replaceTerm(
+      TypeTerm * tt,
+      TypeConstraint * tc) {
+      if (term == tt) return tc;
+      return this;
+    }
   };
 
   class Call : public TypeConstraint {
@@ -67,6 +93,15 @@ namespace frobnob {
     virtual void print_to(std::ostream &out) {
       out << "Call(" << callee << ", " << args << ")";
     }
+    virtual TypeConstraint * replaceTerm(
+      TypeTerm * tt,
+      TypeConstraint * tc) {
+      callee = callee->replaceTerm(tt, tc);
+      for(auto &arg: args)
+        arg = arg->replaceTerm(tt, tc);
+      return this;
+    }
+
   };
 
   class FreeType : public TypeConstraint {

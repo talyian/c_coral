@@ -20,13 +20,14 @@
 #define COL_LIGHT_CLEAR "\033[0;1m"
 
 #include <iostream>
+#include <iomanip>
 template <int R, int G, int B>
-class COL_216_m {
-public:
-  static const int val = (R * 6 + G) * 6 + B + 16;
-};
+class COL_216_m { public:  static const int val = (R * 6 + G) * 6 + B + 16; };
 template <int R, int G, int B>
 std::ostream& operator<< (std::ostream& out, COL_216_m<R, G, B>&& m) {
   return (out << "\033[38;5;" << m.val << "m");
 }
 #define COL_RGB(r, g, b) COL_216_m<r, g, b>()
+
+class fill { public: char s; fill(char s) : s(s) {} };
+std::ostream& operator<< (std::ostream &out, fill &&f);
