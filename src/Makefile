@@ -23,7 +23,7 @@ clean:
 
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
-ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o
+ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${BUILD}/analyzers/InferenceObjectModel.o ${BUILD}/analyzers/InferenceEnvironment.o
 CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o  ${BUILD}/codegen/LLVMModuleCompiler.o ${BUILD}/codegen/LLVMJit.o
 ${BIN}/coral-core: ${COREFILES} ${BUILD}/core/main_core.o
 	${LINKCMD}
