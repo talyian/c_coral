@@ -32,7 +32,7 @@ ${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
 ${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/parser/main_parse.o
 	${LINKCMD}
 ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_jit.o
-	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
+	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl -lSDL2
 ${BIN}/coralc: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_compile.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
 ${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o ${BUILD}/tests/runner/codegen.o ${BUILD}/tests/runner/parser.o

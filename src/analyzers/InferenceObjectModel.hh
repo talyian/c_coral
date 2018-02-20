@@ -71,7 +71,7 @@ namespace frobnob {
   public: TypeTerm * term;
     Term(TypeTerm * term) : term(term) { }
     virtual void print_to(std::ostream &out) {
-      out << COL_RGB(5, 3, 4) << term->name << COL_CLEAR;
+      out << COL_RGB(5, 3, 4) << (term ? term->name : "(nullterm)") << COL_CLEAR;
     }
     virtual TypeConstraint * findTerm(TypeTerm * t) {
       if (this->term == t) return this;

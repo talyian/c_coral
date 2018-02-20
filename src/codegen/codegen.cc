@@ -35,12 +35,12 @@ namespace coral {
 
     llvmModule = compiler->llvmModule;
     // auto fpass = LLVMCreateFunctionPassManagerForModule(llvmModule);
-    // auto mpass = LLVMCreatePassManager();
-    // auto pmb = LLVMPassManagerBuilderCreate();
-    // LLVMPassManagerBuilderSetOptLevel(pmb, 1);
+    auto mpass = LLVMCreatePassManager();
+    auto pmb = LLVMPassManagerBuilderCreate();
+    LLVMPassManagerBuilderSetOptLevel(pmb, 1);
     // LLVMPassManagerBuilderPopulateFunctionPassManager(pmb, fpass);
-    // LLVMPassManagerBuilderPopulateModulePassManager(pmb, mpass);
-    // LLVMRunPassManager(mpass, llvmModule);
+    LLVMPassManagerBuilderPopulateModulePassManager(pmb, mpass);
+    LLVMRunPassManager(mpass, llvmModule);
   }
   void CodeProcessingUnit::showSource() { PrettyPrinter::print(module); }
 

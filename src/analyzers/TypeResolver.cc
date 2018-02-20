@@ -37,7 +37,7 @@ namespace frobnob {
         out = env.AddTerm(m->name + "." + p->name, p.get());
         func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
       }
-
+      if (!m->body) return;
       m->body->accept(this);
       func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
       out = func_term;
@@ -85,6 +85,7 @@ namespace frobnob {
     void visit(ast::Call * c) {
       c->callee->accept(this);
       auto callee_term = out;
+      if (!callee_term) return;
       auto c_out = env.AddTerm("call." + callee_term->name, c);
       auto call_con = new Call(new Term(callee_term), {});
       for(auto &&arg: c->arguments) {
