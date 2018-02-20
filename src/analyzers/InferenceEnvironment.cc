@@ -29,14 +29,14 @@ namespace frobnob {
     TypeTerm * search,
     TypeConstraint * replace) {
 
-    for(auto &pair : env->mconstraints)
+    for(auto &pair : env->critical_constraints)
       if (pair.first == rule)
         pair.second = pair.second->replaceTerm(search, replace);
   }
 
   std::set<TypeTerm *> GetDependents(TypeEnvironment * env, TypeTerm * search) {
     std::set<TypeTerm *> t;
-    for(auto &&pair: env->mconstraints) if (pair.second->findTerm(search)) t.insert(pair.first);
+    for(auto &&pair: env->critical_constraints) if (pair.second->findTerm(search)) t.insert(pair.first);
     return t;
   }
 
@@ -55,12 +55,49 @@ namespace frobnob {
       if (dependents.find(pair.first) != dependents.end()) continue;
 
       if (dependents.size()) {
-        std::cerr << "mooo " << pair.first << dependents.size() << "\n";
-        env->mconstraints.erase(pair.first);
+        env->subcount++;
       }
 
       for(auto &&dep: dependents)
         ReplaceTerm(env, dep, pair.first, pair.second);
+    }
+  }
+
+  void DoSimplifyM(
+    TypeEnvironment * env,
+    std::multimap<TypeTerm *, TypeConstraint *> constraints)
+  // TODO: come up with a better name than "simplify"
+/*
+* T :: Type
+* T :: B
+* T :: C
+becomes
+* B :: Type
+* C :: Type
+if T is solely rules that are a single type and some other terms, we can remove T
+*
+*/
+  {
+    for(auto it = constraints.begin(); it != constraints.end();) {
+      auto key = it->first;
+      std::vector<TypeConstraint *> values;
+      for(auto end = constraints.upper_bound(it->first); it != end; it++) {
+        values.push_back(it->second);
+      }
+      // skip if we're not all of type [Type*] or [Term*]
+      bool skip = false;
+      for(auto &&v : values)
+        if (!dynamic_cast<Type *>(v) && !dynamic_cast<Term *>(v)) skip = true;
+      if (skip) continue;
+      if (values.size() < 2) continue;
+
+      env->critical_constraints.erase(key);
+      for(size_t i=0; i<values.size() - 1; i++) {
+        auto out = env->AddEquality(values[i], values[i + 1]);
+        if (out)
+          env->subcount++;
+          env->AddConstraint(key, out);
+      }
     }
   }
 
@@ -72,7 +109,6 @@ namespace frobnob {
 constraints |> map match
 | Call(Type(t), args) as call ->
 */;
-
     for(auto &pair: constraints) {
       if (auto call = dynamic_cast<Call *>(pair.second)) {
         if (auto callee = dynamic_cast<Type *>(call->callee)) {
@@ -89,10 +125,17 @@ constraints |> map match
                   newtypes[fparam] = t;
                 }
                 env->AddConstraint(t, arg);
+                env->subcount++;
+              } else {
+                env->AddEquality(param, arg);
               }
             }
             auto rparam = callee->params[args.size()].get();
             auto arg = pair.first;
+            if (!rparam || callee->params.size() < args.size() + 1) {
+              std::cerr << COL_LIGHT_RED << "Something is really wrong\n";
+              std::cerr << call << "\n";
+            }
             if (auto fparam = dynamic_cast<FreeType *>(rparam)) {
               auto t = newtypes[fparam];
               if (!t) {
@@ -100,11 +143,14 @@ constraints |> map match
                 newtypes[fparam] = t;
               }
               env->AddConstraint(arg, new Term(t));
+                env->subcount++;
+            } else {
+              env->AddEquality(rparam, new Term(arg));
             }
-            for(auto to_erase = env->mconstraints.begin();
-                to_erase != env->mconstraints.end();
+            for(auto to_erase = env->critical_constraints.begin();
+                to_erase != env->critical_constraints.end();
                 to_erase++)
-              if(*to_erase == pair) env->mconstraints.erase(to_erase);
+              if(*to_erase == pair) env->critical_constraints.erase(to_erase);
           }
         }
       }
@@ -114,105 +160,27 @@ constraints |> map match
   void TypeEnvironment::Solve() {
     // Okay, at this point we have the initial set of constraints
     printHeader("Original");
-    for(auto &&pair: mconstraints) print(std::cerr, pair);
+    for(auto &&pair: critical_constraints) print(std::cerr, pair);
 
-    DoApplicationsM(this, mconstraints);
+    for(int i=0; subcount && i<30; i++) {
+      this->subcount = 0;
+      DoApplicationsM(this, critical_constraints);
+      // printHeader("Application");
+      // for(auto &&pair: critical_constraints) print(std::cerr, pair);
 
-    printHeader("Application");
-    for(auto &&pair: mconstraints) print(std::cerr, pair);
+      // if [term] has a single value that equates to a type or other term
+      // we can substitite that value in for all the places where [term] appears
+      DoSubstitutionsM(this, critical_constraints);
+      // printHeader("Substitution");
+      // for(auto &&pair: critical_constraints) print(std::cerr, pair);
 
-    DoSubstitutionsM(this, mconstraints);
-
-    printHeader("Substitution");
-    for(auto &&pair: mconstraints) print(std::cerr, pair);
-
-    // DoInstantiations(constraints);
-    // DoSubstitutions(constraints);
-  }
-
-
-  TypeConstraint * TypeEnvironment::SubstituteTerm(TypeConstraint * subject, TypeTerm * search, TypeConstraint * replacement)  {
-    // TODO: this should be a virtual method on each typeconstraint
-    if (Call * c = dynamic_cast<Call *>(subject)) {
-      c->callee = SubstituteTerm(c->callee, search, replacement);
-      for(auto argi = c->args.begin(); argi != c->args.end(); argi++) {
-        *argi = SubstituteTerm(*argi, search, replacement); } }
-    if (Term * t = dynamic_cast<Term *>(subject)) {
-      if (t->term == search) {
-        subcount++;
-        return replacement; } }
-    if (Type * t = dynamic_cast<Type *>(subject)) {
-      for(auto &p: t->params)
-        p.reset(SubstituteTerm(p.release(), search, replacement)); }
-    if (And * t = dynamic_cast<And *>(subject)) {
-      for(auto &p: t->terms)
-        p = SubstituteTerm(p, search, replacement); }
-    return subject;
-  }
-
-  bool TypeEnvironment::DoSubstitutions(std::map<TypeTerm *, TypeConstraint *> &constraints) {
-    // std::map<TypeTerm *, TypeConstraint *> replacements;
-    // for(auto &&pair:constraints) {
-    //   for(auto &&type: getDescendants<Type *>(pair.second))
-    //     replacements[pair.first] = type;
-    //   for(auto &&term: getDescendants<Term *>(pair.second))
-    //     replacements[pair.first] = term;
-    // }
-    // for(auto &&replace_pair: replacements) {
-    //   subcount = 0;
-    //   for(auto &pair: constraints) {
-    //     pair.second = SubstituteTerm(pair.second, replace_pair.first, replace_pair.second);
-    //     // constraints[replace_pair.first] = SubstituteTerm(
-    //     //   replace_pair.second,
-    //     //   replace_pair.second, 0);
-    //   }
-    //   if (subcount > 0) {
-    //     std::cerr << COL_MAGENTA << "SUBSTITUTED " << replace_pair.first << "\n";
-    //     constraints.erase(constraints.find(replace_pair.first));
-    //   }
-    // }
-    return subcount > 0;
-  }
-
-  bool TypeEnvironment::DoInstantiations(std::map<TypeTerm *, TypeConstraint *> &constraints) {
-    // get rid of all the free variables. Generate a direct typeterm at every callsite.
-    for(auto &&pair:constraints) {
-      if (Call * call = dynamic_cast<Call *>(pair.second)) {
-        auto callee = dynamic_cast<Type *>(call->callee);
-        if (callee && std::count_if(
-              callee->params.begin(),
-              callee->params.end(),
-              [] (std::unique_ptr<TypeConstraint> &p) { return dynamic_cast<FreeType *>(p.get()); })) {
-
-          auto new_callee = new Type(callee->name);
-          new_callee->params.reserve(callee->params.size());
-          std::map<FreeType *, TypeTerm *> newterms;
-
-          for(size_t i =0; i < callee->params.size(); i++) {
-            auto &p = callee->params[i];
-            if (auto f = dynamic_cast<FreeType *>(p.get())) {
-              if (!newterms[f]) { newterms[f] = AddTerm(pair.first->name + ".T", 0); }
-              // if (i < call->args.size())
-              //   AddConstraint(constraints, newterms[f], call->args[i]);
-              new_callee->params.emplace_back(new Term(newterms[f]));
-            } else {
-              new_callee->params.emplace_back(callee->params[i].release());
-            }
-          }
-          call->callee = new_callee;
-          pair.second = new_callee->params.back().get();
-        }
-      }
+      // If [term] has multiple values that are
+      DoSimplifyM(this, critical_constraints);
+      // printHeader("Simplification");
+      // for(auto &&pair: critical_constraints) print(std::cerr, pair);
     }
-
-    std::cerr << COL_RGB(5, 5, 4)
-              << "-[ Abstraction ] --------------------------------------------------------------------"
-              << COL_CLEAR << "\n";
-    for(auto &&pair: constraints) {
-      TypeTerm * term = pair.first;
-      std::cerr << std::setw(15) << pair.first << " :: " << pair.second << "\n";
-    }
-    return false;
+    printHeader("Solutions");
+    for(auto &&pair: critical_constraints) print(std::cerr, pair);
   }
 
   TypeTerm * TypeEnvironment::AddTerm(std::string name, ast::BaseExpr * expr) {
@@ -231,16 +199,30 @@ constraints |> map match
   void TypeEnvironment::AddConstraint(
     TypeTerm * term,
     TypeConstraint * tcons) {
-    mconstraints.insert(std::make_pair(term, tcons));
+    critical_constraints.insert(std::make_pair(term, tcons));
   }
-  // void TypeEnvironment::AddConstraint(
-  //   std::map<TypeTerm *, TypeConstraint *> &constraints,
-  //   TypeTerm * term,
-  //   TypeConstraint * tcons) {
-  //   if (constraints.find(term) != constraints.end()) {
-  //     constraints[term] = new And({ constraints[term], tcons });
-  //     std::cerr << COL_LIGHT_RED << "multi-constraint on " << term << COL_CLEAR << "\n";
-  //   } else
-  //     constraints[term] = tcons;
-  // }
+
+  TypeConstraint * TypeEnvironment::AddEquality(TypeConstraint * lhs, TypeConstraint * rhs) {
+    Type *lt, *rt;
+    Term *tt, *tt2;
+    if ((lt = dynamic_cast<Type *>(lhs)) && (rt = dynamic_cast<Type *>(rhs))) {
+      if (lt->name != rt->name)
+        std::cerr << "Warning: Unifying two Types " << lhs << " -- " << rhs << "\n";
+    }
+    else if (dynamic_cast<Type *>(lhs) && dynamic_cast<Term *>(rhs)) {
+      return AddEquality(rhs, lhs);
+    }
+    else if ((rt = dynamic_cast<Type *>(rhs)) && (tt = dynamic_cast<Term *>(lhs))) {
+      AddConstraint(tt->term, rhs); return rhs;
+    }
+    else if ((tt2 = dynamic_cast<Term *>(rhs)) && (tt = dynamic_cast<Term *>(lhs))) {
+      AddConstraint(tt->term, rhs); return rhs;
+    }
+    else {
+      std::cerr
+        << COL_LIGHT_RED << "Warning: Unhandled Unification: "
+        << lhs << " -- " << rhs << COL_CLEAR << "\n";
+    }
+    return rhs;
+  }
 }

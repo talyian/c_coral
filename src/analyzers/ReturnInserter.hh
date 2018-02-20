@@ -20,6 +20,7 @@ namespace coral {
 	  void visit(ast::Func * f);
 	  void visit(ast::Block * m);
 	  void visit(ast::Comment * e) { }
+	  void visit(ast::Let * e) { }
 	};
   }
 }

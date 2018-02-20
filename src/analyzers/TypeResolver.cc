@@ -37,9 +37,13 @@ namespace frobnob {
         out = env.AddTerm(m->name + "." + p->name, p.get());
         func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
       }
-      if (!m->body) return;
-      m->body->accept(this);
-      func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
+      if (!m->body) {
+        type::Type t = m->type->params.back();
+        func_type->params.push_back(std::unique_ptr<Type>(new Type(t)));
+      } else {
+        m->body->accept(this);
+        func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
+      }
       out = func_term;
     }
 
@@ -70,7 +74,8 @@ namespace frobnob {
         e->elsebody->accept(this);
         auto else_var = out;
         out = env.AddTerm("if", e);
-        env.AddConstraint(out, new Type("UNION", {new Term(if_var), new Term(else_var)}));
+        env.AddConstraint(out, new Term(if_var));
+        env.AddConstraint(out, new Term(else_var));
       }
     }
 
@@ -93,6 +98,14 @@ namespace frobnob {
         call_con->args.push_back(new Term(out));
       }
       env.AddConstraint(c_out, call_con);
+      out = c_out;
+    }
+
+    void visit(ast::Let * l) {
+      l->value->accept(this);
+      auto val = out;
+      auto letterm = env.AddTerm(l->var->name, l);
+      env.AddConstraint(letterm, new Term(out));
     }
 
     void visit(__attribute__((unused)) ast::Comment * c) { out = 0; }
@@ -100,5 +113,23 @@ namespace frobnob {
 }
 
 coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
-  frobnob::TypeResolver env(m);
+  frobnob::TypeResolver resolver(m);
+  for(auto &&pair : resolver.env.critical_constraints) {
+    if (!pair.first) continue;
+    auto expr = pair.first->expr;
+    auto tvalue = dynamic_cast<frobnob::Type *>(pair.second);
+    if (tvalue && tvalue->concrete_type()) {
+      if (auto func = dynamic_cast<ast::Func *>(expr)) {
+        std::cerr << COL_LIGHT_RED << *(func->type.get()) << "\n";
+        if (func->type->returnType().name == "")
+          func->type.reset(tvalue->concrete_type());
+        for(size_t i = 0; i < func->params.size(); i++) {
+          if (!func->params[i]->type || func->params[i]->type->name == "") {
+            frobnob::Type * v = (frobnob::Type *)(tvalue->params[i].get());
+            func->params[i]->type.reset(v->concrete_type());
+          }
+        }
+      }
+    }
+  }
 }

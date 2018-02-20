@@ -21,6 +21,10 @@ types: ${BIN}/coral-types
 clean:
 	@rm -r ${BIN} ${BUILD} parser/flexLexer.cc parser/bisonParser.tab.cc parser/bisonParser.tab.hh
 
+sdl: tests/cases/wip.2.cc
+	clang++-5.0 -Wall -std=c++11 -o sdl tests/cases/wip.2.cc -lSDL2
+	./sdl
+
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/utils/ansicolor.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
 ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${BUILD}/analyzers/InferenceObjectModel.o ${BUILD}/analyzers/InferenceEnvironment.o

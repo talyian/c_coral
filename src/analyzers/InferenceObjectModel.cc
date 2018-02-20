@@ -17,7 +17,7 @@ namespace frobnob {
   }
 
   std::ostream & operator<<(std::ostream &out, TypeTerm * tptr) {
-    return out << *tptr;
+    return (tptr ? out << *tptr : out << "(null term)");
   }
 
   std::ostream & operator<<(std::ostream &out, TypeConstraint &tc) {

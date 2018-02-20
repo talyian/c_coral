@@ -38,9 +38,26 @@ namespace frobnob {
   public:
     std::string name;
     std::vector<std::unique_ptr<TypeConstraint>> params;
+    Type(coral::type::Type basetype) : name(basetype.name) {
+      for(auto &p: basetype.params)
+        params.push_back(std::unique_ptr<Type>(new Type(p)));
+    }
     Type(std::string name) : name(name) { }
     Type(std::string name, std::vector<TypeConstraint *> pp) : name(name) {
       for(auto &&p:pp) params.emplace_back(p);
+    }
+    coral::type::Type * concrete_type() {
+      std::vector<coral::type::Type> params;
+      bool is_valid = true;
+      for(size_t i=0; i < this->params.size(); i++) {
+        auto t = dynamic_cast<Type *>(this->params[i].get());
+        if (!t) { is_valid = false; break; }
+        auto ttype = t->concrete_type();
+        if (!ttype) { is_valid = false; break; }
+        else params.push_back(*ttype);
+      }
+      if (!is_valid) return 0;
+      return new coral::type::Type(name, params);
     }
     virtual TypeConstraint * findTerm(TypeTerm * t) {
       for(auto && p: params)
@@ -92,6 +109,15 @@ namespace frobnob {
       : callee(callee), args(args) { }
     virtual void print_to(std::ostream &out) {
       out << "Call(" << callee << ", " << args << ")";
+    }
+    virtual TypeConstraint * findTerm(TypeTerm * t) {
+      auto out = callee->findTerm(t);
+      if (out) return out;
+      for(auto &arg: args) {
+        out = arg->findTerm(t);
+        if (out) return out;
+      }
+      return 0;
     }
     virtual TypeConstraint * replaceTerm(
       TypeTerm * tt,

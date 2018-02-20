@@ -6,7 +6,7 @@ func fizzbuzz : Ptr(n: Int32):
   else if n % 3 = 0: "fizz"
   else: itoa n
 
-func main : Int32 ():
+func main ():
   let i = 0
   while i < 100:
     printf("%s ", fizzbuzz(i))

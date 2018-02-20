@@ -14,8 +14,9 @@ namespace frobnob {
     int subcount;
     std::set<std::string> names;
     std::vector<TypeTerm *> terms;
-    std::map<TypeTerm *, std::unique_ptr<TypeConstraint>> constraints;
-    std::multimap<TypeTerm *, TypeConstraint *> mconstraints;
+
+    // the constraints that are necessary for solving current unknown terms
+    std::multimap<TypeTerm *, TypeConstraint *> critical_constraints;
 
     TypeTerm * AddTerm(std::string name, coral::ast::BaseExpr * expr);
     TypeTerm * FindTerm(coral::ast::BaseExpr * expr);
@@ -24,34 +25,13 @@ namespace frobnob {
       std::map<TypeTerm *, TypeConstraint *> &constraints,
       TypeTerm * term,
       TypeConstraint * tcons);
-
+    TypeConstraint * AddEquality(TypeConstraint * lhs, TypeConstraint * rhs);
 
     void Solve();
 
-    TypeConstraint * SubstituteTerm(TypeConstraint * subject, TypeTerm * search, TypeConstraint * replacement);
-
-    template<class T>
-    std::vector<T> getDescendants(TypeConstraint * root) {
-      std::vector<T> a;
-      getDescendants<T>(root, a);
-      return a;
-    }
-
-    template<class T>
-    std::vector<T> getDescendants(TypeConstraint * root, std::vector<T> & items) {
-      if (T t = dynamic_cast<T>(root)) {
-        std::cerr << COL_LIGHT_BLUE << "Adding " << t << ", ";
-        std::cerr << typeid(T).name() << "\n";
-        items.push_back((T)root);
-      } else if (And * t = dynamic_cast<And *>(root)) {
-        for(auto &term : t->terms)
-          getDescendants<T>(term, items);
-      }
-      return items;
-    };
-
+    TypeConstraint * SubstituteTerm(
+      TypeConstraint * subject, TypeTerm * search, TypeConstraint * replacement);
     bool DoSubstitutions(std::map<TypeTerm *, TypeConstraint *> &constraints);
-
     bool DoInstantiations(std::map<TypeTerm *, TypeConstraint *> &constraints);
 
   };
