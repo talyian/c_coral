@@ -5,8 +5,6 @@
 #include <array>
 
 int main(int argc, const char ** argv) {
-  printf("tests finished\n");
-  return 0;
   coral::tests::TestSuite T;
   if (argc < 2 || std::string("parser") == argv[1])
     T.add_suite(coral::tests::run_parser_tests());

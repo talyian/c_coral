@@ -19,6 +19,7 @@ namespace frobnob {
     virtual TypeConstraint * replaceTerm(
       __attribute__((unused)) TypeTerm * tt,
       __attribute__((unused)) TypeConstraint * tc) { return this; }
+    virtual ~TypeConstraint() { }
   };
   class Term;
   class Type;
