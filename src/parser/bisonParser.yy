@@ -118,6 +118,8 @@ Function
 | FUNC IDENTIFIER '(' ')' StatementBlock { $$ = new ast::Func($2, new Type(""), {}, $5); }
 | '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' {
   $$ = new ast::Func($4, $6, $8, 0); }
+| '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ')' {
+  $$ = new ast::Func($4, $6, {}, 0); }
 ForLoop
 : FOR GeneralIdentifier IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 | FOR IdentifierList IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }

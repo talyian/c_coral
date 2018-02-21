@@ -1,13 +1,15 @@
-`extern func printf : Void (fmt:Ptr)
 `extern func SDL_Init:Int32 (flags: Int32)
 `extern func SDL_Delay:Void (flags: Int32)
 `extern func SDL_WaitEvent:Int32 (flags: Int32)
 `extern func SDL_PollEvent:Int32 (event: Ptr)
 `extern func SDL_CreateWindow: Ptr(title:Ptr, x:Int32, y:Int32, w:Int32, h:Int32, f:Int32)
+`extern func SDL_GL_CreateContext: Ptr (window: Ptr)
+`extern func SDL_GL_GetAttribute: Int32(flag: Int32, addr: Ptr[Int8])
+`extern func SDL_GetError: Ptr ()
 `extern func malloc:Ptr (size: Int32)
 `extern func free:Void (ptr:Ptr)
 
-func wait_sdl_key: Int32():
+func wait_sdl_key ():
   let event = malloc(200)
   while SDL_PollEvent(event) = 0: 0
   let type = derefi event
@@ -27,8 +29,15 @@ func wait_sdl_key: Int32():
     free(event)
     wait_sdl_key()
 
-func main: Int32():
+func main ():
   if SDL_Init 0 >= 0:
-    let window = SDL_CreateWindow("Hello SDL", 100, 100, 600, 400, 4)
-  wait_sdl_key()
+    let window = SDL_CreateWindow("Hello SDL", 100, 100, 600, 400, 0)
+    let gl = SDL_GL_CreateContext(window)
+    let v1 = 1
+    let v2 = 1
+    SDL_GL_GetAttribute(17, addrof v1)
+    SDL_GL_GetAttribute(18, addrof v2)
+    printf("OpenGL Version %d.%d\n", v1, v2)
+    printf("OpenGL Context Address %p\n", gl)
+    # wait_sdl_key()
   0

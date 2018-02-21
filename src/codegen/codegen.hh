@@ -18,14 +18,19 @@ namespace coral {
   class CodeProcessingUnit {
   public:
     ast::Module * module;
-    analyzers::NameResolver * nameResolver;
-    analyzers::TypeResolver * typeResolver;
-    analyzers::ReturnInserter * returner;
+    void * parser;
+    // analyzers::NameResolver * nameResolver;
+    // analyzers::TypeResolver * typeResolver;
+    // analyzers::ReturnInserter * returner;
     codegen::LLVMModuleCompiler * compiler;
     LLVMModuleRef llvmModule;
     CodeProcessingUnit(const char * path) ;
     void showSource();
     void showIR();
     void runJIT();
+    ~CodeProcessingUnit() {
+      if (parser) coralDestroyModule(parser);
+      if (compiler) delete compiler;
+    }
   };
 }

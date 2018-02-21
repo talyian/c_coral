@@ -3,14 +3,15 @@ CC=clang++-5.0 -std=c++11 -Wall -Wextra -I.
 LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
 BUILD=obj
 BIN=bin
-TESTFILE?=tests/cases/features/pcre.coral
+#TESTFILE?=tests/cases/features/pcre.coral
+TESTFILE?=tests/cases/wip.coral
 .SUFFIXES:
 
 run: ${BIN}/coral-jit
 	$< ${TESTFILE}
 debug: ${BIN}/coral-test
 	@gdb -ex 'run ${TESTFILE}' -ex quit $<
-mdebug: ${BIN}/coral-test
+mdebug: ${BIN}/coral-jit
 	valgrind --leak-check=full $< ${TESTFILE}
 parse: ${BIN}/coral-parse
 	$< ${TESTFILE}

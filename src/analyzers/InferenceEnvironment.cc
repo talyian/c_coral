@@ -148,9 +148,11 @@ constraints |> map match
               env->AddEquality(rparam, new Term(arg));
             }
             for(auto to_erase = env->critical_constraints.begin();
-                to_erase != env->critical_constraints.end();
-                to_erase++)
-              if(*to_erase == pair) env->critical_constraints.erase(to_erase);
+                to_erase != env->critical_constraints.end();)
+              if(*to_erase == pair)
+                to_erase = env->critical_constraints.erase(to_erase);
+              else
+                to_erase++;
           }
         }
       }
@@ -162,6 +164,7 @@ constraints |> map match
     printHeader("Original");
     for(auto &&pair: critical_constraints) print(std::cerr, pair);
 
+    subcount = 1;
     for(int i=0; subcount && i<30; i++) {
       this->subcount = 0;
       DoApplicationsM(this, critical_constraints);

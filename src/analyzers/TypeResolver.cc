@@ -30,7 +30,7 @@ namespace frobnob {
 
     void visit(ast::Func * m) {
       auto func_term = env.AddTerm(m->name, m);
-      auto func_type = new Type("Func");
+      auto func_type = env.newType("Func");
       env.AddConstraint(func_term, func_type);
 
       for(auto && p: m->params) {
@@ -59,7 +59,9 @@ namespace frobnob {
       op->rhs->accept(this);
       auto rvar = out;
       out = env.AddTerm("op:" + op->op, op);
-      env.AddConstraint(out, new Call(Global_Ops(op->op), {new Term(lvar), new Term(rvar)}));
+      env.AddConstraint(out, env.newCall(env.Global_Ops(op->op), std::vector<TypeConstraint *> {
+            env.newTerm(lvar),
+            env.newTerm(rvar)}));
     }
 
     void visit(ast::Var * var) {
@@ -92,7 +94,7 @@ namespace frobnob {
       auto callee_term = out;
       if (!callee_term) return;
       auto c_out = env.AddTerm("call." + callee_term->name, c);
-      auto call_con = new Call(new Term(callee_term), {});
+      auto call_con = env.newCall(env.newTerm(callee_term));
       for(auto &&arg: c->arguments) {
         arg->accept(this);
         call_con->args.push_back(new Term(out));
@@ -102,10 +104,11 @@ namespace frobnob {
     }
 
     void visit(ast::Let * l) {
+      auto letterm = env.AddTerm(l->var->name, l);
       l->value->accept(this);
       auto val = out;
-      auto letterm = env.AddTerm(l->var->name, l);
-      env.AddConstraint(letterm, new Term(out));
+      if (l->type.name != "") env.AddConstraint(letterm, new Type(l->type));
+      else env.AddConstraint(letterm, new Term(out));
     }
 
     void visit(__attribute__((unused)) ast::Comment * c) { out = 0; }
@@ -118,20 +121,24 @@ coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
     if (!pair.first) continue;
     auto expr = pair.first->expr;
     auto tvalue = dynamic_cast<frobnob::Type *>(pair.second);
-    if (tvalue && tvalue->concrete_type()) {
-      if (auto let = dynamic_cast<ast::Let *>(expr)) {
-        if (let->type.name == "")
-          let->type = *(tvalue->concrete_type());
-      }
-      else if (auto func = dynamic_cast<ast::Func *>(expr)) {
-        if (func->type->returnType().name == "")
-          func->type.reset(tvalue->concrete_type());
-        for(size_t i = 0; i < func->params.size(); i++) {
-          if (!func->params[i]->type || func->params[i]->type->name == "") {
-            frobnob::Type * v = (frobnob::Type *)(tvalue->params[i].get());
-            func->params[i]->type.reset(v->concrete_type());
+    if (tvalue) {
+      auto tvaluetype = tvalue->concrete_type();
+      if (tvaluetype){
+        if (auto let = dynamic_cast<ast::Let *>(expr)) {
+          if (let->type.name == "")
+            let->type = *tvaluetype;
+        }
+        else if (auto func = dynamic_cast<ast::Func *>(expr)) {
+          if (func->type->returnType().name == "")
+            func->type.reset(tvalue->concrete_type());
+          for(size_t i = 0; i < func->params.size(); i++) {
+            if (!func->params[i]->type || func->params[i]->type->name == "") {
+              frobnob::Type * v = (frobnob::Type *)(tvalue->params[i].get());
+              func->params[i]->type.reset(v->concrete_type());
+            }
           }
         }
+        delete tvaluetype;
       }
     }
   }

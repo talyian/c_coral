@@ -26,32 +26,38 @@ namespace coral {
 	FILE * f = fopen(path, "r");
 	if (!f) { std::cout << "Couldn't Open " << path << "\n"; return; }
 	fclose(f);
-	auto parser =  coralParseModule(path);
+	parser =  coralParseModule(path);
 	module = (ast::Module *)_coralModule(parser);
 	analyzers::NameResolver nresolver(module);
 	analyzers::TypeResolver tresolver(module);
 	analyzers::ReturnInserter returner(module);
 	compiler = new codegen::LLVMModuleCompiler(module);
-
     llvmModule = compiler->llvmModule;
-    // auto fpass = LLVMCreateFunctionPassManagerForModule(llvmModule);
+
+    std::cerr << COL_LIGHT_YELLOW;
+    LLVMVerifyModule(llvmModule, LLVMPrintMessageAction, 0);
+    std::cerr << COL_CLEAR << "\n";
+
     auto mpass = LLVMCreatePassManager();
     auto pmb = LLVMPassManagerBuilderCreate();
     LLVMPassManagerBuilderSetOptLevel(pmb, 1);
-    // LLVMPassManagerBuilderPopulateFunctionPassManager(pmb, fpass);
     LLVMPassManagerBuilderPopulateModulePassManager(pmb, mpass);
     LLVMRunPassManager(mpass, llvmModule);
+    LLVMPassManagerBuilderDispose(pmb);
+    LLVMDisposePassManager(mpass);
+    // LLVMPassManagerBuilderPopulateFunctionPassManager(pmb, fpass);
+    // auto fpass = LLVMCreateFunctionPassManagerForModule(llvmModule);
   }
   void CodeProcessingUnit::showSource() { PrettyPrinter::print(module); }
 
   void CodeProcessingUnit::showIR() {
-    std::cout << LLVMPrintModuleToString(llvmModule);
+    auto msg = LLVMPrintModuleToString(llvmModule);
+    std::cout << msg;
+    LLVMDisposeMessage(msg);
+
   }
 
   void CodeProcessingUnit::runJIT() {
-    std::cerr << COL_LIGHT_YELLOW;
-    LLVMVerifyModule(llvmModule, LLVMPrintMessageAction, 0);
-    std::cerr << COL_CLEAR << "\n";
     codegen::JIT jit(llvmModule);
     jit.runMain();
   }

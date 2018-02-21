@@ -35,13 +35,4 @@ namespace frobnob {
     }
     return out;
   }
-
-
-  TypeConstraint * Global_Ops(std::string op) {
-    static auto T0 = new FreeType();
-    static auto ArithOp = new Type("Func", { T0, T0, T0 });
-    if (op == "<")
-      return new Type("Func", {T0, T0, new Type("Int1")});
-    return ArithOp;
-  }
 }

@@ -32,7 +32,6 @@ namespace frobnob {
   std::ostream & operator<<(std::ostream &out, TypeConstraint &tc);
   std::ostream & operator<<(std::ostream &out, TypeConstraint *tc);
   std::ostream & operator<<(std::ostream &out, std::vector<TypeConstraint *> &vv);
-  TypeConstraint * Global_Ops(std::string op);
 
   class Type : public TypeConstraint {
   public:
@@ -54,7 +53,10 @@ namespace frobnob {
         if (!t) { is_valid = false; break; }
         auto ttype = t->concrete_type();
         if (!ttype) { is_valid = false; break; }
-        else params.push_back(*ttype);
+        else {
+          params.push_back(*ttype);
+          delete ttype;
+        }
       }
       if (!is_valid) return 0;
       return new coral::type::Type(name, params);
@@ -105,6 +107,7 @@ namespace frobnob {
   public:
     TypeConstraint * callee;
     std::vector<TypeConstraint *> args;
+    Call(TypeConstraint * callee) : callee(callee) { }
     Call(TypeConstraint * callee, std::vector<TypeConstraint *> args)
       : callee(callee), args(args) { }
     virtual void print_to(std::ostream &out) {
