@@ -8,20 +8,20 @@
 #include "parser.hh"
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 namespace coral {
   namespace tests {
     void ParserTests::parse_and_print(const char * name, const char * path) {
       std::cout
         << "-------------------- ["
-        << name
+        << std::setw(20) << name
         << "] --------------------"
         << "\n";
       auto parser = coralParseModule(path);
       auto module = _coralModule(parser);
       total++;
       if (module) success++;
-      coralPrintAST(parser);
       coralDestroyModule(parser);
     }
 
@@ -30,7 +30,7 @@ namespace coral {
       auto module = (ast::Module *)_coralModule(parser);
       analyzers::NameResolver nresolve(module);
       analyzers::TypeResolver tresolve(module);
-      PrettyPrinter::print(module);
+
       BeginTest("Parameter Type Inference");
       for(auto &&expr: module->body->lines) {
         auto func = dynamic_cast<ast::Func *>(expr.get());

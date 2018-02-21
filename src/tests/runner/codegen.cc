@@ -90,7 +90,7 @@ namespace coral {
 	  T->RunFactorialWhile();
       T->RunCollatz();
 	  T->RunReturnInserter();
-      T->total++; // T->Run("tests/cases/features/pcre.coral");
+      // T->Run("tests/cases/features/pcre.coral");
       T->show(0);
       return T;
     }

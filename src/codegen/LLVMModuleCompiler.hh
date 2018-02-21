@@ -25,7 +25,7 @@ namespace coral {
 	    return std::string(LLVMPrintModuleToString(llvmModule));
 	  }
 
-	  ~LLVMModuleCompiler() {
+	  virtual ~LLVMModuleCompiler() {
         LLVMDisposeModule(llvmModule);
 		LLVMDisposeBuilder(llvmBuilder);
 		LLVMContextDispose(llvmContext);

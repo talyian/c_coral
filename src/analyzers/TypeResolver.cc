@@ -13,13 +13,13 @@
 using namespace coral;
 
 namespace frobnob {
-  class TypeResolver : ast::ExprVisitor {
+  class TypeResolver : public ast::ExprVisitor {
   public:
     TypeEnvironment env;
 
     TypeTerm * out;
 
-    std::string visitorName() { return "TypeEnvironment"; }
+    std::string visitorName() { return "FrobResolver"; }
 
     TypeResolver(ast::Module * m) {
       m->accept(this);
@@ -35,6 +35,8 @@ namespace frobnob {
 
       for(auto && p: m->params) {
         out = env.AddTerm(m->name + "." + p->name, p.get());
+        if (p->type)
+          env.AddConstraint(out, env.newType(*(p->type)));
         func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
       }
       if (!m->body) {
@@ -97,7 +99,7 @@ namespace frobnob {
       auto call_con = env.newCall(env.newTerm(callee_term));
       for(auto &&arg: c->arguments) {
         arg->accept(this);
-        call_con->args.push_back(new Term(out));
+        call_con->args.push_back(env.newTerm(out));
       }
       env.AddConstraint(c_out, call_con);
       out = c_out;
@@ -107,16 +109,42 @@ namespace frobnob {
       auto letterm = env.AddTerm(l->var->name, l);
       l->value->accept(this);
       auto val = out;
-      if (l->type.name != "") env.AddConstraint(letterm, new Type(l->type));
-      else env.AddConstraint(letterm, new Term(out));
+      if (l->type.name != "") env.AddConstraint(letterm, env.newType(l->type));
+      else env.AddConstraint(letterm, env.newTerm(out));
     }
 
     void visit(__attribute__((unused)) ast::Comment * c) { out = 0; }
+    void visit(ast::Return * r) {
+      r->val->accept(this);
+    }
+    void visit(ast::StringLiteral * s) {
+      out = env.AddTerm("str", s);
+      env.AddConstraint(out, env.newType("Ptr"));
+    }
+
+    void visit(ast::While * w) {
+      w->cond->accept(this);
+      w->body->accept(this);
+      out = env.AddTerm("while", w);
+      env.AddConstraint(out, env.newType("Void"));
+    }
+
+    void visit(ast::Set * s) {
+      s->value->accept(this);
+      auto valueterm = out;
+      s->var->accept(this);
+      auto varterm = out;
+      env.AddConstraint(valueterm, env.newTerm(varterm));
+      out = env.AddTerm("set." + valueterm->name, s);
+    }
+
   };
 }
 
 coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
   frobnob::TypeResolver resolver(m);
+
+  // rewrite types back into the AST
   for(auto &&pair : resolver.env.critical_constraints) {
     if (!pair.first) continue;
     auto expr = pair.first->expr;

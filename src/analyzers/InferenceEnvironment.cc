@@ -1,6 +1,5 @@
 #include "utils/ansicolor.hh"
 #include "core/expr.hh"
-#include "core/prettyprinter.hh"
 #include "TypeResolver.hh"
 
 #include <iostream>
@@ -17,6 +16,7 @@ namespace frobnob {
   void print(std::ostream &out, std::pair<TypeTerm *, TypeConstraint *> pair ) {
     std::cerr << std::setw(15) << pair.first << " :: " << pair.second << "\n";
   }
+
   void printHeader(std::string title) {
     if (title.empty()) return;
     std::cerr  << COL_RGB(3, 3, 5) << '[' << title << "] " << std::setw(60) << fill('-')
@@ -161,8 +161,8 @@ constraints |> map match
 
   void TypeEnvironment::Solve() {
     // Okay, at this point we have the initial set of constraints
-    printHeader("Original");
-    for(auto &&pair: critical_constraints) print(std::cerr, pair);
+    // printHeader("Original");
+    // for(auto &&pair: critical_constraints) print(std::cerr, pair);
 
     subcount = 1;
     for(int i=0; subcount && i<30; i++) {
@@ -181,9 +181,10 @@ constraints |> map match
       DoSimplifyM(this, critical_constraints);
       // printHeader("Simplification");
       // for(auto &&pair: critical_constraints) print(std::cerr, pair);
+      printf("[%02d] ++++++++++++++++++++++++++++++++++++++++\n", i);
     }
-    printHeader("Solutions");
-    for(auto &&pair: critical_constraints) print(std::cerr, pair);
+    // printHeader("Solutions");
+    // for(auto &&pair: critical_constraints) print(std::cerr, pair);
   }
 
   TypeTerm * TypeEnvironment::AddTerm(std::string name, ast::BaseExpr * expr) {
