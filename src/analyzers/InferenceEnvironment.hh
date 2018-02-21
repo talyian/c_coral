@@ -38,7 +38,7 @@ namespace frobnob {
     ~TypeEnvironment() { for(auto &&p: terms) if (p) delete p; }
 
     TypeConstraint * Global_Ops(std::string op) {
-      static auto T0 = newFreeType();
+      auto T0 = newFreeType();
       static auto ArithOp = newType("Func", std::vector<TypeConstraint *>{ T0, T0, T0 });
       if (op == "<")
         return newType("Func", std::vector<TypeConstraint *>{T0, T0, newType("Int1")});

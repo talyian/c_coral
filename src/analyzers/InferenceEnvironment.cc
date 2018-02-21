@@ -113,39 +113,42 @@ constraints |> map match
       if (auto call = dynamic_cast<Call *>(pair.second)) {
         if (auto callee = dynamic_cast<Type *>(call->callee)) {
           if (callee->name == "Func") {
-            std::map<FreeType *, TypeTerm*> newtypes;
+            auto freetype_compare = [](FreeType * a, FreeType * b) {
+              return (
+                a == b ? false :
+                a == 0 ? true:
+                b == 0 ? false:
+                a->id < b->id);
+            };
+            std::map<FreeType *, TypeTerm *, decltype(freetype_compare)> newtypes(freetype_compare);
             auto args(call->args);
             for(size_t i = 0; i < args.size(); i++) {
-              auto param = callee->params[i].get();
+              auto param = callee->params[i];
               auto arg = args[i];
               if (auto fparam = dynamic_cast<FreeType *>(param)) {
-                auto t = newtypes[fparam];
-                if (!t) {
-                  t = env->AddTerm(pair.first->name + ".T" + std::to_string(fparam->id), 0);
-                  newtypes[fparam] = t;
+                if (newtypes.find(fparam) == newtypes.end()) {
+                  newtypes[fparam] = env->AddTerm(pair.first->name + ".T" + std::to_string(fparam->id), 0);
                 }
-                env->AddConstraint(t, arg);
+                env->AddConstraint(newtypes[fparam], arg);
                 env->subcount++;
               } else {
                 env->AddEquality(param, arg);
               }
             }
-            auto rparam = callee->params[args.size()].get();
+            auto rparam = callee->params[args.size()];
             auto arg = pair.first;
             if (!rparam || callee->params.size() < args.size() + 1) {
               std::cerr << COL_LIGHT_RED << "Something is really wrong\n";
               std::cerr << call << "\n";
             }
             if (auto fparam = dynamic_cast<FreeType *>(rparam)) {
-              auto t = newtypes[fparam];
-              if (!t) {
-                t = env->AddTerm(pair.first->name + ".T" + std::to_string(fparam->id), 0);
-                newtypes[fparam] = t;
+              if (newtypes.find(fparam) == newtypes.end()) {
+                newtypes[fparam] = env->AddTerm(pair.first->name + ".T" + std::to_string(fparam->id), 0);
               }
-              env->AddConstraint(arg, new Term(t));
+              env->AddConstraint(arg, env->newTerm(newtypes[fparam]));
                 env->subcount++;
             } else {
-              env->AddEquality(rparam, new Term(arg));
+              env->AddEquality(rparam, env->newTerm(arg));
             }
             for(auto to_erase = env->critical_constraints.begin();
                 to_erase != env->critical_constraints.end();)

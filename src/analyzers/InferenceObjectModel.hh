@@ -37,20 +37,17 @@ namespace frobnob {
   class Type : public TypeConstraint {
   public:
     std::string name;
-    std::vector<std::unique_ptr<TypeConstraint>> params;
+    std::vector<TypeConstraint *> params;
     Type(coral::type::Type basetype) : name(basetype.name) {
-      for(auto &p: basetype.params)
-        params.push_back(std::unique_ptr<Type>(new Type(p)));
+      for(auto &p: basetype.params) params.push_back(new Type(p));
     }
     Type(std::string name) : name(name) { }
-    Type(std::string name, std::vector<TypeConstraint *> pp) : name(name) {
-      for(auto &&p:pp) params.emplace_back(p);
-    }
+    Type(std::string name, std::vector<TypeConstraint *> pp) : name(name), params(pp) { }
     coral::type::Type * concrete_type() {
       std::vector<coral::type::Type> params;
       bool is_valid = true;
       for(size_t i=0; i < this->params.size(); i++) {
-        auto t = dynamic_cast<Type *>(this->params[i].get());
+        auto t = dynamic_cast<Type *>(this->params[i]);
         if (!t) { is_valid = false; break; }
         auto ttype = t->concrete_type();
         if (!ttype) { is_valid = false; break; }
@@ -71,7 +68,7 @@ namespace frobnob {
       TypeTerm * tt,
       TypeConstraint * tc) {
       for(auto &p: params)
-        p.reset(p.release()->replaceTerm(tt, tc));
+        p = p->replaceTerm(tt, tc);
       return this;
     }
 

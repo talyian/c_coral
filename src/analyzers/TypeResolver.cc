@@ -26,7 +26,10 @@ namespace frobnob {
       env.Solve();
     }
 
-    void visit(ast::Module * m) { for(auto && line: m->body->lines) if (line) line->accept(this); }
+    void visit(ast::Module * m) {
+      for(auto && line: m->body->lines)
+        if (line) line->accept(this);
+    }
 
     void visit(ast::Func * m) {
       auto func_term = env.AddTerm(m->name, m);
@@ -37,14 +40,14 @@ namespace frobnob {
         out = env.AddTerm(m->name + "." + p->name, p.get());
         if (p->type)
           env.AddConstraint(out, env.newType(*(p->type)));
-        func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
+        func_type->params.emplace_back(env.newTerm(out));
       }
       if (!m->body) {
         type::Type t = m->type->params.back();
-        func_type->params.push_back(std::unique_ptr<Type>(new Type(t)));
+        func_type->params.emplace_back(env.newType(t));
       } else {
         m->body->accept(this);
-        func_type->params.push_back(std::unique_ptr<Term>(new Term(out)));
+        func_type->params.emplace_back(env.newTerm(out));
       }
       out = func_term;
     }
@@ -78,8 +81,8 @@ namespace frobnob {
         e->elsebody->accept(this);
         auto else_var = out;
         out = env.AddTerm("if", e);
-        env.AddConstraint(out, new Term(if_var));
-        env.AddConstraint(out, new Term(else_var));
+        env.AddConstraint(out, env.newTerm(if_var));
+        env.AddConstraint(out, env.newTerm(else_var));
       }
     }
 
@@ -88,7 +91,7 @@ namespace frobnob {
       // TODO: each int value should be its own type,
       // and Int32 should be inferred as a supertype
       // This lets us get value constraints out of our system
-      env.AddConstraint(out, new Type("Int32"));
+      env.AddConstraint(out, env.newType("Int32"));
     }
 
     void visit(ast::Call * c) {
@@ -108,7 +111,6 @@ namespace frobnob {
     void visit(ast::Let * l) {
       auto letterm = env.AddTerm(l->var->name, l);
       l->value->accept(this);
-      auto val = out;
       if (l->type.name != "") env.AddConstraint(letterm, env.newType(l->type));
       else env.AddConstraint(letterm, env.newTerm(out));
     }
@@ -161,7 +163,7 @@ coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
             func->type.reset(tvalue->concrete_type());
           for(size_t i = 0; i < func->params.size(); i++) {
             if (!func->params[i]->type || func->params[i]->type->name == "") {
-              frobnob::Type * v = (frobnob::Type *)(tvalue->params[i].get());
+              frobnob::Type * v = (frobnob::Type *)(tvalue->params[i]);
               func->params[i]->type.reset(v->concrete_type());
             }
           }
