@@ -119,8 +119,11 @@ coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
     auto expr = pair.first->expr;
     auto tvalue = dynamic_cast<frobnob::Type *>(pair.second);
     if (tvalue && tvalue->concrete_type()) {
-      if (auto func = dynamic_cast<ast::Func *>(expr)) {
-        std::cerr << COL_LIGHT_RED << *(func->type.get()) << "\n";
+      if (auto let = dynamic_cast<ast::Let *>(expr)) {
+        if (let->type.name == "")
+          let->type = *(tvalue->concrete_type());
+      }
+      else if (auto func = dynamic_cast<ast::Func *>(expr)) {
         if (func->type->returnType().name == "")
           func->type.reset(tvalue->concrete_type());
         for(size_t i = 0; i < func->params.size(); i++) {
