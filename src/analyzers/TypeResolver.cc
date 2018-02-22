@@ -61,6 +61,13 @@ namespace coral {
 
     void TypeResolver::visit(ast::Var * var) {
       out = env.FindTerm(var->expr);
+      if (!out) {
+        if (var->name == "struct") {
+          out = env.AddTerm("global::struct", var);
+          return;
+        }
+        std::cerr << COL_LIGHT_MAGENTA << var->name << COL_CLEAR << "\n";
+      }
     }
 
     void TypeResolver::visit(ast::IfExpr * e) {
@@ -87,7 +94,12 @@ namespace coral {
     void TypeResolver::visit(ast::Call * c) {
       c->callee->accept(this);
       auto callee_term = out;
-      if (!callee_term) return;
+      if (!callee_term) {
+        for(auto &&arg: c->arguments) {
+          arg->accept(this);
+        }
+        return;
+      }
       auto c_out = env.AddTerm("call." + callee_term->name, c);
       auto call_con = env.newCall(env.newTerm(callee_term));
       for(auto &&arg: c->arguments) {
@@ -129,6 +141,18 @@ namespace coral {
       env.AddConstraint(valueterm, env.newTerm(varterm));
       out = env.AddTerm("set." + valueterm->name, s);
     }
+
+    void TypeResolver::visit(ast::Member * m) {
+      m->base->accept(this);
+      out = 0;
+      // s->value->accept(this);
+      // auto valueterm = out;
+      // s->var->accept(this);
+      // auto varterm = out;
+      // env.AddConstraint(valueterm, env.newTerm(varterm));
+      // out = env.AddTerm("set." + valueterm->name, s);
+    }
+
   };
 }
 

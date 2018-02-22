@@ -66,6 +66,27 @@ namespace coral {
       }
     }
 
+    void RemoveReflexiveRule(
+      TypeEnvironment * env,
+      std::multimap<TypeTerm *, TypeConstraint *> constraints) {
+
+      std::set<std::pair<TypeTerm *, TypeConstraint *>> toErase;
+      for(auto it = constraints.begin(); it != constraints.end(); it++) {
+        if (auto tt = dynamic_cast<Term *>(it->second))
+          if (tt->term == it->first)
+            toErase.insert(*it);
+      }
+      for(auto ccIter = env->critical_constraints.begin(); ccIter != env->critical_constraints.end();) {
+        if (toErase.find(*ccIter) != toErase.end())
+          ccIter = env->critical_constraints.erase(ccIter);
+        else
+          ccIter++;
+      }
+      // for(auto &&pair : toErase)
+      //   for(env->critical_constraints
+      // for each rule : constraint of type
+      // x : Term(x)
+    }
     void Deduplicate(
       TypeEnvironment * env,
       std::multimap<TypeTerm *, TypeConstraint *> constraints) {
@@ -195,7 +216,7 @@ namespace coral {
     }
 
 #define SHOW(s) { printHeader(s); for(auto &&pair: critical_constraints) print(std::cerr, pair); }
-#define SHOW(s) ;
+// #define SHOW(s) ;w
     void TypeEnvironment::Solve() {
       SHOW("Original");
 
@@ -215,11 +236,12 @@ namespace coral {
         SHOW("Simplification");
 
         Deduplicate(this, critical_constraints);
+        RemoveReflexiveRule(this, critical_constraints);
         SHOW("Dedup");
       }
-      if (i == 30)
+      if (subcount)
         std::cerr << COL_LIGHT_RED
-                  << "Warning: Type Solver Limit reached: " << i << COL_CLEAR << "\n";
+                  << "Warning: Type Solver Limit reached: " << 30 << COL_CLEAR << "\n";
       SHOW("Solution")
     }
 
@@ -239,6 +261,14 @@ namespace coral {
     void TypeEnvironment::AddConstraint(
       TypeTerm * term,
       TypeConstraint * tcons) {
+
+      if (Term * tt = dynamic_cast<Term *>(tcons)) {
+        if (tt->term->expr == term->expr) {
+          std::cerr << "Redefining term as itself :( " << term << "\n";
+          return;
+        }
+      }
+
       critical_constraints.insert(std::make_pair(term, tcons));
       if (critical_constraints.size() > 1000) {
         std::cerr << "constraints overflow :(";

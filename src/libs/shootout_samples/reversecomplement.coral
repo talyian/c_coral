@@ -1,0 +1,16 @@
+func reversecmp(lines):
+  (lines.map(x => x[:-1])
+   .join()
+   .reverse()
+   .translate('ABCDGHKMNRSTUVWYabcdghkmnrstuvwy', 'TVGHCDMKNYSAABWRTVGHCDMKNYSAABWR')
+   .chunks(60)
+   .iter(print))
+
+lines = []
+for line in stdin.lines ++ ['>END']:
+  if line.startswith ">" && lines:
+     reversecmp(lines)
+     printf "${line}"
+     set lines = []
+  else:
+     lines.append line

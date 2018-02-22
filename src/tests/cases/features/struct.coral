@@ -1,9 +1,15 @@
-func returnsStruct(i:Int32, j:Int32, k:Int32):
-  struct(x=i, y=j, z=k)
+func returnsStruct(a, b):
+  struct(x=i, y=j, z=3)
+
+func printStruct(m):
+  printf("m:%d, %f, %s\n", m.x, m.y, m.z)
 
 func main():
   let b = returnsStruct(10, 20, 30)
-  printf("B: %ld\n", b.field0)
-  printf("B: %ld\n", b.field1)
-  printf("B: %ld\n", b.field2)
+  printf("B.f0: %ld\n", Struct.field 0 b)
+  printf("B.f1: %ld\n", Struct.field 0 b)
+  printf("B.f2: %ld\n", Struct.field 0 )
+  printf("B.x: %ld\n", b.x)
+  printf("B.y: %ld\n", b.y)
+  printf("B.z: %ld\n", b.z)
   0

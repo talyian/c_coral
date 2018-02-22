@@ -1,0 +1,10 @@
+# Argument Type Inference is where you can propagate a known
+# Parameter type of a function or operator to an unknown argument / operand
+`extern func strlen : Int64 (s:Ptr)
+
+func retStruct (a, b):
+  struct(x = a, y = b, z = 300)
+
+func main ():
+  printf "\n[  HI  ]\n\n"
+  0

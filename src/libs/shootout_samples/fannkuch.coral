@@ -1,0 +1,7 @@
+func fannkuch(n):
+  data = Array.new n
+  for data in permutations data:
+    func pf(data, counter):
+      match data[0]:
+        1: counter
+        n: flip n data; pf(data, counter)

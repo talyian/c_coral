@@ -23,7 +23,7 @@ func regex_matches (regex:Ptr, subject:Ptr):
   struct(regex=regex, subject=subject, len=len, matchdata=matchdata, pos=0, ov=addrof pos)
 
 # Move the matches object
-func regex_Matches_move (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
+func regex_Matches_move (m):
   let m = m
   let matchdata = m.field3
   let c : Int64 = 0
@@ -33,7 +33,7 @@ func regex_Matches_move (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
   else:
     struct(r=0,t=0,l=0,m=0,s=1,a=0)
 
-func regex_Matches_printCurrent (m : Struct[Ptr, Ptr, Int32, Ptr, Int32, Ptr]):
+func regex_Matches_printCurrent (m):
   let m = m
   let ov : Ptr = m.field5
   let start = derefi ov

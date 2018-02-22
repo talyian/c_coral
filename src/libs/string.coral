@@ -1,0 +1,12 @@
+# Strings in Coral
+
+type String:
+   func __index
+
+type CString: 0
+
+type ByteString: 0
+
+type String: 0
+
+type Encoding: 0

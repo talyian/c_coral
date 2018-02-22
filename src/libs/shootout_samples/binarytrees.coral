@@ -1,0 +1,25 @@
+let tree = match:
+  0: Leaf
+  d: Node(tree (d - 1), tree (d - 1))
+
+let check = match:
+  Leaf: 1
+  Node as (left, right): 1 + check left + check right
+
+let min_depth = 4
+let max_depth = Int32(sys.args[1])
+let stretch_depth = max_depth + 1
+
+printf "stretch tree of depth %{stretch_depth}\t "
+printf "check: %{check(tree stretch_depth)}\n"
+
+let long_lived_tree = tree max_depth
+
+for depth in range(min_depth, stretch_depth, 2):
+   total = sum(
+     for i in range(1, 2 ** max_depth + 1)
+     check (tree depth))
+   print "%{iterations}\t trees of depth %{depth}\t check: %{total}\n"
+
+printf "long lived tree of depth ${max_depth}\t "
+printf "check: %{check long_lived_tree}\n"

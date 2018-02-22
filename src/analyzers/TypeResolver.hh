@@ -9,7 +9,7 @@ namespace coral {
     public:
       TypeEnvironment env;
       TypeTerm * out;
-      std::string visitorName() { return "FrobResolver"; }
+      std::string visitorName() { return "TypeResolverImpl"; }
       TypeResolver(ast::Module * m);
 
       void visit(ast::Module * m);
@@ -26,6 +26,7 @@ namespace coral {
       void visit(ast::Comment * m);
       void visit(ast::Return * m);
       void visit(ast::While * m);
+      void visit(ast::Member * m);
     };
   }
   namespace analyzers {
