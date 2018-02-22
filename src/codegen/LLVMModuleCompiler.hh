@@ -26,7 +26,6 @@ namespace coral {
 	  }
 
 	  virtual ~LLVMModuleCompiler() {
-        LLVMDisposeModule(llvmModule);
 		LLVMDisposeBuilder(llvmBuilder);
 		LLVMContextDispose(llvmContext);
 	  }

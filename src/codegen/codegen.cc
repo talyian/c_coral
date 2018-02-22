@@ -61,4 +61,8 @@ namespace coral {
     codegen::JIT jit(llvmModule);
     jit.runMain();
   }
+  CodeProcessingUnit::~CodeProcessingUnit() {
+    if (parser) coralDestroyModule(parser);
+    if (compiler) delete compiler;
+  }
 }

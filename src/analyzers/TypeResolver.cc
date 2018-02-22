@@ -1,37 +1,27 @@
 #include "utils/ansicolor.hh"
 #include "core/expr.hh"
 #include "core/prettyprinter.hh"
-#include "TypeResolver.hh"
 #include "InferenceEnvironment.hh"
+#include "TypeResolver.hh"
 
 #include <iostream>
 #include <iomanip>
 #include <set>
 #include <algorithm>
 
-
-using namespace coral;
-
-namespace frobnob {
-  class TypeResolver : public ast::ExprVisitor {
-  public:
-    TypeEnvironment env;
-
-    TypeTerm * out;
-
-    std::string visitorName() { return "FrobResolver"; }
-
-    TypeResolver(ast::Module * m) {
+namespace coral {
+  namespace typeinference {
+    TypeResolver::TypeResolver(ast::Module * m) {
       m->accept(this);
       env.Solve();
     }
 
-    void visit(ast::Module * m) {
+    void TypeResolver::visit(ast::Module * m) {
       for(auto && line: m->body->lines)
         if (line) line->accept(this);
     }
 
-    void visit(ast::Func * m) {
+    void TypeResolver::visit(ast::Func * m) {
       auto func_term = env.AddTerm(m->name, m);
       auto func_type = env.newType("Func");
       env.AddConstraint(func_term, func_type);
@@ -52,13 +42,13 @@ namespace frobnob {
       out = func_term;
     }
 
-    void visit(ast::Block * b) {
+    void TypeResolver::visit(ast::Block * b) {
       for(auto &&line: b->lines)
         if (line)
           line->accept(this);
     }
 
-    void visit(ast::BinOp * op) {
+    void TypeResolver::visit(ast::BinOp * op) {
       op->lhs->accept(this);
       auto lvar = out;
       op->rhs->accept(this);
@@ -69,11 +59,11 @@ namespace frobnob {
             env.newTerm(rvar)}));
     }
 
-    void visit(ast::Var * var) {
+    void TypeResolver::visit(ast::Var * var) {
       out = env.FindTerm(var->expr);
     }
 
-    void visit(ast::IfExpr * e) {
+    void TypeResolver::visit(ast::IfExpr * e) {
       e->cond->accept(this);
       e->ifbody->accept(this);
       if (e->elsebody) {
@@ -86,7 +76,7 @@ namespace frobnob {
       }
     }
 
-    void visit(ast::IntLiteral * e) {
+    void TypeResolver::visit(ast::IntLiteral * e) {
       out = env.AddTerm("i" + e->value, e);
       // TODO: each int value should be its own type,
       // and Int32 should be inferred as a supertype
@@ -94,7 +84,7 @@ namespace frobnob {
       env.AddConstraint(out, env.newType("Int32"));
     }
 
-    void visit(ast::Call * c) {
+    void TypeResolver::visit(ast::Call * c) {
       c->callee->accept(this);
       auto callee_term = out;
       if (!callee_term) return;
@@ -108,30 +98,30 @@ namespace frobnob {
       out = c_out;
     }
 
-    void visit(ast::Let * l) {
+    void TypeResolver::visit(ast::Let * l) {
       auto letterm = env.AddTerm(l->var->name, l);
       l->value->accept(this);
       if (l->type.name != "") env.AddConstraint(letterm, env.newType(l->type));
       else env.AddConstraint(letterm, env.newTerm(out));
     }
 
-    void visit(__attribute__((unused)) ast::Comment * c) { out = 0; }
-    void visit(ast::Return * r) {
+    void TypeResolver::visit(__attribute__((unused)) ast::Comment * c) { out = 0; }
+    void TypeResolver::visit(ast::Return * r) {
       r->val->accept(this);
     }
-    void visit(ast::StringLiteral * s) {
+    void TypeResolver::visit(ast::StringLiteral * s) {
       out = env.AddTerm("str", s);
       env.AddConstraint(out, env.newType("Ptr"));
     }
 
-    void visit(ast::While * w) {
+    void TypeResolver::visit(ast::While * w) {
       w->cond->accept(this);
       w->body->accept(this);
       out = env.AddTerm("while", w);
       env.AddConstraint(out, env.newType("Void"));
     }
 
-    void visit(ast::Set * s) {
+    void TypeResolver::visit(ast::Set * s) {
       s->value->accept(this);
       auto valueterm = out;
       s->var->accept(this);
@@ -139,18 +129,17 @@ namespace frobnob {
       env.AddConstraint(valueterm, env.newTerm(varterm));
       out = env.AddTerm("set." + valueterm->name, s);
     }
-
   };
 }
 
 coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
-  frobnob::TypeResolver resolver(m);
+  typeinference::TypeResolver resolver(m);
 
   // rewrite types back into the AST
   for(auto &&pair : resolver.env.critical_constraints) {
     if (!pair.first) continue;
     auto expr = pair.first->expr;
-    auto tvalue = dynamic_cast<frobnob::Type *>(pair.second);
+    auto tvalue = dynamic_cast<typeinference::Type *>(pair.second);
     if (tvalue) {
       auto tvaluetype = tvalue->concrete_type();
       if (tvaluetype){
@@ -163,7 +152,7 @@ coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
             func->type.reset(tvalue->concrete_type());
           for(size_t i = 0; i < func->params.size(); i++) {
             if (!func->params[i]->type || func->params[i]->type->name == "") {
-              frobnob::Type * v = (frobnob::Type *)(tvalue->params[i]);
+              typeinference::Type * v = (typeinference::Type *)(tvalue->params[i]);
               func->params[i]->type.reset(v->concrete_type());
             }
           }

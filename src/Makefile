@@ -9,7 +9,7 @@ TESTFILE?=tests/cases/wip.coral
 
 run: ${BIN}/coral-jit
 	$< ${TESTFILE}
-debug: ${BIN}/coral-test
+debug: ${BIN}/coral-jit
 	@gdb -ex 'run ${TESTFILE}' -ex quit $<
 mdebug: ${BIN}/coral-jit
 	valgrind --leak-check=full $< ${TESTFILE}
@@ -17,6 +17,10 @@ parse: ${BIN}/coral-parse
 	$< ${TESTFILE}
 test: ${BIN}/coral-test
 	$< ${TESTARGS}
+debugtest: ${BIN}/coral-test
+	gdb $< -ex "run ${TESTARGS}" -ex quit
+mtest: ${BIN}/coral-test
+	valgrind --leak-check=full $< ${TESTARGS}
 types: ${BIN}/coral-types
 	$<
 clean:

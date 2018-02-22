@@ -28,9 +28,6 @@ namespace coral {
     void showSource();
     void showIR();
     void runJIT();
-    ~CodeProcessingUnit() {
-      if (parser) coralDestroyModule(parser);
-      if (compiler) delete compiler;
-    }
+    ~CodeProcessingUnit();
   };
 }
