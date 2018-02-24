@@ -1,7 +1,7 @@
 #include "utils/ansicolor.hh"
 #include "utils/opts.hh"
 #include "core/expr.hh"
-#include "TypeResolver.hh"
+#include "analyzers/TypeResolver.hh"
 
 #include <iostream>
 #include <sstream>
@@ -9,12 +9,6 @@
 #include <set>
 #include <algorithm>
 #include <typeinfo>
-
-#include "InferenceEnvironment.hh"
-
-#include "InferenceApplication.cc"
-#include "InferenceDeduplication.cc"
-#include "InferenceSubstitution.cc"
 
 using namespace coral;
 
@@ -141,6 +135,7 @@ namespace coral {
         RemoveReflexiveRule(this, critical_constraints);
         SHOW("Dedup");
       }
+      HEADER("Solution")
       if (subcount)
         std::cerr << COL_LIGHT_RED
                   << "Warning: Type Solver Limit reached: " << 30 << COL_CLEAR << "\n";
@@ -206,13 +201,6 @@ namespace coral {
     }
 
     TypeConstraint * TypeEnvironment::AddEquality(TypeConstraint * lhs, TypeConstraint * rhs) {
-      // if (coral::opt::ShowTypeSolution) {
-      //   std::cerr << COL_RGB(3,5,4) << std::setw(20) << "Adding"
-      //             << std::setw(10) << lhs
-      //             << COL_RGB(3,5,4) << " == "
-      //             << rhs << COL_CLEAR << "\n";
-      // }
-
       Type *lt, *rt;
       Term *tt, *tt2;
       if ((lt = dynamic_cast<Type *>(lhs)) && (rt = dynamic_cast<Type *>(rhs))) {
@@ -234,6 +222,14 @@ namespace coral {
           << lhs << " -- " << rhs << COL_CLEAR << "\n";
       }
       return rhs;
+    }
+
+    void TypeEnvironment::Sideboard(TypeTerm * tt) {
+      auto it = this->critical_constraints.find(tt);
+      this->solved_constraints.insert(*it);
+      if (coral::opt::ShowTypeSolution)
+        std::cerr << COL_LIGHT_BLUE << std::setw(20) << "sideboarded " << it->first << "\t" << it->second << "\n";
+      this->critical_constraints.erase(it->first);
     }
   }
 }

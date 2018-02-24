@@ -1,6 +1,6 @@
 #include "core/expr.hh"
 #include "utils/ansicolor.hh"
-#include "InferenceObjectModel.hh"
+#include "analyzers/inference/ObjectModel.hh"
 
 #include <iostream>
 #include <iomanip>
@@ -10,6 +10,12 @@ using namespace coral;
 
 namespace coral {
   namespace typeinference {
+    void TypeConstraintVisitor::visit(TypeConstraint * t) { std::cerr << "TypeConstraintVisitor " << t << "\n"; }
+    void TypeConstraintVisitor::visit(Term * t) { }
+    void TypeConstraintVisitor::visit(Type * t) { for(auto &p: t->params) p->accept(this); }
+    void TypeConstraintVisitor::visit(Call * t) { for(auto &a: t->args) a->accept(this); t->callee->accept(this); }
+    void TypeConstraintVisitor::visit(FreeType * t) { }
+
 
     std::ostream & operator<<(std::ostream &out, TypeTerm &tptr) {
       std::streamsize s =  out.width();

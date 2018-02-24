@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/expr.hh"
-#include "analyzers/InferenceObjectModel.hh"
-#include "analyzers/InferenceEnvironment.hh"
+#include "analyzers/inference/ObjectModel.hh"
+#include "analyzers/inference/Environment.hh"
 #include <iostream>
 
 namespace coral {

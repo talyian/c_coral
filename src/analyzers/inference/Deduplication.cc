@@ -1,12 +1,12 @@
 // This is the [Dedup] Reduction step of the Type Inference algorithm
 
-#include "analyzers/InferenceObjectModel.hh"
-#include "analyzers/InferenceEnvironment.hh"
+#include "analyzers/inference/ObjectModel.hh"
+#include "analyzers/inference/Environment.hh"
 
 #include <map>
 #include <vector>
-using namespace coral::typeinference;
 
+namespace coral { namespace typeinference {
 void Deduplicate(
   TypeEnvironment * env,
   std::multimap<TypeTerm *, TypeConstraint *> constraints) {
@@ -51,4 +51,7 @@ void Deduplicate(
   // env->critical_constraints.clear();
   // for(auto &&pair: newconstraints)
   //   env->critical_constraints.insert(pair);
+}
+
+  }
 }

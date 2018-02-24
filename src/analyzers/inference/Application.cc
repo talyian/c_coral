@@ -1,12 +1,14 @@
 // This is the [Apply] Reduction step of the Type Inference algorithm
 
-#include "analyzers/InferenceObjectModel.hh"
-#include "analyzers/InferenceEnvironment.hh"
+#include "analyzers/inference/ObjectModel.hh"
+#include "analyzers/inference/Environment.hh"
 
 #include <map>
 
 using namespace coral::typeinference;
 
+namespace coral {
+  namespace typeinference {
 bool freecmp (FreeType * a, FreeType * b) {
   return (
     a == b ? false :
@@ -62,4 +64,6 @@ std::pair<TypeTerm *, Call *> Apply(TypeEnvironment * env, TypeTerm * tt, Call *
     env->AddEquality(call->args[i], func->params[i]);
   env->AddConstraint(tt, func->params[call->args.size()]);
   return std::make_pair(tt, call);
+}
+  }
 }

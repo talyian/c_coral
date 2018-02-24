@@ -1,7 +1,7 @@
 #pragma once
 #include "utils/ansicolor.hh"
 #include "core/expr.hh"
-#include "InferenceObjectModel.hh"
+#include "analyzers/inference/ObjectModel.hh"
 
 #include <iostream>
 #include <iomanip>
@@ -10,6 +10,9 @@
 
 namespace coral {
   namespace typeinference {
+
+    class ConstraintMap : public std::multimap<TypeTerm *, TypeConstraint *> { };
+
     class TypeEnvironment {
     public:
       int subcount;
@@ -18,7 +21,8 @@ namespace coral {
       std::vector<std::unique_ptr<TypeConstraint>> all_constraints;
 
       // the constraints that are necessary for solving current unknown terms
-      std::multimap<TypeTerm *, TypeConstraint *> critical_constraints;
+      ConstraintMap critical_constraints;
+      ConstraintMap solved_constraints;
 
       TypeTerm * AddTerm(std::string name, coral::ast::BaseExpr * expr);
       TypeTerm * FindTerm(coral::ast::BaseExpr * expr);
@@ -29,6 +33,7 @@ namespace coral {
         TypeConstraint * tcons);
       TypeConstraint * AddEquality(TypeConstraint * lhs, TypeConstraint * rhs);
       void RemoveConstraint(TypeTerm * tt, TypeConstraint * tcons);
+      void Sideboard(TypeTerm * tt);
 
       void Solve();
 
@@ -69,5 +74,9 @@ namespace coral {
         auto call = new FreeType(args...); all_constraints.emplace_back(call); return call;
       }
     };
+
+    void DoSubstitutionsM(TypeEnvironment * env, std::multimap<TypeTerm *, TypeConstraint *> ccc);
+    void Deduplicate(TypeEnvironment * env, std::multimap<TypeTerm *, TypeConstraint *> ccc);
+    std::pair<TypeTerm *, Call *> Apply(TypeEnvironment * env, TypeTerm * tt, Call * call);
   }
 }

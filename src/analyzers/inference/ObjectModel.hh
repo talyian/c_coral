@@ -35,11 +35,11 @@ namespace coral {
     class TypeConstraintVisitor : public AbstractTypeConstraintVisitor {
     public:
       TypeConstraintVisitor() { }
-      virtual void visit(TypeConstraint * t) = 0;
-      virtual void visit(Term * t) = 0;
-      virtual void visit(Type * t) = 0;
-      virtual void visit(Call * t) = 0;
-      virtual void visit(FreeType * t) = 0;
+      virtual void visit(TypeConstraint * t);
+      virtual void visit(Term * t);
+      virtual void visit(Type * t);
+      virtual void visit(Call * t);
+      virtual void visit(FreeType * t);
     };
 
     // A typeconstraint is a formula on TypeTerms

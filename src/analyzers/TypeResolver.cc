@@ -1,7 +1,6 @@
 #include "utils/ansicolor.hh"
 #include "core/expr.hh"
 #include "core/prettyprinter.hh"
-#include "InferenceEnvironment.hh"
 #include "TypeResolver.hh"
 
 #include <iostream>
@@ -64,6 +63,10 @@ namespace coral {
       if (!out) {
         if (var->name == "struct") {
           out = env.AddTerm("global::struct", var);
+          return;
+        }
+        if (var->name == "printf") {
+          out = env.AddTerm("printf", var);
           return;
         }
         std::cerr << COL_LIGHT_MAGENTA << "unknown type for identifier: " << var->name << COL_CLEAR << "\n";
