@@ -1,0 +1,6 @@
+# Conway's Game of Life
+func cell(x, y):
+  neighbors = (arr[x+i,y+j] for i, j in zip(-1..2, -1..2))
+  int(3 = sum neighbors)
+func life(arr): Matrix2.init(cell, overflow=Wrap) |> tee print
+fixed_point life (Matrix2.init(xy => hash xy, 30, 30, overflow=Wrap))
