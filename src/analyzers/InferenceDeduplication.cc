@@ -14,9 +14,9 @@ void Deduplicate(
   for(auto it = constraints.begin(); it != constraints.end();) {
     auto key = it->first;
     auto values = std::vector<std::pair<TypeTerm *, TypeConstraint*>>(it, constraints.upper_bound(key));
-    std::cerr << COL_RGB(4, 2, 1) << "Dedoop "<< key
-              << COL_RGB(4, 2, 1) << " :: "
-              << COL_RGB(4, 2, 1) << values.size() << COL_CLEAR << "\n";
+    // std::cerr << COL_RGB(4, 2, 1) << "Dedoop "<< key
+    //           << COL_RGB(4, 2, 1) << " :: "
+    //           << COL_RGB(4, 2, 1) << values.size() << COL_CLEAR << "\n";
     it = constraints.upper_bound(key);
     // auto values = std::vector(it, constraints->upp
   }

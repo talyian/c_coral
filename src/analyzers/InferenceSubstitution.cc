@@ -96,7 +96,7 @@ namespace coral {
       }
       void visit(Term * t) {
         if (t->term == find) {
-          std::cerr << COL_LIGHT_RED << "Replacing " << find << COL_CLEAR << "\n";
+          if (coral::opt::ShowTypeSolution) std::cerr << COL_LIGHT_RED << "Replacing " << find << COL_CLEAR << "\n";
           out = replace;
         } else
           out = t;
