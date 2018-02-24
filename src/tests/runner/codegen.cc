@@ -88,8 +88,8 @@ namespace coral {
       T->Run("tests/cases/simple/hello_world.coral");
       T->RunFactorial();
 	  T->RunFactorialWhile();
-      T->RunCollatz();
 	  T->RunReturnInserter();
+      T->RunCollatz();
       // T->Run("tests/cases/features/pcre.coral");
       T->show(0);
       return T;

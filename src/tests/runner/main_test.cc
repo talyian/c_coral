@@ -1,10 +1,11 @@
 #include "tests/runner/parser.hh"
 #include "tests/runner/codegen.hh"
 #include "tests/runner/base.hh"
-
+#include "utils/opts.hh"
 #include <array>
 
 int main(int argc, const char ** argv) {
+  coral::opt::initOpts();
   coral::tests::TestSuite T;
   if (argc < 2 || std::string("parser") == argv[1])
     T.add_suite(coral::tests::run_parser_tests());

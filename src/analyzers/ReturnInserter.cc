@@ -8,6 +8,7 @@
 namespace coral {
   namespace analyzers {
 
+    // This visitor takes in a BaseExpr * and returns a BaseExpr * in ::out
     class ReturnReplace : public ast::ExprVisitor {
     public:
       ast::BaseExpr * original;
@@ -24,9 +25,6 @@ namespace coral {
 
       static ast::BaseExpr * replace(ast::BaseExpr * original) {
         ReturnReplace rr(original);
-        // std::cout << "Replacing Return: "
-        //            << ast::ExprNameVisitor::of(rr.original) << " -- "
-        //            << ast::ExprNameVisitor::of(rr.out) << std::endl;
         return rr.out;
       }
 
@@ -55,10 +53,7 @@ namespace coral {
             last_item->reset(old_ptr);
           }
         }
-        e->lines.push_back(
-          std::unique_ptr<ast::BaseExpr>(
-            new ast::Return(
-              new ast::IntLiteral("0"))));
+        e->lines.emplace_back(new ast::Return());
         out = e;
       }
       void visit(ast::Var * e) { out = new ast::Return(e); }

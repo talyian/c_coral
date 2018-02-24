@@ -1,5 +1,6 @@
 #include "core/expr.hh"
 #include "utils/ansicolor.hh"
+#include "utils/opts.hh"
 
 #include "codegen.hh"
 #include "LLVMJit.hh"
@@ -16,9 +17,7 @@ namespace coral {
 
   void Run(const char * path) {
     CodeProcessingUnit cc(path);
-    cc.showSource();
-    cc.showIR();
-    std::cout << "Running: " << path << "\n";
+    if (coral::opt::ShowIR) cc.showIR();
     cc.runJIT();
   }
 
@@ -31,6 +30,9 @@ namespace coral {
 	analyzers::NameResolver nresolver(module);
 	analyzers::TypeResolver tresolver(module);
 	analyzers::ReturnInserter returner(module);
+
+    if (coral::opt::ShowFinalParseTree) PrettyPrinter::print(module);
+
 	compiler = new codegen::LLVMModuleCompiler(module);
     llvmModule = compiler->llvmModule;
 

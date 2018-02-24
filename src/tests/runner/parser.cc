@@ -85,10 +85,6 @@ namespace coral {
 	  T->parse_and_print("Factorial", "tests/cases/simple/factorial.coral");
 	  T->parse_and_print("Collatz Function", "tests/cases/simple/collatz.coral");
 	  T->parse_and_print("Unicode Strings", "tests/cases/simple/unicode-strings.coral");
-	  T->parse_and_print("Fasta", "tests/cases/shootout/fasta.coral");
-	  T->parse_and_print("Knucleotide", "tests/cases/shootout/knucleotide.coral");
-	  T->parse_and_print("Pidigits", "tests/cases/shootout/pidigits.coral");
-	  T->parse_and_print("Regex Redux", "tests/cases/shootout/regexredux.coral");
       T->checkTypeInferenceReturn();
       T->checkTypeInferenceParam();
 	  return T;

@@ -66,7 +66,7 @@ namespace coral {
           out = env.AddTerm("global::struct", var);
           return;
         }
-        std::cerr << COL_LIGHT_MAGENTA << var->name << COL_CLEAR << "\n";
+        std::cerr << COL_LIGHT_MAGENTA << "unknown type for identifier: " << var->name << COL_CLEAR << "\n";
       }
     }
 

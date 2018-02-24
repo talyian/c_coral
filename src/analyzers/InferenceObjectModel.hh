@@ -14,6 +14,34 @@ namespace coral {
       TypeTerm(std::string name, coral::ast::BaseExpr * expr) : name(name), expr(expr) { }
     };
 
+    class TypeConstraint;
+    class Term;
+    class Type;
+    class Call;
+    class FreeType;
+    class And;
+    class Equal;
+
+    class AbstractTypeConstraintVisitor {
+    public:
+      AbstractTypeConstraintVisitor() { }
+      virtual void visit(TypeConstraint * t) = 0;
+      virtual void visit(Term * t) = 0;
+      virtual void visit(Type * t) = 0;
+      virtual void visit(Call * t) = 0;
+      virtual void visit(FreeType * t) = 0;
+    };
+
+    class TypeConstraintVisitor : public AbstractTypeConstraintVisitor {
+    public:
+      TypeConstraintVisitor() { }
+      virtual void visit(TypeConstraint * t) = 0;
+      virtual void visit(Term * t) = 0;
+      virtual void visit(Type * t) = 0;
+      virtual void visit(Call * t) = 0;
+      virtual void visit(FreeType * t) = 0;
+    };
+
     // A typeconstraint is a formula on TypeTerms
     class TypeConstraint {
     public:
@@ -22,14 +50,9 @@ namespace coral {
       virtual TypeConstraint * replaceTerm(
         __attribute__((unused)) TypeTerm * tt,
         __attribute__((unused)) TypeConstraint * tc) { return this; }
+      virtual void accept(AbstractTypeConstraintVisitor * v) { v->visit(this); }
       virtual ~TypeConstraint() { }
     };
-    class Term;
-    class Type;
-    class Call;
-    class FreeType;
-    class And;
-    class Equal;
 
     std::ostream & operator<<(std::ostream &out, TypeTerm &tptr);
     std::ostream & operator<<(std::ostream &out, TypeTerm * tptr);
@@ -46,6 +69,8 @@ namespace coral {
       }
       Type(std::string name) : name(name) { }
       Type(std::string name, std::vector<TypeConstraint *> pp) : name(name), params(pp) { }
+      virtual void accept(AbstractTypeConstraintVisitor * v) { v->visit(this); }
+
       coral::type::Type * concrete_type() {
         std::vector<coral::type::Type> params;
         bool is_valid = true;
@@ -90,6 +115,8 @@ namespace coral {
     class Term : public TypeConstraint {
     public: TypeTerm * term;
       Term(TypeTerm * term) : term(term) { }
+      virtual void accept(AbstractTypeConstraintVisitor * v) { v->visit(this); }
+
       virtual void print_to(std::ostream &out) {
         out << COL_RGB(5, 3, 4) << (term ? term->name : "(nullterm)") << COL_CLEAR;
       }
@@ -111,6 +138,7 @@ namespace coral {
       Call(TypeConstraint * callee) : callee(callee) { }
       Call(TypeConstraint * callee, std::vector<TypeConstraint *> args)
         : callee(callee), args(args) { }
+      virtual void accept(AbstractTypeConstraintVisitor * v) { v->visit(this); }
       virtual void print_to(std::ostream &out) {
         out << "Call(" << callee << ", ";
         for(auto &&arg : args) {
@@ -146,15 +174,8 @@ namespace coral {
         static int maxid = 0;
         id = maxid++;
       }
-      virtual void print_to(std::ostream &out) { out << "T" << id; }
+      virtual void print_to(std::ostream &out) { out << "*T" << id; }
+      virtual void accept(AbstractTypeConstraintVisitor * v) { v->visit(this); }
     };
-
-    class And : public TypeConstraint {
-    public:
-      std::vector<TypeConstraint *> terms;
-      And(std::vector<TypeConstraint *> terms) : terms(terms) { }
-      virtual void print_to(std::ostream & out) { out << "And(" << terms << ")"; }
-    };
-
   }
 }

@@ -175,7 +175,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
 }
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
   returns++;
-  out = LLVMBuildRet(builder, compile(expr->val.get()));
+  if (expr->val)
+    out = LLVMBuildRet(builder, compile(expr->val.get()));
+  else
+    out = LLVMBuildRetVoid(builder);
 }
 
 namespace coral {

@@ -30,7 +30,7 @@ sdl: tests/cases/wip.2.cc
 	clang++-5.0 -Wall -std=c++11 -o sdl tests/cases/wip.2.cc -lSDL2
 	./sdl
 
-COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/utils/ansicolor.o
+COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/utils/ansicolor.o ${BUILD}/utils/opts.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
 ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${BUILD}/analyzers/InferenceObjectModel.o ${BUILD}/analyzers/InferenceEnvironment.o
 CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o  ${BUILD}/codegen/LLVMModuleCompiler.o ${BUILD}/codegen/LLVMJit.o

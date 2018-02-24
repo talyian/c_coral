@@ -1,3 +1,5 @@
+#pragma once
+
 #include "core/expr.hh"
 #include "analyzers/InferenceObjectModel.hh"
 #include "analyzers/InferenceEnvironment.hh"

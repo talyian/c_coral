@@ -1,11 +1,11 @@
 func collatz(n, m):
   if n = 1: m
-  else: collatz(n - 1, m + 1)
+  else if n % 2 = 1: collatz(3 * n + 1, m + 1)
+  else: collatz(n / 2, m + 1)
 
-func collatz_loop(a):
-  printf("collatz %d = %d\n", a, collatz(a, 0))
-  0
+func collatz_loop(a: Int32, b: Int32):
+    collatz(a, 0)
 
 func main():
-  collatz_loop(30)
+  collatz(1, 30)
   0

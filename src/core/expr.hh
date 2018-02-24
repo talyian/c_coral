@@ -27,28 +27,28 @@ namespace coral {
 	// Forward-declare all Expr classes
 #define RUN_EXPR(E) class E;
 	MAP_ALL_EXPRS(RUN_EXPR)
-
+#undef RUN_EXPR
     class BaseExprVisitor {
 	public:
 	  virtual std::string visitorName() { return "ExprVisitor"; }
 #define RUN_EXPR(E) virtual void visit(__attribute__((unused)) E * expr) = 0;
       MAP_ALL_EXPRS(RUN_EXPR)
-
+#undef RUN_EXPR
     };
 	// Visitor
 	class ExprVisitor : public BaseExprVisitor {
     public:
       std::string visitorName() { return "ExprVisitor"; }
-#define F(E) virtual void visit(__attribute__((unused)) E * expr) {     \
+#define RUN_EXPR(E) virtual void visit(__attribute__((unused)) E * expr) {     \
 	    fprintf(stderr, "%s: %s", visitorName().c_str(), #E "\n"); }
-      MAP_ALL_EXPRS(F)
-#undef F
+      MAP_ALL_EXPRS(RUN_EXPR)
+#undef RUN_EXPR
 	};
 
 	enum class ExprTypeKind {
-#define F(E) E##Kind,
-      MAP_ALL_EXPRS(F)
-#undef F
+#define RUN_EXPR(E) E##Kind,
+      MAP_ALL_EXPRS(RUN_EXPR)
+#undef RUN_EXPR
 	};
 
 	class BaseExpr {
@@ -263,6 +263,7 @@ namespace coral {
 	class Return : public Statement {
 	public:
 	  unique_ptr<BaseExpr> val;
+	  Return() : val((BaseExpr *)0) { }
 	  Return(BaseExpr * val) : val(val) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};

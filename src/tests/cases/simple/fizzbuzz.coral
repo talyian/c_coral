@@ -9,5 +9,5 @@ func fizzbuzz : Ptr(n: Int32):
 func main ():
   let i = 0
   while i < 100:
-    printf("%s ", fizzbuzz(i))
+    printf("%s \n", fizzbuzz(i))
     set i = i + 1

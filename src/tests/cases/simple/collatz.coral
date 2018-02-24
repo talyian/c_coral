@@ -10,6 +10,7 @@ func collatz_loop(a: Int32, b: Int32):
   else:
     printf("collatz %d = %d\n", a, collatz(a, 0))
     collatz_loop(a + 1, b)
+  return 0
 
 func main():
   collatz_loop(1, 30)

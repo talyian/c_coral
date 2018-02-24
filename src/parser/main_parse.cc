@@ -1,5 +1,6 @@
 #include "parser.hh"
 #include "utils/ansicolor.hh"
+#include "utils/opts.hh"
 #include "core/prettyprinter.hh"
 #include "analyzers/ReturnInserter.hh"
 #include "analyzers/NameResolver.hh"
@@ -25,6 +26,7 @@ void showFile(const char * filename) {
 }
 
 int main(int argc, const char ** argv) {
+  coral::opt::initOpts();
   if (argc > 1) { showFile(argv[1]); return 0; }
   showFile("tests/cases/simple/collatz.coral"); return 0;
   showFile("tests/cases/shootout/fasta.coral");

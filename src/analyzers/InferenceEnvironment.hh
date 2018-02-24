@@ -28,6 +28,7 @@ namespace coral {
         TypeTerm * term,
         TypeConstraint * tcons);
       TypeConstraint * AddEquality(TypeConstraint * lhs, TypeConstraint * rhs);
+      void RemoveConstraint(TypeTerm * tt, TypeConstraint * tcons);
 
       void Solve();
 

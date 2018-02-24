@@ -1,4 +1,5 @@
 #include "utils/ansicolor.hh"
+#include "utils/opts.hh"
 #include "core/expr.hh"
 #include "TypeResolver.hh"
 
@@ -10,6 +11,10 @@
 #include <typeinfo>
 
 #include "InferenceEnvironment.hh"
+
+#include "InferenceApplication.cc"
+#include "InferenceDeduplication.cc"
+#include "InferenceSubstitution.cc"
 
 using namespace coral;
 
@@ -43,29 +48,6 @@ namespace coral {
       return t;
     }
 
-    void DoSubstitutionsM(
-      TypeEnvironment * env,
-      std::multimap<TypeTerm *, TypeConstraint *> constraints) {
-
-      for(auto it = constraints.begin(); it != constraints.end(); it++) {
-        auto pair = *it;
-        // only substitute terms and types
-        if (!dynamic_cast<Type *>(pair.second) && !dynamic_cast<Term *>(pair.second)) continue;
-        // only substitute single-rule terms for now
-        if (constraints.count(pair.first) > 1) continue;
-        auto dependents = GetDependents(env, pair.first);
-        // ignore recursive terms for now
-        if (dependents.find(pair.first) != dependents.end()) continue;
-
-        if (dependents.size()) {
-          env->subcount++;
-        }
-
-        for(auto &&dep: dependents)
-          ReplaceTerm(env, dep, pair.first, pair.second);
-      }
-    }
-
     void RemoveReflexiveRule(
       TypeEnvironment * env,
       std::multimap<TypeTerm *, TypeConstraint *> constraints) {
@@ -86,40 +68,6 @@ namespace coral {
       //   for(env->critical_constraints
       // for each rule : constraint of type
       // x : Term(x)
-    }
-    void Deduplicate(
-      TypeEnvironment * env,
-      std::multimap<TypeTerm *, TypeConstraint *> constraints) {
-      // Some of the other steps naively create multiple copies of the same constraint
-      std::vector<std::pair<TypeTerm *, TypeConstraint *>> newconstraints;
-      for(auto it = constraints.begin(); it != constraints.end();) {
-        auto key = it->first;
-        auto compare_constraints = [](TypeConstraint * a, TypeConstraint * b) {
-          if (typeid(a).hash_code() < typeid(b).hash_code()) return true;
-          if (typeid(a).hash_code() > typeid(b).hash_code()) return false;
-          Type *ta, *tb;
-          if ((ta = dynamic_cast<Type *>(a)) && (tb = dynamic_cast<Type *>(b))) {
-            std::stringstream ss;
-            std::stringstream st;
-            ss << ta;
-            auto s = ss.str();
-            st << tb;
-            auto t = st.str();
-            return s < t;
-          }
-          return false;
-        };
-        std::set<TypeConstraint *, decltype(compare_constraints)> values(compare_constraints);
-        auto end = constraints.upper_bound(it->first);
-        for(; it != end; it++) {
-          values.insert(it->second);
-        }
-        for(auto &&constraint : values)
-          newconstraints.push_back(std::make_pair(key, constraint));
-      }
-      env->critical_constraints.clear();
-      for(auto &&pair: newconstraints)
-        env->critical_constraints.insert(pair);
     }
 
     void DoSimplifyM(
@@ -144,6 +92,8 @@ namespace coral {
         if (skip) continue;
         if (values.size() < 2) continue;
 
+        if (coral::opt::ShowTypeSolution) std::cerr << COL_LIGHT_RED
+                                                    << "simplifying " << key << "\n";
         env->critical_constraints.erase(key);
         for(size_t i=0; i<values.size() - 1; i++) {
           auto out = env->AddEquality(values[i], values[i + 1]);
@@ -154,87 +104,39 @@ namespace coral {
       }
     }
 
-    void DoApplicationsM(
-      TypeEnvironment * env,
-      std::multimap<TypeTerm *, TypeConstraint *> constraints)
-    {
-/*
-  constraints |> map match
-  | Call(Type(t), args) as call ->
-*/;
-      for(auto &pair: constraints) {
-        if (auto call = dynamic_cast<Call *>(pair.second)) {
-          if (auto callee = dynamic_cast<Type *>(call->callee)) {
-            if (callee->name == "Func") {
-              auto freetype_compare = [](FreeType * a, FreeType * b) {
-                return (
-                  a == b ? false :
-                  a == 0 ? true:
-                  b == 0 ? false:
-                  a->id < b->id);
-              };
-              std::map<FreeType *, TypeTerm *, decltype(freetype_compare)> newtypes(freetype_compare);
-              auto args(call->args);
-              for(size_t i = 0; i < args.size(); i++) {
-                auto param = callee->params[i];
-                auto arg = args[i];
-                if (auto fparam = dynamic_cast<FreeType *>(param)) {
-                  if (newtypes.find(fparam) == newtypes.end()) {
-                    newtypes[fparam] = env->AddTerm(pair.first->name + ".T" + std::to_string(fparam->id), 0);
-                  }
-                  env->AddConstraint(newtypes[fparam], arg);
-                  env->subcount++;
-                } else {
-                  env->AddEquality(param, arg);
-                }
-              }
-              auto rparam = callee->params[args.size()];
-              auto arg = pair.first;
-              if (!rparam || callee->params.size() < args.size() + 1) {
-                std::cerr << COL_LIGHT_RED << "Something is really wrong\n";
-                std::cerr << call << "\n";
-              }
-              if (auto fparam = dynamic_cast<FreeType *>(rparam)) {
-                if (newtypes.find(fparam) == newtypes.end()) {
-                  newtypes[fparam] = env->AddTerm(pair.first->name + ".T" + std::to_string(fparam->id), 0);
-                }
-                env->AddConstraint(arg, env->newTerm(newtypes[fparam]));
-                env->subcount++;
-              } else {
-                env->AddEquality(rparam, env->newTerm(arg));
-              }
-              for(auto to_erase = env->critical_constraints.begin();
-                  to_erase != env->critical_constraints.end();)
-                if(*to_erase == pair)
-                  to_erase = env->critical_constraints.erase(to_erase);
-                else
-                  to_erase++;
-            }
-          }
-        }
-      }
-    }
-
-#define SHOW(s) { printHeader(s); for(auto &&pair: critical_constraints) print(std::cerr, pair); }
+#define HEADER(s) {if (coral::opt::ShowTypeSolution) { \
+        std::cerr << "[" << i << "] "; printHeader(s); }}
+#define SHOW(s) {if (coral::opt::ShowTypeSolution) { \
+        for(auto &&pair: critical_constraints) print(std::cerr, pair);}}
 // #define SHOW(s) ;w
     void TypeEnvironment::Solve() {
+      int i=0;
       SHOW("Original");
-
       subcount = 1;
-      for(int i=0; subcount && i<30; i++) {
+      for(; subcount && i<30; i++) {
         this->subcount = 0;
-        DoApplicationsM(this, critical_constraints);
+
+        HEADER("Application")
+        std::vector<std::pair<TypeTerm *, Call *>> to_delete;
+        for(auto &pair: critical_constraints)
+          if (auto call = dynamic_cast<Call *>(pair.second))
+            to_delete.push_back(Apply(this, pair.first, call));
+        for(auto & pair: to_delete)
+          this->RemoveConstraint(pair.first, pair.second);
         SHOW("Application");
 
         // if [term] has a single value that equates to a type or other term
         // we can substitite that value in for all the places where [term] appears
+        HEADER("Substitution")
         DoSubstitutionsM(this, critical_constraints);
         SHOW("Substitution");
 
         // If [term] has multiple values that are
+        HEADER("Simplification")
         DoSimplifyM(this, critical_constraints);
         SHOW("Simplification");
 
+        HEADER("Dedup + RemoveReflex")
         Deduplicate(this, critical_constraints);
         RemoveReflexiveRule(this, critical_constraints);
         SHOW("Dedup");
@@ -262,8 +164,15 @@ namespace coral {
       TypeTerm * term,
       TypeConstraint * tcons) {
 
+      if (coral::opt::ShowTypeSolution) {
+        std::cerr << COL_RGB(3,5,4) << std::setw(20) << "Adding"
+                  << std::setw(10) << term
+                  << COL_RGB(3,5,4) << " :: "
+                  << tcons << COL_CLEAR << "\n";
+      }
+
       if (Term * tt = dynamic_cast<Term *>(tcons)) {
-        if (tt->term->expr == term->expr) {
+        if (tt->term->name == term->name) {
           std::cerr << "Redefining term as itself :( " << term << "\n";
           return;
         }
@@ -276,7 +185,34 @@ namespace coral {
       }
     }
 
+    void TypeEnvironment::RemoveConstraint(TypeTerm * tt, TypeConstraint * tcons) {
+      if (!tt) return;
+      if (coral::opt::ShowTypeSolution) {
+        std::cerr << COL_RGB(5, 3, 2) << std::setw(20) << "Removing"
+                  << std::setw(10) << tt
+                  << COL_RGB(5, 3, 2) << " :: "
+                  << tcons << COL_CLEAR << "\n";
+      }
+
+      for(auto iter = critical_constraints.begin();
+          iter != critical_constraints.end();) {
+        if (iter->first != tt)
+          iter = critical_constraints.upper_bound(iter->first);
+        else if (iter->second == tcons)
+          iter = critical_constraints.erase(iter);
+        else
+          iter++;
+      }
+    }
+
     TypeConstraint * TypeEnvironment::AddEquality(TypeConstraint * lhs, TypeConstraint * rhs) {
+      // if (coral::opt::ShowTypeSolution) {
+      //   std::cerr << COL_RGB(3,5,4) << std::setw(20) << "Adding"
+      //             << std::setw(10) << lhs
+      //             << COL_RGB(3,5,4) << " == "
+      //             << rhs << COL_CLEAR << "\n";
+      // }
+
       Type *lt, *rt;
       Term *tt, *tt2;
       if ((lt = dynamic_cast<Type *>(lhs)) && (rt = dynamic_cast<Type *>(rhs))) {
