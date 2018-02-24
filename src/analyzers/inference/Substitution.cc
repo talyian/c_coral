@@ -82,8 +82,9 @@ namespace coral {
     public:
       bool out = true;
       TypeConstraint * root;
-      IsConcreteType (TypeConstraint * e) : root(e) { e->accept(this); }
-      void visit(Type * t) { out = (root == t); TypeConstraintVisitor::visit(t); }
+      IsConcreteType (TypeConstraint * e) : root(e) {
+        out = (bool)(dynamic_cast<Type *>(root));
+        e->accept(this); }
       void visit(FreeType * f) { out = false; }
     };
     // given { a :: Foo[b, Int32], b: Bar[Int32] }
@@ -120,7 +121,9 @@ namespace coral {
       }
       void visit(Term * t) {
         if (t->term == find) {
-          if (coral::opt::ShowTypeSolution) std::cerr << COL_LIGHT_RED << "Replacing " << find << COL_CLEAR << "\n";
+          if (coral::opt::ShowTypeSolution)
+            std::cerr << COL_LIGHT_RED << "Replacing " << find << COL_CLEAR
+                      << " with " << replace  << "\n";
           counter++;
           out = replace;
         } else
@@ -133,6 +136,20 @@ namespace coral {
       TypeEnvironment * env,
       std::multimap<TypeTerm *, TypeConstraint *> ccc) {
 
+    START:
+      //remove identity constraints before replacements
+      for(auto del_iter = env->critical_constraints.begin();
+          del_iter != env->critical_constraints.end();) {
+        if (Term * t = dynamic_cast<Term *>(del_iter->second)) {
+          if (t->term == del_iter->first) {
+            std::cerr << "Deleting Reflexive Rule: " << t->term << "\n";
+            del_iter = env->critical_constraints.erase(del_iter);
+            continue;
+          }
+        }
+        del_iter++;
+      }
+
       for(auto it = env->critical_constraints.begin(); it != env->critical_constraints.end(); it++) {
         auto pair = *it;
         // only substitute terms and types
@@ -142,18 +159,27 @@ namespace coral {
         }
 
         // only substitute single-rule terms for now
-        if (env->critical_constraints.count(pair.first) > 1) {
+        auto rulecount = env->critical_constraints.count(pair.first);
+        if (rulecount > 1) {
           // std::cout << "Multirule: " << pair.first << "\n";
           continue; }
 
         // do not substitute recursively-defined items since that just propagates the loop
         auto depends = FindTermRequirements { env, pair.first }.found;
-        if (depends.find(pair.first) != depends.end()) {
+        auto isRecursive = (depends.find(pair.first) != depends.end());
+        if (isRecursive && rulecount > 1) {
           // std::cout << "Skipping Recursive: " << pair.first << "\n";
           continue; }
 
-        std::cerr << "replacing " << pair.first << "\n";
+        // std::cerr << "replacing " << pair.first << ", " << pair.second << "\n";
+        // std::cerr << "DependentSize " << FindTermDependents { env, pair.first }.out.size() << "\n";
+        // std::cerr << "IsConcrete " << (IsConcreteType { pair.second }.out) << "\n";
 
+        if (Term * tt = dynamic_cast<Term *>(pair.second))
+          if (tt->term == pair.first) {
+            std::cout << "Skipping Recursive: " << pair.first << "\n";
+            continue;
+          }
         for(auto &subject : env->critical_constraints) {
           ReplaceTermVisitor rep { env, subject.second, pair.first, pair.second };
           subject.second = rep.out;
@@ -161,10 +187,12 @@ namespace coral {
 
         if (FindTermDependents { env, pair.first }.out.size()) {
           std::cerr << COL_LIGHT_RED << "ERROR: dependencies still exist\n";
-          std::cerr << pair.first << COL_CLEAR << "\n";
+          for(auto && pp: env->critical_constraints)
+            std::cerr << std::setw(20) << pp.first << "\t" << pp.second << "\n";
           exit(1);
         } else if (IsConcreteType { pair.second }.out) {
-          env->Sideboard(pair.first);
+          if (pair.first->expr)
+            env->Sideboard(pair.first);
         }
       }
     }

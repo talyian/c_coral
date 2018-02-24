@@ -127,19 +127,22 @@ namespace coral {
 
         // If [term] has multiple values that are
         HEADER("Simplification")
-        DoSimplifyM(this, critical_constraints);
+          DoSimplifyM(this, critical_constraints);
         SHOW("Simplification");
 
         HEADER("Dedup + RemoveReflex")
-        Deduplicate(this, critical_constraints);
+          Deduplicate(this, critical_constraints);
         RemoveReflexiveRule(this, critical_constraints);
         SHOW("Dedup");
       }
       HEADER("Solution")
-      if (subcount)
+        if (subcount) {
         std::cerr << COL_LIGHT_RED
                   << "Warning: Type Solver Limit reached: " << 30 << COL_CLEAR << "\n";
+        }
       SHOW("Solution")
+        for(auto &m : solved_constraints)
+          std::cerr << std::setw(20) << m.first << " == " << m.second << "\n";
     }
 
     TypeTerm * TypeEnvironment::AddTerm(std::string name, ast::BaseExpr * expr) {
