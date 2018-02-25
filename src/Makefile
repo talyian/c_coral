@@ -35,7 +35,7 @@ sdl: tests/cases/wip.2.cc
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/utils/ansicolor.o ${BUILD}/utils/opts.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
 INFERENCE=${BUILD}/analyzers/inference/ObjectModel.o ${BUILD}/analyzers/inference/Environment.o ${BUILD}/analyzers/inference/Application.o ${BUILD}/analyzers/inference/Deduplication.o ${BUILD}/analyzers/inference/Substitution.o ${BUILD}/analyzers/inference/Builder.o
-ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${INFERENCE} ${BUILD}/analyzers/typegraph/TypeGraph.o
+ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${INFERENCE} ${BUILD}/analyzers/typegraph/TypeGraph.o ${BUILD}/analyzers/typegraph/constraint.o
 
 
 CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o  ${BUILD}/codegen/LLVMModuleCompiler.o ${BUILD}/codegen/LLVMJit.o
@@ -80,3 +80,4 @@ ${BUILD}/codegen/%.o: codegen/%.cc
 	${LLVM_CC} -c -g -o $@ $<
 
 -include ${BUILD}/**/*.d
+-include ${BUILD}/**/**/*.d

@@ -42,6 +42,10 @@ int main() {
   gg.AddTerm("collatz");
   gg.AddTerm("i2");
 
+  gg.AddTerm("collatz.m");
+  gg.AddTerm("collatz.n");
+  gg.AddTerm("op.*");
+
   gg.AddConstraint("i1", gg.type("Int32"));
   gg.AddConstraint(
     "op:=", gg.call(
@@ -60,7 +64,7 @@ int main() {
 
   gg.AddConstraint("call.collatz", gg.call(gg.term("collatz"), {gg.term("op:+"), gg.term("op:+.0")}));
   gg.AddConstraint("i3", gg.type("Int32"));
-  gg.AddConstraint("op:gg.free(", gg.call(
+  gg.AddConstraint("op:*", gg.call(
                      gg.type("Func", {gg.free(3), gg.free(3), gg.free(3)}),
                      {gg.term("i3"), gg.term("collatz.n")}));
   gg.AddConstraint("i1.1", gg.type("Int32"));
@@ -97,10 +101,10 @@ int main() {
   gg.AddConstraint("collatz", gg.type("Func", { gg.term("collatz.n"), gg.term("collatz.m"), gg.term("if.0") }));
   gg.AddConstraint("i2", gg.type("Int32"));
 
-  // gg.Show("Initial");
+  gg.Show("Initial");
   gg.MarkAllDirty();
-  gg.Step();
-  gg.Step();
-  // gg.Show("Final");
+  for(int i=0; i<100; i++)
+    gg.Step();
+  gg.Show("Final");
   return 0;
 }

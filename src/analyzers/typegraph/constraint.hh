@@ -12,9 +12,6 @@ public:
   TypeTerm(std::string name) : name(name) { }
 };
 
-std::ostream& operator << (std::ostream&out, TypeTerm * tt) {
-  return tt ? (out << tt->name) : (out << "(null)"); }
-
 class Constraint;
 class Type;
 class Term;
@@ -35,14 +32,12 @@ public:
   virtual std::string toString() { return "constraint"; }
   virtual void accept(ConstraintVisitor *);
 };
-std::ostream& operator << (std::ostream&out, Constraint * cc) {
-  return cc ? (out << cc->toString()) : (out << "(null)"); }
 
 class Term : public Constraint {
   public:
   std::string name;
-  TypeTerm * ptr = 0;
-  Term(std::string name): name(name) { }
+  TypeTerm * term = 0;
+  Term(std::string name, TypeTerm * term): name(name), term(term) { }
   std::string toString() { return name; }
   virtual void accept(ConstraintVisitor *);
 };
@@ -67,7 +62,7 @@ class Free : public Constraint {
 public:
   int v;
   Free(int v): v(v) { }
-  std::string toString() { return "T" + std::to_string(v); }
+  std::string toString() { return "*T" + std::to_string(v); }
 virtual void accept(ConstraintVisitor *);
 };
 class Call : public Constraint {
@@ -78,7 +73,7 @@ public:
     Constraint * callee,
     std::vector<Constraint *> args
     ): callee(callee), args(args) { }
-virtual void accept(ConstraintVisitor *);
+  virtual void accept(ConstraintVisitor *);
   std::string toString() {
     auto s = "Call(" + callee->toString();
     if(args.size()) {
@@ -89,12 +84,6 @@ virtual void accept(ConstraintVisitor *);
     return s;
   }
 };
-
-void Constraint::accept(ConstraintVisitor * v) { v->visit(this); }
-void Type::accept(ConstraintVisitor * v) { v->visit(this); }
-void Term::accept(ConstraintVisitor * v) { v->visit(this); }
-void Free::accept(ConstraintVisitor * v) { v->visit(this); }
-void Call::accept(ConstraintVisitor * v) { v->visit(this); }
 
 // 2D Visitor!
 template<class R, class TLeft>
@@ -127,3 +116,8 @@ class TypeEqualityWrapper : public ConstraintVisitor {
   void visit(Call * c) VISIT
 #undef VISIT
 };
+
+
+std::ostream& operator << (std::ostream&out, TypeTerm * tt);
+
+std::ostream& operator << (std::ostream&out, Constraint * cc);
