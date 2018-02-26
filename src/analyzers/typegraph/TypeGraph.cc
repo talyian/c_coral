@@ -54,9 +54,9 @@ void TypeTermReplacer::visit(Type * t) {
 void TypeTermReplacer::visit(Term * t) {
   // std::cerr << t->term << " !! term \n";
   if (t->term == search) {
-    std::cerr << COL_YELLOW << std::setw(30)
-              << subject << ".." << t << " " << COL_CLEAR
-              << "\tReplacing? " << search << " with " << replace << "\n";
+    // std::cerr << COL_YELLOW << std::setw(30)
+    //           << subject << ".." << t << " " << COL_CLEAR
+    //           << "\tReplacing " << search << " with " << replace << "\n";
     graph->changes++;
     out = replace;
   } else
@@ -74,7 +74,9 @@ void TypeTermReplacer::visit(Call * c) {
 void InstantiateFree::visit(Free * f) {
   auto it = vars.find(f);
   if (it == vars.end()) {
-    vars[f] = graph->term("T" + std::to_string(f->v));
+    auto newterm = graph->AddTerm("T" + std::to_string(f->v));
+    vars[f] = graph->term(newterm->name);
+    vars[f]->term = newterm;
   }
   out = vars[f];
 }
@@ -106,4 +108,11 @@ void Dependents::visit(Free * f) { }
 void Dependents::visit(Call * c) {
   c->callee->accept(this);
   for(auto &a: c->args) a->accept(this);
+}
+
+AllConstraints::AllConstraints(TypeGraph * graph, TypeTerm * tt) {
+  for(auto &pair : graph->GetRelations()) {
+    if (pair.second == tt)
+      out.insert(pair.first);
+  }
 }

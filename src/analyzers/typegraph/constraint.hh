@@ -41,6 +41,7 @@ class Term : public Constraint {
   std::string toString() { return name; }
   virtual void accept(ConstraintVisitor *);
 };
+
 class Type : public Constraint {
   public:
   std::string name;
@@ -48,23 +49,17 @@ class Type : public Constraint {
   Type(std::string name) : name(name) { }
   Type(std::string name,   std::vector<Constraint *> params) : name(name), params(params) { }
   virtual void accept(ConstraintVisitor *);
-  std::string toString() {
-    auto s = name;
-    if(params.size()) {
-      s += "(";
-      for(auto &p : params) { if (&p != &params.front()) s += ", "; s += p->toString();}
-      s += ")";
-    }
-    return s;
-  }
+  std::string toString();
 };
+
 class Free : public Constraint {
 public:
   int v;
   Free(int v): v(v) { }
-  std::string toString() { return "*T" + std::to_string(v); }
+  std::string toString();
 virtual void accept(ConstraintVisitor *);
 };
+
 class Call : public Constraint {
 public:
   Constraint * callee;
@@ -74,24 +69,16 @@ public:
     std::vector<Constraint *> args
     ): callee(callee), args(args) { }
   virtual void accept(ConstraintVisitor *);
-  std::string toString() {
-    auto s = "Call(" + callee->toString();
-    if(args.size()) {
-      s += ", ";
-      for(auto &p : args) { if (&p != &args.front()) s += ", "; s += p->toString();}
-    }
-    s += ")";
-    return s;
-  }
+  std::string toString();
 };
 
-// 2D Visitor!
+// 2D Visitor
 template<class R, class TLeft>
 class TypeEqualityRight : public ConstraintVisitor {
   public:
   R res;
-  TLeft * lhs;
-  TypeEqualityRight(R res, TLeft * lhs) : res(res), lhs(lhs) { }
+  TLeft lhs;
+  TypeEqualityRight(R res, TLeft lhs) : res(res), lhs(lhs) { }
 #define VISIT { res->equal(lhs, c); }
   void visit(Type * c) VISIT
   void visit(Term * c) VISIT
@@ -99,22 +86,31 @@ class TypeEqualityRight : public ConstraintVisitor {
   void visit(Call * c) VISIT
 };
 
-template<class R, class T>
-TypeEqualityRight<R, T> * makeTQR(R r, T * o) { return new TypeEqualityRight<R, T>(r, o); }
-
 template<class R>
 class TypeEqualityWrapper : public ConstraintVisitor {
   public:
   R res;
   Constraint * c, *d;
+
   TypeEqualityWrapper(R res, Constraint * c, Constraint * d) : res(res), c(c), d(d) {
     c->accept(this); }
-#define VISIT { d->accept(makeTQR(res, c)); }
+#define VISIT { d->accept(new TypeEqualityRight<R, decltype(c)>(res, c)); }
   void visit(Type * c) VISIT
   void visit(Term * c) VISIT
   void visit(Free * c) VISIT
   void visit(Call * c) VISIT
 #undef VISIT
+};
+
+// Checks if two constraints have equal values
+class ConstraintEqualsImpl {
+public:
+  static bool of(Constraint * a, Constraint * b);
+  bool out = false;
+  void equal(Constraint * a, Constraint * b) { out = false; }
+  void equal(Free * a, Free * b);
+  void equal(Term * a, Term * b);
+  void equal(Type * a, Type * b);
 };
 
 

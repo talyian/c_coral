@@ -2,9 +2,9 @@
 #include "utils/ansicolor.hh"
 #include <iostream>
 
-int main() {
-  std::cout << "\033[3m" << COL_RGB(1, 2, 5) << "Type Test\n" << COL_CLEAR;
 
+
+void check_collatz() {
   TypeGraph gg;
   gg.AddTerm("i1");
   gg.AddTerm("op:=");
@@ -103,8 +103,37 @@ int main() {
 
   gg.Show("Initial");
   gg.MarkAllDirty();
-  for(int i=0; i<100; i++)
-    gg.Step();
+  gg.Step();
   gg.Show("Final");
+}
+
+void check_apply() {
+  TypeGraph gg;
+  Constraint * fcons = gg.type("Func", {gg.free(0), gg.free(0), gg.free(0)});
+  gg.AddTerm("f");
+  gg.AddTerm("res");
+  gg.AddTerm("a");
+  gg.AddTerm("b");
+  gg.AddConstraint("f", fcons);
+  gg.AddConstraint("res", gg.call(fcons, {gg.term("a"), gg.term("b")}));
+  gg.AddConstraint("a", gg.type("Int32"));
+
+  gg.Show(" [Application test]");
+  gg.MarkAllDirty();
+  gg.Step();
+  gg.Show(" [Application test]");
+}
+
+void check_ConstraintEquals() {
+  auto a = new Type("asdf");
+  auto b = new Type("asdf", {new Type("Int32")});
+  auto out = ConstraintEqualsImpl::of(a, b);
+  std::cerr << a << (out ? " == " : " != ") << b << "\n";
+}
+
+int main() {
+  std::cout << "\033[3m" << COL_RGB(1, 2, 5) << "Type Test\n" << COL_CLEAR;
+  check_ConstraintEquals();
+  check_apply();
   return 0;
 }

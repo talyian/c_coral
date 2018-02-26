@@ -122,15 +122,33 @@ public:
 
   void AddConstraint(std::string termname, Constraint * c) {
     if (termnames.find(termname) == termnames.end()) {
-      std::cerr << "not found " << termname << "\n"; return; }
+      std::cerr << "not found " << termname << "\n";
+      exit(3);
+      return;
+    }
     auto term = termnames[termname];
+    if (!term) {
+      std::cerr << "Null term?!? " << termname << "\n";
+      exit(3);
+      return;
+    }
+    if (relations.find(c) != relations.end()) {
+      std::cerr << "constraint collision: " << termname << " :: " << c << "\n";
+      return;
+    }
+
+    std::cerr << COL_RGB(2, 5, 3) << "adding" << std::setw(24) << term
+              << " :: " << c << COL_CLEAR << "\n";
     relations[c] = term;
   }
 
   void RemoveConstraint(TypeTerm * tt, Constraint * cc) {
     auto it = relations.find(cc);
-    if (it == relations.end())
-      std::cerr << "could not remove " << cc << "\n";
+    // std::cerr << "Removing! " << tt << "\n";
+    if (it == relations.end()) {
+      std::cerr << "could not remove " << tt << " :: " << cc << "\n";
+      exit(1);
+    }
     else
       relations.erase(relations.find(cc));
   }
@@ -157,61 +175,74 @@ How Optimally this should work:
         //           : dynamic_cast<Type *>(constraint)
         // Action: for(rule: term->direct_dependents) -> replace(rule, term, constraint)
         // Action: sideboard RULE
-
+        // Conditions [Phase 3]: if Term is another Term:
+        // Action: for(rule: term->direct_dependents) -> replace(rule, term, constraint)
+        // Action: sideboard RULE
      */
     int old_changes = -1;
     while(changes != old_changes) {
     BEGIN:
       old_changes = changes;
+      // TODO: this should be a work queue instead of scanning the entire set
       for(auto && c : relations) {
         // [Apply] Rule
-        if (Call * cc = dynamic_cast<Call *>(c.first))
+        if (Call * cc = dynamic_cast<Call *>(c.first)) {
           if (Type * f = dynamic_cast<Type *>(cc->callee)) {
             Apply(c.second, cc, f);
             break;
           }
+        }
+        // [Substitution - Phase 1] Rule
+
         if (Type * cons = dynamic_cast<Type *>(c.first))
           if (SimpleType::of(cons)) {
-            std::cerr << c.second << ": " << cons << " is simple type \n";
-            for(auto &dependent: Dependents::of(this, c.second)) {
-              Substitute(dependent, c.second, c.first);
+            auto dependents = Dependents::of(this, c.second);
+            if (dependents.size()) {
+              std::cerr << "substituting " << COL_LIGHT_YELLOW << std::setw(17) << c.second
+                        << " :: " << cons << COL_CLEAR << "\n";
+              for(auto &dependent: dependents)
+                Substitute(dependent, c.second, cons);
+              // we unify all the constraints of c.second against c.first
+              // e.g. { a:: Int, a:: b} -> { b :: Int}
+              for(auto other_constraint: AllConstraints::of(this, c.second)) {
+                if (other_constraint == c.first) continue;
+                RemoveConstraint(c.second, other_constraint);
+                AddEquality(c.first, other_constraint);
+              }
+              // TODO: sideboard rule
+              RemoveConstraint(c.second, c.first);
+              break;
             }
-            // we unify all the constraints of c.second against c.first
-            // e.g. { a:: Int, a:: b} -> { b :: Int}
-            // for(auto other_constraint: AllConstraints::of(this, c.second)) {
-            //   AddEquality(c.first, other_constraint);
-            //   RemoveConstraint(c.second, other_constraint);
-            // }
+          }
+        // Substitution - Term
+        if (Term * cons = dynamic_cast<Term *>(c.first)) {
+          auto dependents = Dependents::of(this, c.second);
+          if (dependents.size()) {
+            std::cerr << "substituting " << std::setw(17) << c.second << " :: " << cons << "\n";
+            for(auto &dependent: dependents) {
+              std::cerr << COL_LIGHT_BLUE << c.first << "\n";
+              auto replaced = Substitute(dependent, c.second, c.first);
+              std::cerr << std::setw(30) << replaced << "\n";
+              // std::cerr << " replaced with " << replaced << COL_CLEAR << "\n";
+            }
+            // RemoveConstraint(c.second, c.first);
             break;
           }
-        // // [Substitute] Rule
-        // if (Type * cons = dynamic_cast<Type *>(c.first)) {
-        //   for(auto r: relations) {
-        //     auto ccc = changes;
-        //     auto out = Substitute(r.first, c.second, c.first);
-        //     if (out != r.first) {
-        //       AddConstraint(r.second->name, out);
-        //       RemoveConstraint(r.second, r.first);
-        //       break;
-        //     }
-        //   }
-        //   RemoveConstraint(c.second, c.first);
-        //   goto BEGIN;
-        // }
+        }
       }
-      std::cerr << changes - old_changes << "\n";
+      // std::cerr << changes - old_changes << "\n";
     }
   }
 
   void Apply(TypeTerm * t, Call * call, Type * callfunc) {
-    // std::cerr << COL_RGB(4, 5, 2) << call << " Applying\n" << COL_CLEAR;
+    // TODO: this can be implemented as a unify operation on two Funcs
     // get rid of free types in F's type signature
     Type * callee = (Type *)InstantiateFree::of(this, callfunc);
-
-    std::cerr << COL_RGB(4, 5, 2) << callee << " <-> " << callfunc << " Applying\n" << COL_CLEAR;
-    for(size_t i = 0; i < call->args.size(); i++) {
+    std::cerr << "applying" << COL_RGB(4, 5, 2) << std::setw(22) << t << " :: "
+              << std::setw(20) << callfunc << " -> "
+              << std::setw(20) << callee << COL_CLEAR << "\n";
+    for(size_t i = 0; i < call->args.size(); i++)
       AddEquality(call->args[i], callee->params[i]);
-    }
     AddEquality(term(t->name), callee->params.back());
     this->RemoveConstraint(t, call);
     changes++;
