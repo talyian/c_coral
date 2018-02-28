@@ -38,7 +38,11 @@ class Term : public Constraint {
   std::string name;
   TypeTerm * term = 0;
   Term(std::string name, TypeTerm * term): name(name), term(term) { }
-  std::string toString() { return name; }
+  Term(TypeTerm * term): name(term->name), term(term) { }
+  std::string toString() {
+    return "\033[38;5;128m" + name + "\033[0m";
+    return "\033[38;5;128m" + name + "(" + std::to_string((unsigned long)term) + ")" + "\033[0m";
+  }
   virtual void accept(ConstraintVisitor *);
 };
 
@@ -84,6 +88,7 @@ class TypeEqualityRight : public ConstraintVisitor {
   void visit(Term * c) VISIT
   void visit(Free * c) VISIT
   void visit(Call * c) VISIT
+#undef VISIT
 };
 
 template<class R>

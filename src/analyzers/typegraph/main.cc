@@ -110,13 +110,13 @@ void check_collatz() {
 void check_apply() {
   TypeGraph gg;
   Constraint * fcons = gg.type("Func", {gg.free(0), gg.free(0), gg.free(0)});
-  gg.AddTerm("f");
-  gg.AddTerm("res");
   gg.AddTerm("a");
   gg.AddTerm("b");
+  gg.AddTerm("f");
+  gg.AddTerm("res");
+  gg.AddConstraint("a", gg.type("Int32"));
   gg.AddConstraint("f", fcons);
   gg.AddConstraint("res", gg.call(fcons, {gg.term("a"), gg.term("b")}));
-  gg.AddConstraint("a", gg.type("Int32"));
 
   gg.Show(" [Application test]");
   gg.MarkAllDirty();
@@ -124,16 +124,36 @@ void check_apply() {
   gg.Show(" [Application test]");
 }
 
-void check_ConstraintEquals() {
-  auto a = new Type("asdf");
-  auto b = new Type("asdf", {new Type("Int32")});
-  auto out = ConstraintEqualsImpl::of(a, b);
-  std::cerr << a << (out ? " == " : " != ") << b << "\n";
+void test_Unify_Type_and_Var() {
+  TypeGraph gg;
+  auto fterm = gg.AddTerm("id");
+  auto gterm = gg.AddTerm("g");
+  auto hterm = gg.AddTerm("h");
+  auto jterm = gg.AddTerm("j");
+  gg.AddConstraint(fterm->name, new Type("Func", {new Free(1), new Free(1)}));
+  gg.AddConstraint("h", new Type("int"));
+  gg.AddConstraint(gterm->name, new Call(new Term(fterm), {new Term(hterm)}));
+  gg.AddConstraint("j", new Term(gterm));
+  gg.Show("Type/Term UnifyTest");
+  gg.Step();
+  gg.Show("Type/Term UnifyTest");
+}
+
+void test_ConstraintEquals() {
+  auto test = [] (Constraint * a, Constraint * b) {
+    auto out = ConstraintEqualsImpl::of(a, b);
+    std::cerr << a << (out ? " == " : " != ") << b << "\n";
+  };
+  test(new Type("asdf"), new Type("asdf"));
+  test(new Type("asdf"), new Type("asdf", {new Type("Int32")}));
+  test(new Type("asdf"), new Type("fedf"));
 }
 
 int main() {
   std::cout << "\033[3m" << COL_RGB(1, 2, 5) << "Type Test\n" << COL_CLEAR;
-  check_ConstraintEquals();
-  check_apply();
+  // test_ConstraintEquals();
+  // test_Unify_Type_and_Var();
+  // check_apply();
+  check_collatz();
   return 0;
 }

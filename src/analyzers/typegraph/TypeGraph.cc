@@ -1,35 +1,31 @@
+#include "utils/opts.hh"
 #include "TypeGraph.hh"
+#include "TypeGraphExtensions.hh"
 
-// void TypeUnify::equal(Term * tt, Free * ff) {
-//   graph->AddConstraint(tt->name, ff);
-// }
-
-// void TypeUnify::equal(Type * a, Free * b) {
-
-// }
 void TypeUnify::equal(Type * a, Term * b) {
-  graph->AddConstraint(b->name, a);
+  graph->AddConstraint(b->term, a);
+}
+
+void TypeUnify::equal(Term * b, Type * a) {
+  graph->AddConstraint(b->term, a);
 }
 
 void TypeUnify::equal(Term * a, Term * b) {
-  graph->AddConstraint(a->name, b);
+  graph->AddConstraint(a->term, b);
 }
 
 void TypeUnify::equal(Type * a, Type * b) {
-  if (a->name != b->name) return;
-  if (a->params.size() != b->params.size()) return;
-  // TODO
-  // for(size_t i = 0; i < a->params.size(); i++)
-  //   if (a->params[i]
+  if (!ConstraintEqualsImpl::of(a, b)) {
+    std::cerr << COL_LIGHT_RED << "Warning: Trying to unify " << a << ", " << b << COL_CLEAR << "\n";
+    return;
+  }
 }
-
-
-
 
 void TypeGraph::Show(std::string header) {
   std::cout << "------------------------------" << header << '\n';
   for(auto &&pair: relations) {
     std::cerr << COL_RGB(5, 2, 3) << std::setw(20) << pair.second
+              // << "(" << std::to_string((unsigned long)pair.second) << ")"
               << COL_RGB(3, 3, 3) << "  ::  "
               << pair.first << COL_CLEAR "\n";
   }
@@ -72,13 +68,13 @@ void TypeTermReplacer::visit(Call * c) {
 }
 
 void InstantiateFree::visit(Free * f) {
-  auto it = vars.find(f);
+  auto it = vars.find(f->v);
   if (it == vars.end()) {
     auto newterm = graph->AddTerm("T" + std::to_string(f->v));
-    vars[f] = graph->term(newterm->name);
-    vars[f]->term = newterm;
+    vars[f->v] = graph->term(newterm->name);
+    vars[f->v]->term = newterm;
   }
-  out = vars[f];
+  out = vars[f->v];
 }
 
 void InstantiateFree::visit(Type * t) {
@@ -114,5 +110,157 @@ AllConstraints::AllConstraints(TypeGraph * graph, TypeTerm * tt) {
   for(auto &pair : graph->GetRelations()) {
     if (pair.second == tt)
       out.insert(pair.first);
+  }
+}
+
+
+void TypeGraph::SideboardConstraint(TypeTerm * tt, Constraint * cc) {
+  // std::cerr << "side" << std::setw(16) << tt << " :: " << cc << "\n";
+}
+
+void TypeGraph::RemoveConstraint(TypeTerm * tt, Constraint * cc) {
+  auto it = relations.find(cc);
+  if (coral::opt::ShowTypeSolution)
+    std::cerr <<COL_LIGHT_RED << "Removing! " << tt << ":" << cc << COL_CLEAR << "\n";
+  if (it == relations.end()) {
+    std::cerr << "could not remove " << tt << " :: " << cc << "\n";
+    exit(1);
+  }
+  else
+    relations.erase(relations.find(cc));
+}
+
+
+void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
+  // TODO: this can be implemented as a unify operation on two Funcs
+  // get rid of free types in F's type signature
+  Type * callee = (Type *)InstantiateFree::of(this, callfunc);
+  if (coral::opt::ShowTypeSolution)
+    std::cerr << "applying" << COL_RGB(4, 5, 2) << std::setw(22) << t << " :: "
+              << std::setw(20) << callfunc << " -> "
+              << std::setw(20) << callee << COL_CLEAR << "\n";
+  for(size_t i = 0; i < call->args.size(); i++)
+    AddEquality(call->args[i], callee->params[i]);
+  AddEquality(term(t->name), callee->params.back());
+  this->RemoveConstraint(t, call);
+  changes++;
+}
+
+void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons) {
+  // std::cerr
+  //   << std::setw(30) << term << " :: " << cons
+  //   << " (" << Dependents::of(graph, term).size() << ")\n";
+
+  // [Apply] Rule
+  if (Call * cc = dynamic_cast<Call *>(cons)) {
+    if (Type * f = dynamic_cast<Type *>(cc->callee)) {
+      graph->Apply(term, cc, f);
+      return;
+    }
+  }
+
+  // [Substitution - Phase 1] Rule
+  if (Type * istype = dynamic_cast<Type *>(cons))
+    if (SimpleType::of(istype)) {
+      auto dependents = Dependents::of(graph, term);
+      if (dependents.size()) {
+        // std::cerr << "substituting " << COL_LIGHT_YELLOW << std::setw(17) << term
+        //           << " :: " << cons << COL_CLEAR << "\n";
+        for(auto &dependent: dependents)
+          graph->Substitute(dependent, term, cons);
+        // TODO: sideboard rule
+        graph->SideboardConstraint(term, cons);
+        return;
+      }
+    }
+
+  // Substitution - Term
+  if (Term * isterm = dynamic_cast<Term *>(cons)) {
+    auto dependents = Dependents::of(graph, term);
+    if (dependents.size()) {
+      // std::cerr << "substituting " << std::setw(17) << term << " :: " << cons << "\n";
+      for(auto &dependent: dependents) {
+        TypeTerm * tt = graph->GetRelations()[dependent];
+        auto replaced = graph->Substitute(dependent, term, cons);
+        // std::cerr << "     subbed " << tt << ":" << dependent << " -> " << replaced << "\n";
+      }
+      // RemoveConstraint(c.second, c.first);
+      return;
+    }
+  }
+
+  // Unification - Terms and Simple Types
+  // if {a :: foo, a::bar, a::baz, a::Func[*T -> *T]}
+  auto shared_constraints = AllConstraints::of(graph, term);
+  if (shared_constraints.size() > 1) {
+    // first, make sure that we're not unifying calls (we have to apply them first)
+    auto skip_unify = false;
+    for(auto &c: shared_constraints)
+      if (dynamic_cast<Call *>(c))
+        skip_unify = true;
+
+    if (!skip_unify) {
+      // to unify, first, we remove all the old constraints
+      // then we merge each constraint against a representative constraint.
+      auto representative = *shared_constraints.begin();
+      for(auto &c: shared_constraints) graph->RemoveConstraint(0, c);
+      for(auto &c: shared_constraints)
+        if (c != representative)
+          graph->AddEquality(c, representative);
+    }
+  }
+END_UNIFY:
+  return;
+}
+
+void TypeGraph::Step() {
+  /*
+    How Optimally this should work:
+
+    while RULE = (Term,Constraint) = pop_work_queue():
+    if [apply] on term:
+    // Conditions: Term is a Call(Func[T])
+    // Action: we create new (Term,Constraints) for each parameter and retval
+    // Action: we remove RULE
+    if [substitute] on term:
+    // Conditions [Phase 1]: if Term is a complete type (i.e. no terms, frees, calls)
+    // Conditions [Phase 2]: if Term is a non-recursive type (with frees and terms)
+    //           : !constraint->recursive_refs->contains(term)
+    //           : dynamic_cast<Type *>(constraint)
+    // Action: for(rule: term->direct_dependents) -> replace(rule, term, constraint)
+    // Action: sideboard RULE
+    // Conditions [Phase 3]: if Term is another Term:
+    // Action: for(rule: term->direct_dependents) -> replace(rule, term, constraint)
+    // Action: sideboard RULE
+    */
+  int old_changes = -1;
+  while(changes != old_changes) {
+    old_changes = changes;
+    // TODO: this should be a work queue instead of scanning the entire set each loop
+    for(auto && c : relations) {
+      StepSingleConstraint(this, c.second, c.first);
+      // Show("--");
+      // getchar();
+      if (changes != old_changes) break;
+    }
+
+    // std::cerr << changes - old_changes << "\n";
+  }
+}
+
+void DuplicateConstraint::visit(Type * c)  { out = new Type(c->name, c->params); }
+void DuplicateConstraint::visit(Term * c) { out = new Term(c->term); }
+void DuplicateConstraint::visit(Free * c) { out = new Free(c->v); }
+void DuplicateConstraint::visit(Call * c) { out = new Call(c->callee, c->args); }
+
+void TypeGraph::AddConstraint(TypeTerm * term, Constraint * c) {
+  if (coral::opt::ShowTypeSolution)
+    std::cerr
+      << COL_RGB(2, 5, 3) << "adding" << std::setw(24) << term << " :: " << c << COL_CLEAR << "\n";
+  changes++;
+  if (relations.find(c) != relations.end()) {
+    relations[DuplicateConstraint(this, c).out] = term;
+  } else {
+    relations[c] = term;
   }
 }
