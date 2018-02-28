@@ -1,5 +1,0 @@
-namespace coral {
-  namespace analyzers {
-
-  }
-}

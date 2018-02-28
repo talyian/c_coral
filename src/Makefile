@@ -34,7 +34,6 @@ sdl: tests/cases/wip.2.cc
 
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/utils/ansicolor.o ${BUILD}/utils/opts.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
-INFERENCE=${BUILD}/analyzers/inference/ObjectModel.o ${BUILD}/analyzers/inference/Environment.o ${BUILD}/analyzers/inference/Application.o ${BUILD}/analyzers/inference/Deduplication.o ${BUILD}/analyzers/inference/Substitution.o ${BUILD}/analyzers/inference/Builder.o
 ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${INFERENCE} ${BUILD}/analyzers/typegraph/TypeGraph.o ${BUILD}/analyzers/typegraph/constraint.o
 
 
@@ -68,15 +67,18 @@ parser/bisonParser.tab.cc: parser/bisonParser.yy
 # # # Autodeps # # #
 ${BUILD}/%.o: %.cc
 	@mkdir -p $(dir $@)
-	${CC} -MM -o $@.d -MT '$@ $@.d' $<
+	${CC} -MM -o $@.d -MT '$@' $<
+	echo "$@.d: $<" >> $@.d
 	${CC} -c -g -o $@ $<
 ${BUILD}/tests/runner/%.o: tests/runner/%.cc
 	@mkdir -p $(dir $@)
-	${LLVM_CC} -MM -o $@.d -MT '$@ $@.d' $<
+	${LLVM_CC} -MM -o $@.d -MT '$@' $<
+	echo "$@.d: $<" >> $@.d
 	${LLVM_CC} -c -g -o $@ $<
 ${BUILD}/codegen/%.o: codegen/%.cc
 	@mkdir -p $(dir $@)
-	${LLVM_CC} -MM -o $@.d -MT '$@ $@.d' $<
+	${LLVM_CC} -MM -o $@.d -MT '$@' $<
+	echo "$@.d: $<" >> $@.d
 	${LLVM_CC} -c -g -o $@ $<
 
 -include ${BUILD}/**/*.d

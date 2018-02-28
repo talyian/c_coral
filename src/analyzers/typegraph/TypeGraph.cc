@@ -128,6 +128,7 @@ void TypeGraph::RemoveConstraint(TypeTerm * tt, Constraint * cc) {
   }
   else
     relations.erase(relations.find(cc));
+  changes++;
 }
 
 
@@ -150,7 +151,6 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
   // std::cerr
   //   << std::setw(30) << term << " :: " << cons
   //   << " (" << Dependents::of(graph, term).size() << ")\n";
-
   // [Apply] Rule
   if (Call * cc = dynamic_cast<Call *>(cons)) {
     if (Type * f = dynamic_cast<Type *>(cc->callee)) {
@@ -210,6 +210,8 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
     }
   }
 END_UNIFY:
+
+  // TODO sometimes a term only appears on the right hand side.
   return;
 }
 
@@ -239,9 +241,11 @@ void TypeGraph::Step() {
     // TODO: this should be a work queue instead of scanning the entire set each loop
     for(auto && c : relations) {
       StepSingleConstraint(this, c.second, c.first);
-      // Show("--");
-      // getchar();
-      if (changes != old_changes) break;
+      if (changes != old_changes) {
+        Show("--");
+        getchar();
+        break;
+      }
     }
 
     // std::cerr << changes - old_changes << "\n";

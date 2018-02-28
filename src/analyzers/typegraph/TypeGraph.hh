@@ -1,4 +1,5 @@
 #pragma once
+#include "core/type.hh"
 #include "utils/ansicolor.hh"
 #include "analyzers/typegraph/constraint.hh"
 #include <memory>
@@ -103,8 +104,26 @@ private:
   std::vector<std::unique_ptr<Constraint>> constraintStore;
   // std::set<std::pair<TypeTerm *, Constraint*>> relations;
   std::map<Constraint *, TypeTerm *> relations;
+  std::map<coral::ast::BaseExpr *, TypeTerm *> expr_terms;
 public:
-  TypeTerm * AddTerm(std::string name) {
+
+  TypeTerm * FindTerm(coral::ast::BaseExpr * expr) {
+    if (expr_terms.find(expr) == expr_terms.end()) return 0;
+    return expr_terms[expr];
+  }
+
+  TypeTerm * AddTerm(std::string name, coral::ast::BaseExpr * expr) {
+    auto term = AddTerm(name);
+    term->expr = expr;
+    expr_terms[expr] = term;
+    return term;
+  }
+  TypeTerm * AddTerm(std::string _name) {
+    auto name = _name;
+    int i = 0;
+    while (termnames.find(name) != termnames.end()) {
+      name = _name + "." + std::to_string(++i);
+    }
     terms.emplace_back(new TypeTerm(name));
     return termnames[name] = terms.back().get();
   }
@@ -118,6 +137,12 @@ public:
   Call * call(Constraint * callee, std::vector<Constraint *> v) {
     return addcons(new Call(callee, v)); }
   Term * term(std::string name) { return addcons(new Term(name, termnames[name])); }
+  Term * term(TypeTerm * t) { return addcons(new Term(t->name, t)); }
+  ::Type * type(coral::type::Type * ct) {
+    auto ret = new ::Type(ct->name);
+    for(auto &p : ct->params) ret->params.push_back(type(&p));
+    return ret;
+  }
 
   void AddConstraint(std::string termname, Constraint * c) {
     AddConstraint(termnames[termname], c);

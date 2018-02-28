@@ -1,5 +1,7 @@
 #pragma once
 #include "utils/ansicolor.hh"
+#include "core/expr.hh"
+
 #include <memory>
 #include <vector>
 #include <string>
@@ -9,6 +11,7 @@
 class TypeTerm {
 public:
   std::string name;
+  coral::ast::BaseExpr * expr;
   TypeTerm(std::string name) : name(name) { }
 };
 
