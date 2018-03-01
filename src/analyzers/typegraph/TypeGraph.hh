@@ -186,7 +186,3 @@ public:
     new TypeEqualityWrapper<TypeUnify *>(&teq, a, b);
   }
 };
-
-class ResolvePass {
-
-};
