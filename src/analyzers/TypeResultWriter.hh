@@ -52,6 +52,7 @@ namespace coral {
         // std::cout << COL_GREEN << std::setw(25) << "def: " << d->name << " :: "
         //           << current_term << COL_CLEAR << "\n";
       }
+      void visit(ast::Extern * l) { }
       void visit(ast::Let * l) {
         if (!current_term) return;
         // std::cout << COL_GREEN << std::setw(25) << "let: " << l->var->name << " :: "

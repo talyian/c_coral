@@ -1,12 +1,17 @@
 # Strings in Coral
 
-type String:
-   func __index
+# A wrapper around a natively allocated string
+# We do not manage its memory
+type CString:
+  buf: Ptr
+  length: Int32
+  func new(buf):
+    this.buf = buf
+    this.length = strlen buf
 
-type CString: 0
-
-type ByteString: 0
-
-type String: 0
-
-type Encoding: 0
+# type String:
+#    func new(
+# type CString: 0
+# type ByteString: 0
+# type String: 0
+# type Encoding: 0

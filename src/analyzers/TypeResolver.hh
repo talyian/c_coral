@@ -138,6 +138,10 @@ namespace coral {
           std::cerr << "Warning: term not found for set: " << s->var->name << "\n";
         out = gg.AddTerm("set", s);
       }
+      void visit(ast::Extern * e) {
+        out = gg.AddTerm(e->name, e);
+        gg.AddConstraint(out, gg.type(e->type.get()));
+      }
     };
   }
 }

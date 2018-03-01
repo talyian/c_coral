@@ -1,0 +1,17 @@
+import string
+import iterable
+import regex
+
+let matchSeq = regex.matches("the quick brown fox", r"\w+")
+
+let boolValue = regex.isMatch("foo", r"\w+")
+
+let replaced = regex.replace(
+  "the quick brown fox jumps over the lazy dog",
+  r"\b([^a-e]*)(\w+)",
+  r"\{2}{1}ay")
+
+# let replace2 = regex.replace(
+#   "the quick brown fox jumps over the lazy dog",
+#   r"\b([^a-e]*)(\w+)",
+#   x => x[2] + x[1] + (if 1 "ay" else "yay"))

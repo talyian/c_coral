@@ -12,7 +12,7 @@
   F(Block) F(Var) F(Call)                                       \
   F(StringLiteral) F(IntLiteral) F(FloatLiteral)                \
   F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member)  \
-  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set)
+  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Struct)
 
 #define MAP_ALL_EXPRS(F) F(BaseExpr) MAP_EXPRS(F)
 
@@ -272,13 +272,15 @@ namespace coral {
 	public:
 	  std::string name;
 	  std::string linkage;
-	  coral::Type type;
-	  Extern(std::string name, coral::Type type) : name(name), type(type) { }
+      std::unique_ptr<coral::Type> type;
+	  Extern(std::string name, coral::Type * type) : name(name), type(type) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 
 	class Import : public Statement {
  	public:
+      std::vector<std::string> path;
+      Import(std::vector<std::string> import_path) : path(import_path) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 
@@ -288,5 +290,12 @@ namespace coral {
 	  While(BaseExpr* cond, BaseExpr * body) : cond(cond), body(body) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
+
+    class Struct : public Statement {
+    public:
+      std::string name;
+      unique_ptr<BaseExpr> body;
+      Struct(std::string name, Block * body): name(name), body(body) { }
+    };
   }
 }

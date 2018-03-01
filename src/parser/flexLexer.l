@@ -30,6 +30,7 @@ UNICODE {U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
 [-+*/=><$!|^%@]+         { STRLVAL; return coral::Token::GetOperator(yytext); }
 [ ]                      { }
 \n[ \t]*                 { yytext[0] = ' '; return TOK::NEWLINE; }
+[.][.][.]                { return TOK::ELLIPSIS; }
 .                        { return yytext[0]; }
 <<EOF>>                  { return TOK::ENDOFFILE; }
 

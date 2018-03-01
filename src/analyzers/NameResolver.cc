@@ -16,6 +16,10 @@ void analyzers::NameResolver::visit(ast::Let * e) {
   info[e->var->name].expr = e;
   info[e->var->name].kind = ast::ExprTypeKind::LetKind;
 }
+void analyzers::NameResolver::visit(ast::Extern * x) {
+  info[x->name].expr = x;
+  info[x->name].kind = ast::ExprTypeKind::ExternKind;
+}
 void analyzers::NameResolver::visit(ast::BinOp * m) { m->lhs->accept(this); m->rhs->accept(this); }
 void analyzers::NameResolver::visit(ast::Return * m) { if (m->val) m->val->accept(this); }
 void analyzers::NameResolver::visit(ast::Call * c) {

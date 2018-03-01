@@ -23,16 +23,18 @@
 %token IF ELIF ELSE
 %token WHILE CONTINUE MATCH
 %token RETURN
+%token ELLIPSIS C_EXTERN IMPORT
+%token TYPE
 %token ENDOFFILE 0
 
 // TODO split between Statements and Exprs
 %type <coral::ast::BaseExpr *> Expr Atom Expr2 Expr3 Expr4
-%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Argument
+%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Argument StructLine
 %type <coral::ast::IfExpr *> IfStatement
-%type <coral::ast::Block *> StatementBlock
+%type <coral::ast::Block *> StatementBlock StructBlock
 %type <coral::ast::TupleLiteral *> Tuple
-%type <std::vector<coral::ast::BaseExpr *>> BlockLines ArgumentsListInner
-%type <std::vector<std::string>> IdentifierList
+%type <std::vector<coral::ast::BaseExpr *>> BlockLines ArgumentsListInner StructBlockLines
+%type <std::vector<std::string>> IdentifierList VarPath
 %type <coral::type::Type *> TypeDef
 %type <std::vector<coral::type::Type>> TypeDefList
 
@@ -90,14 +92,15 @@ Param : IDENTIFIER { $$ = new ast::Def($1, 0, 0); }
 
 TypeDef : IDENTIFIER { $$ = new coral::type::Type($1); }
 | IDENTIFIER '[' TypeDefList ']' { $$ = new coral::type::Type($1, $3); }
+| ELLIPSIS { $$ = new coral::type::Type("..."); }
 TypeDefList : TypeDef { $$.push_back(*$1); }
 | TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); }
-
 ParamsListInner : Param { $$.push_back($1); }
 | ParamsListInner ',' Param { $$ = $1; $$.push_back($3); }
 
 ModuleLine
 : COMMENT { $$ = new ast::Comment($1); }
+| C_EXTERN GeneralIdentifier ':' TypeDef { $$ = new ast::Extern($2, $4); }
 | Expr { $$ = $1; }
 | Function { $$ = $1; }
 | LET GeneralIdentifier OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
@@ -108,7 +111,8 @@ ModuleLine
 | IfStatement { $$ = $1; }
 | WHILE Expr StatementBlock { $$ = new ast::While($2, $3); }
 | RETURN Expr { $$ = new ast::Return($2); }
-
+| TYPE GeneralIdentifier StructBlock { $$ = new ast::Struct($2, $3); }
+| IMPORT VarPath { $$ = new ast::Import($2); }
 Function
 : FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type(""), $4, $6); }
 | FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' StatementBlock {
@@ -120,6 +124,7 @@ Function
   $$ = new ast::Func($4, $6, $8, 0); }
 | '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ')' {
   $$ = new ast::Func($4, $6, {}, 0); }
+
 ForLoop
 : FOR GeneralIdentifier IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
 | FOR IdentifierList IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }
@@ -131,5 +136,17 @@ IfStatement
 
 IdentifierList : GeneralIdentifier { $$.push_back($1); }
 | IdentifierList ',' GeneralIdentifier { $$ = $1; $$.push_back($3); }
+
+VarPath
+: GeneralIdentifier { $$.push_back($1); }
+| VarPath '.' GeneralIdentifier { $$ = $1; $$.push_back($3); }
+
+StructBlock : ':' NEWLINE INDENT StructBlockLines DEDENT { $$ = new ast::Block($4); }
+StructBlockLines : { }
+| StructBlockLines StructLine NEWLINE { $$ = $1; $$.push_back($2); }
+| StructBlockLines NEWLINE { $$ = $1; $$.push_back(0); }
+StructLine
+: GeneralIdentifier ':' TypeDef { $$ = new ast::Def($1, $3, 0); }
+| Function { $$ = $1; }
 
 %%

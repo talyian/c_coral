@@ -13,7 +13,7 @@ namespace coral {
   const auto COL_TYPE = COL_YELLOW;
 
   void coral::PrettyPrinter::visit(ast::Extern * e) {
-	cout << IND() << "extern 'C' " << e->name << " : " << e->type.name << END();
+	cout << IND() << "extern 'C' " << e->name << " : " << *(e->type) << END();
   }
 
   void PrettyPrinter::visit(ast::Func * e) {

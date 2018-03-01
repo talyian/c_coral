@@ -38,8 +38,12 @@ namespace coral {
 		s == "while" ? TOK::WHILE :
 		s == "continue" ? TOK::CONTINUE :
 		s == "match" ? TOK::MATCH:
+		s == "type" ? TOK::TYPE:
+		s == "c_extern" ? TOK::C_EXTERN:
+        s == "import" ? TOK::IMPORT:
 		0;
 	}
+
 	static std::string show(int token, char * text) {
 	  return token < 256 ? std::string(1, (char)token) :
 		token == TOK::NEWLINE ? "NEWLINE" :

@@ -1,6 +1,7 @@
 #include "utils/opts.hh"
 #include "TypeGraph.hh"
 #include "TypeGraphExtensions.hh"
+#include <algorithm>
 
 void TypeUnify::equal(Type * a, Term * b) {
   graph->AddConstraint(b->term, a);
@@ -135,13 +136,18 @@ void TypeGraph::RemoveConstraint(TypeTerm * tt, Constraint * cc) {
 void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
   // TODO: this can be implemented as a unify operation on two Funcs
   // get rid of free types in F's type signature
+
   Type * callee = (Type *)InstantiateFree::of(this, callfunc);
   if (coral::opt::ShowTypeSolution)
     std::cerr << "applying" << COL_RGB(4, 5, 2) << std::setw(22) << t << " :: "
               << std::setw(20) << callfunc << " -> "
               << std::setw(20) << callee << COL_CLEAR << "\n";
-  for(size_t i = 0; i < call->args.size(); i++)
+  for(size_t i = 0; i < call->args.size(); i++) {
+    if (Type * t = dynamic_cast<Type *>(callee->params[i]))
+      if (t->name == "...")
+        break;
     AddEquality(call->args[i], callee->params[i]);
+  }
   AddEquality(term(t->name), callee->params.back());
   this->RemoveConstraint(t, call);
   changes++;
