@@ -7,8 +7,6 @@ BIN=bin
 TESTFILE?=tests/cases/wip.coral
 .SUFFIXES:
 
-typetest: ${BIN}/typetest
-	$< ${TESTFILE}
 run: ${BIN}/coral-jit
 	$< ${TESTFILE}
 debug: ${BIN}/coral-jit
@@ -28,14 +26,10 @@ types: ${BIN}/coral-types
 clean:
 	@rm -r ${BIN} ${BUILD} parser/flexLexer.cc parser/bisonParser.tab.cc parser/bisonParser.tab.hh
 
-sdl: tests/cases/wip.2.cc
-	clang++-5.0 -Wall -std=c++11 -o sdl tests/cases/wip.2.cc -lSDL2
-	./sdl
-
 COREFILES=${BUILD}/core/expr.o  ${BUILD}/core/prettyprinter.o ${BUILD}/utils/ansicolor.o ${BUILD}/utils/opts.o
 PARSERFILES=${BUILD}/parser/lexer.o ${BUILD}/parser/bisonParser.tab.o  ${BUILD}/parser/flexLexer.o ${BUILD}/parser/parser.o
-ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${INFERENCE} ${BUILD}/analyzers/typegraph/TypeGraph.o ${BUILD}/analyzers/typegraph/constraint.o
-
+INFERENCE=${BUILD}/analyzers/typegraph/TypeGraph.o ${BUILD}/analyzers/typegraph/constraint.o
+ANALYZERS=${BUILD}/analyzers/NameResolver.o ${BUILD}/analyzers/ReturnInserter.o ${BUILD}/analyzers/TypeResolver.o ${INFERENCE}
 
 CODEGEN=${BUILD}/codegen/codegen.o ${BUILD}/codegen/LLVMFunctionCompiler.o  ${BUILD}/codegen/LLVMModuleCompiler.o ${BUILD}/codegen/LLVMJit.o
 ${BIN}/coral-core: ${COREFILES} ${BUILD}/core/main_core.o
@@ -45,14 +39,12 @@ ${BIN}/coral-token: ${COREFILES} ${PARSERFILES} ${BUILD}/parser/main_tokens.o
 ${BIN}/coral-parse: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/parser/main_parse.o
 	${LINKCMD}
 ${BIN}/coral-jit: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_jit.o
-	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl -lSDL2
+	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
 ${BIN}/coralc: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/codegen/main_compile.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -rdynamic -lpcre2-8 -ldl
 ${BIN}/coral-test: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${CODEGEN} ${BUILD}/tests/runner/main_test.o ${BUILD}/tests/runner/codegen.o ${BUILD}/tests/runner/parser.o
 	${LINKCMD} $(shell llvm-config-5.0 --libs) -ldl -rdynamic -lpcre2-8
 ${BIN}/coral-types: ${COREFILES} ${BUILD}/core/type.o
-	${LINKCMD}
-${BIN}/typetest: ${COREFILES} ${PARSERFILES} ${ANALYZERS} ${BUILD}/analyzers/typegraph/main.o
 	${LINKCMD}
 
 # # # Bison # # #
