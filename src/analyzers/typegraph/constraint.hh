@@ -34,6 +34,7 @@ class Constraint {
 public:
   virtual std::string toString() { return "constraint"; }
   virtual void accept(ConstraintVisitor *);
+  virtual ~Constraint() { }
 };
 
 class Term : public Constraint {
@@ -102,7 +103,7 @@ class TypeEqualityWrapper : public ConstraintVisitor {
 
   TypeEqualityWrapper(R res, Constraint * c, Constraint * d) : res(res), c(c), d(d) {
     c->accept(this); }
-#define VISIT { d->accept(new TypeEqualityRight<R, decltype(c)>(res, c)); }
+#define VISIT { TypeEqualityRight<R, decltype(c)> ter(res, c); d->accept(&ter); }
   void visit(Type * c) VISIT
   void visit(Term * c) VISIT
   void visit(Free * c) VISIT

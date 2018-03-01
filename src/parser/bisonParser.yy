@@ -93,8 +93,8 @@ Param : IDENTIFIER { $$ = new ast::Def($1, 0, 0); }
 TypeDef : IDENTIFIER { $$ = new coral::type::Type($1); }
 | IDENTIFIER '[' TypeDefList ']' { $$ = new coral::type::Type($1, $3); }
 | ELLIPSIS { $$ = new coral::type::Type("..."); }
-TypeDefList : TypeDef { $$.push_back(*$1); }
-| TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); }
+TypeDefList : TypeDef { $$.push_back(*$1); delete $1; }
+| TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); delete $3; }
 ParamsListInner : Param { $$.push_back($1); }
 | ParamsListInner ',' Param { $$ = $1; $$.push_back($3); }
 

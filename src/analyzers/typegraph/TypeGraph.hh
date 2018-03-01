@@ -137,7 +137,10 @@ public:
   }
 
   template <class T>
-  T * addcons(T * p) { constraintStore.emplace_back(p); return p; }
+  T * addcons(T * p) {
+    constraintStore.push_back(std::unique_ptr<Constraint>(p));
+    return p;
+  }
   Type * type(std::string name, std::vector<Constraint *> v) {
     return addcons(new Type(name, v)); }
   Type * type(std::string name) { return addcons(new Type(name)); }
@@ -149,7 +152,7 @@ public:
   ::Type * type(coral::type::Type * ct) {
     auto ret = new ::Type(ct->name);
     for(auto &p : ct->params) ret->params.push_back(type(&p));
-    return ret;
+    return addcons(ret);
   }
 
   void AddConstraint(std::string termname, Constraint * c) {
@@ -183,6 +186,6 @@ public:
   void MarkAllDirty() { }
   void AddEquality(Constraint * a, Constraint * b) {
     TypeUnify teq(this);
-    new TypeEqualityWrapper<TypeUnify *>(&teq, a, b);
+    TypeEqualityWrapper<TypeUnify *>(&teq, a, b);
   }
 };

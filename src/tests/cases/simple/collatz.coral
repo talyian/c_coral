@@ -1,3 +1,6 @@
+c_extern printf: Func[Ptr, ..., Void]
+
+# Collatz function
 func collatz(n, m):
   if n = 1: m
   else if n % 2 = 0: collatz(n / 2, m + 1)
@@ -6,7 +9,6 @@ func collatz(n, m):
 func collatz_loop(a, b):
   if a = b:
     printf("done\n")
-    0
   else:
     printf("collatz %d = %d\n", a, collatz(a, 0))
     collatz_loop(a + 1, b)

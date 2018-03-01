@@ -291,10 +291,10 @@ void TypeGraph::Step() {
   }
 }
 
-void DuplicateConstraint::visit(Type * c)  { out = new Type(c->name, c->params); }
-void DuplicateConstraint::visit(Term * c) { out = new Term(c->term); }
-void DuplicateConstraint::visit(Free * c) { out = new Free(c->v); }
-void DuplicateConstraint::visit(Call * c) { out = new Call(c->callee, c->args); }
+void DuplicateConstraint::visit(Type * c)  { out = graph->type(c->name, c->params); }
+void DuplicateConstraint::visit(Term * c) { out = graph->term(c->term); }
+void DuplicateConstraint::visit(Free * c) { out = graph->free(c->v); }
+void DuplicateConstraint::visit(Call * c) { out = graph->call(c->callee, c->args); }
 
 void TypeGraph::AddConstraint(TypeTerm * term, Constraint * c) {
   if (coral::opt::ShowTypeSolution)
