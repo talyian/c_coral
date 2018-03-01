@@ -1,6 +1,6 @@
 LINKCMD=mkdir -p $(dir $@); clang++-5.0 -o $@ $^
-CC=clang++-5.0 -std=c++11 -Wall -Wextra -I.
-LLVM_CC=${CC} -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
+CC=clang++-5.0 -std=c++11 -Wall -Wextra -I. -O3
+LLVM_CC=${CC} -Wno-unused-parameter -Wno-unknown-warning-option -Wno-unused-command-line-argument $(shell llvm-config-5.0 --cxxflags)
 BUILD=obj
 BIN=bin
 #TESTFILE?=tests/cases/features/pcre.coral

@@ -36,9 +36,19 @@ namespace coral {
           p->accept(this);
           constraint->params.push_back(gg.term(out));
         }
-        f->body->accept(this);
-        constraint->params.push_back(gg.term(out));
+        if (f->body) {
+          f->body->accept(this);
+          constraint->params.push_back(gg.term(out));
+        }
+        else if (f->type) {
+          auto t = gg.type(f->type.get());
+          constraint->params = t->params;
+        } else {
+          constraint->params.push_back(gg.free(100));
+        }
+
         gg.AddConstraint(term, constraint);
+        out = term;
       }
 
       void visit(ast::IfExpr * ifexpr) {
@@ -82,6 +92,7 @@ namespace coral {
       }
       void visit(ast::IntLiteral * op) {
         out = gg.AddTerm("i" + (op->value), op);
+        gg.AddConstraint(out, gg.type("Int32"));
       }
       void visit(ast::Call * call) {
         call->callee->accept(this);
@@ -101,7 +112,31 @@ namespace coral {
       }
       void visit(ast::StringLiteral * s) {
         out = gg.AddTerm("str." + s->value, s);
-        gg.AddConstraint(out, gg.type("String"));
+        gg.AddConstraint(out, gg.type("Ptr"));
+      }
+      void visit(ast::Let * l) {
+        l->value->accept(this);
+        auto valueterm = out;
+        out = gg.AddTerm(l->var->name, l);
+        if (l->type.name.size())
+          gg.AddConstraint(out, gg.type(&l->type));
+        gg.AddConstraint(out, gg.term(valueterm));
+      }
+      void visit(ast::While * w) {
+        w->body->accept(this);
+        w->cond->accept(this);
+        gg.AddConstraint(out, gg.type("Bool"));
+        out = gg.AddTerm("while", w);
+      }
+      void visit(ast::Set * s) {
+        s->value->accept(this);
+        auto valueterm = out;
+        auto term = gg.FindTerm(s->var->expr);
+        if (term)
+          gg.AddConstraint(term, gg.term(valueterm));
+        else
+          std::cerr << "Warning: term not found for set: " << s->var->name << "\n";
+        out = gg.AddTerm("set", s);
       }
     };
   }

@@ -104,8 +104,16 @@ private:
   std::vector<std::unique_ptr<Constraint>> constraintStore;
   // std::set<std::pair<TypeTerm *, Constraint*>> relations;
   std::map<Constraint *, TypeTerm *> relations;
-  std::map<coral::ast::BaseExpr *, TypeTerm *> expr_terms;
 public:
+  std::map<coral::ast::BaseExpr *, TypeTerm *> expr_terms;
+
+  Type * GetTypeConstraintForTerm(TypeTerm * term) {
+    for(auto & pair: relations)
+      if (Type * tt = dynamic_cast<Type *>(pair.first))
+        if (pair.second == term)
+          return tt;
+    return 0;
+  }
 
   TypeTerm * FindTerm(coral::ast::BaseExpr * expr) {
     if (expr_terms.find(expr) == expr_terms.end()) return 0;

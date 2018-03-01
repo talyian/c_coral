@@ -1,0 +1,18 @@
+# Sokoban AI
+
+# let board = Array2D.init(8, 8, Empty)
+# set board.[3, 3] = Black
+# set board.[4, 4] = Black
+# set board.[3, 4] = White
+# set board.[4, 3] = White
+
+func show (board):
+  for i in 0..8:
+    for j in 0..8:
+      printf "⚫"
+      # match board.[i, j]:
+      #   Black: printf "⚫"
+      #   White: printf "⚪"
+      #   _: printfn " "
+
+show board

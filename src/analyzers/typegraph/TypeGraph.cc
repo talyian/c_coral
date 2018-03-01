@@ -207,11 +207,45 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
       for(auto &c: shared_constraints)
         if (c != representative)
           graph->AddEquality(c, representative);
+      return;
     }
   }
-END_UNIFY:
 
-  // TODO sometimes a term only appears on the right hand side.
+  // Sometimes a term appears on the right hand side multiple times.
+  // In this case, we can remove all those constraints and replace with
+  // unifying all the remaining terms against a representative
+  // (they should all be equivalent)
+  if (Term * right_term = dynamic_cast<Term *>(cons)) {
+    auto shared_terms = AllTerms::of(graph, right_term);
+    if (shared_terms.size() > 1) {
+      auto representative = *shared_terms.begin();
+      for(auto &&pair: shared_terms) graph->RemoveConstraint(pair.first, pair.second);
+      for(auto &&pair: shared_terms)
+        if (pair.first != representative.first)
+          graph->AddEquality(graph->term(pair.first), graph->term(representative.first));
+      return;
+    }
+  }
+
+  // If we're Calling a term, we might as well substitute its definition into the
+  // call.
+
+  if (Type * func = dynamic_cast<Type *>(cons)) {
+    if (func->name == "Func") {
+      auto dependents = Dependents::of(graph, term);
+      for(auto &dep: dependents) {
+        if (Call * call = dynamic_cast<Call *>(dep)) {
+          if (coral::opt::ShowTypeSolution)
+            std::cerr
+              << COL_BLUE << call->callee << " "
+              << (call->callee == func) << "   call \n" << COL_CLEAR;
+          if (ConstraintEqualsImpl::of(call->callee, graph->term(term))) {
+            graph->Substitute(call, term, cons);
+          }
+        }
+      }
+    }
+  }
   return;
 }
 
@@ -242,12 +276,11 @@ void TypeGraph::Step() {
     for(auto && c : relations) {
       StepSingleConstraint(this, c.second, c.first);
       if (changes != old_changes) {
-        Show("--");
-        getchar();
+      //   Show("--");
+      //   getchar();
         break;
       }
     }
-
     // std::cerr << changes - old_changes << "\n";
   }
 }

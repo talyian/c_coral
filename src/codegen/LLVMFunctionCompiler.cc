@@ -36,6 +36,9 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
     }
     return LLVMStructTypeInContext(context, params, t->params.size(), true);
   }
+  if (t->name == "String") {
+    return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
+  }
   std::cerr << COL_LIGHT_BLUE << "Warning: Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
   return LLVMInt64TypeInContext(context);
 }
