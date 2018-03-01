@@ -5,6 +5,7 @@
 A toy LLVM-based language.  
 A Kaleidoscope tutorial project that gained sentience.  
 A Playground to experiment with language features.  
+This is not https://corallanguage.org/ ! -- I need a new name
 
 ## Show me some Code!
 
