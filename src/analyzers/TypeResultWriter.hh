@@ -2,6 +2,7 @@
 
 namespace coral {
 
+  // changes a typegraph type back to a coral type
   coral::type::Type convert_Type(::Type * tt) {
     coral::type::Type f(tt->name);
     for(auto &p: tt->params) {
@@ -52,7 +53,7 @@ namespace coral {
         // std::cout << COL_GREEN << std::setw(25) << "def: " << d->name << " :: "
         //           << current_term << COL_CLEAR << "\n";
       }
-      void visit(ast::Extern * l) { }
+      void visit(ast::Extern *) { }
       void visit(ast::Let * l) {
         if (!current_term) return;
         // std::cout << COL_GREEN << std::setw(25) << "let: " << l->var->name << " :: "
@@ -61,6 +62,7 @@ namespace coral {
         if (t.name == "") return;
         l->type = t;
       }
+      void visit(ast::TupleLiteral * t) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(current_term->
     };
   }

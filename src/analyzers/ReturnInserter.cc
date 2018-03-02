@@ -28,7 +28,7 @@ namespace coral {
         return rr.out;
       }
 
-      void visit(ast::Comment * e) { }
+      void visit(ast::Comment *) { }
       void visit(ast::IfExpr * e) {
         if (!e->elsebody) { out = 0; return; }
         e->ifbody.reset(ReturnReplace::replace(e->ifbody.release()));
@@ -61,9 +61,9 @@ namespace coral {
       void visit(ast::BinOp * e) { out = new ast::Return(e); }
       void visit(ast::IntLiteral * e) { out = new ast::Return(e); }
       void visit(ast::StringLiteral * e) { out = new ast::Return(e); }
-      void visit(ast::While * e) { }
-      void visit(ast::ForExpr * e) { }
-      void visit(ast::Return * e) { }
+      void visit(ast::While *) { }
+      void visit(ast::ForExpr *) { }
+      void visit(ast::Return *) { }
     };
   }
 }

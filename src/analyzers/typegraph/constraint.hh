@@ -23,11 +23,11 @@ class Call;
 
 class ConstraintVisitor {
   public:
-  virtual void visit(Constraint * c) { std::cerr << "error!\n"; }
-  virtual void visit(Type * c) = 0;
-  virtual void visit(Term * c) = 0;
-  virtual void visit(Free * c) = 0;
-  virtual void visit(Call * c) = 0;
+  virtual void visit(Constraint *) { std::cerr << "error!\n"; }
+  virtual void visit(Type *) = 0;
+  virtual void visit(Term *) = 0;
+  virtual void visit(Free *) = 0;
+  virtual void visit(Call *) = 0;
 };
 
 class Constraint {
@@ -116,7 +116,7 @@ class ConstraintEqualsImpl {
 public:
   static bool of(Constraint * a, Constraint * b);
   bool out = false;
-  void equal(Constraint * a, Constraint * b) { out = false; }
+  void equal(Constraint *, Constraint *) { out = false; }
   void equal(Free * a, Free * b);
   void equal(Term * a, Term * b);
   void equal(Type * a, Type * b);

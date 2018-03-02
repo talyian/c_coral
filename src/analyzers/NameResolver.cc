@@ -68,8 +68,11 @@ void analyzers::NameResolver::visit(ast::Member * w) {
 }
 
 void analyzers::NameResolver::visit(ast::Tuple * w) {
-
+  info[w->name].expr = w;
+  info[w->name].kind = ast::ExprTypeKind::TupleKind;
 }
-void analyzers::NameResolver::visit(ast::TupleLiteral * w) {
 
+void analyzers::NameResolver::visit(ast::TupleLiteral * w) {
+  for(auto &item:w->items)
+    item->accept(this);
 }

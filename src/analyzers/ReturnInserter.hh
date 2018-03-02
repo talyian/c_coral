@@ -16,12 +16,13 @@ namespace coral {
 	  ReturnInserter(ast::Module * m) : module(m) { visit(m); }
 	  virtual std::string visitorName() { return "ReturnInserter"; }
 
-	  void visit(ast::Module * m);
-	  void visit(ast::Func * f);
-	  void visit(ast::Block * m);
-	  void visit(ast::Comment * e) { }
-	  void visit(ast::Let * e) { }
-	  void visit(ast::Extern * e) { }
+	  void visit(ast::Module *);
+	  void visit(ast::Func *);
+	  void visit(ast::Block *);
+	  void visit(ast::Comment *) { }
+	  void visit(ast::Let *) { }
+	  void visit(ast::Extern *) { }
+      void visit(ast::Tuple *) { }
 	};
   }
 }

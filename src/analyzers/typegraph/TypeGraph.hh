@@ -92,9 +92,9 @@ public:
   bool out = true;
   SimpleType(Type * t) { t->accept(this); }
   void visit(Type * t) { for(auto &p: t->params) p->accept(this); }
-  void visit(Term * t) { out = false; }
-  void visit(Free * f) { }
-  void visit(Call * c) { out = false; }
+  void visit(Term *) { out = false; }
+  void visit(Free *) { }
+  void visit(Call *) { out = false; }
 };
 
 class TypeGraph {
