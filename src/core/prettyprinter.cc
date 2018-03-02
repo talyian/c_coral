@@ -192,6 +192,20 @@ namespace coral {
 	indent--;
   }
 
+  void PrettyPrinter::visit(ast::Tuple * t) {
+    cout << IND() << COL_KEYWORD << "type " << COL_TYPE;
+    cout << t->name << COL_NORMAL;
+    cout << " = {";
+    for(auto &field: t->fields) {
+      if (field->name.size())
+        cout << field->name << ":";
+      cout << COL_TYPE << *(field->type) << COL_NORMAL;
+      if (&field != &t->fields.back())
+        cout << ", ";
+    }
+    cout << "}" << END();
+  }
+
   PrettyPrinter::PrettyPrinter() {
 	indent = 0;
   }

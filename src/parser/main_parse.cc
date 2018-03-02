@@ -15,9 +15,9 @@ void showFile(const char * filename) {
 	auto parser = coralParseModule(filename);
 	auto module = (coral::ast::Module *)_coralModule(parser);
 	if (module) {
-	  coral::analyzers::NameResolver nri(module);
-	  coral::analyzers::TypeResolver tri(module);
-	  coral::analyzers::ReturnInserter ri(module);
+	  // coral::analyzers::NameResolver nri(module);
+	  // coral::analyzers::TypeResolver tri(module);
+	  // coral::analyzers::ReturnInserter ri(module);
 	  coral::PrettyPrinter::print(module);
 	}
 	coralDestroyModule(parser);

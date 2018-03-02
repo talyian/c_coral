@@ -66,3 +66,10 @@ void analyzers::NameResolver::visit(ast::While * w) {
 void analyzers::NameResolver::visit(ast::Member * w) {
   w->base->accept(this);
 }
+
+void analyzers::NameResolver::visit(ast::Tuple * w) {
+
+}
+void analyzers::NameResolver::visit(ast::TupleLiteral * w) {
+
+}

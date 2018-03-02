@@ -19,6 +19,10 @@ namespace coral {
     }
 
 	std::ostream & operator << (std::ostream &os, Type & tt)	{
+      if (tt.name == "Field") {
+        os << tt.params[0] << ":" << tt.params[1];
+        return os;
+      }
 	  os << tt.name;
 	  if (tt.params.size()) {
 		os << "[";
@@ -71,5 +75,24 @@ namespace coral {
 	  }
 	  return 0;
 	}
+
+    Tuple::Tuple(std::string name, std::vector<type::Type> fields) : name(name) {
+      int i = 0;
+      std::string item = "item";
+      for(auto &f: fields)
+        this->fields.emplace_back(new Def("", new type::Type(f), 0));
+    }
+
+    Tuple::Tuple(std::string name, std::vector<Def *> fields) : name(name) {
+      for(auto &f: fields) this->fields.emplace_back(f);
+    }
+
+    std::vector<Type> _defsToTypeArg(std::vector<Def *> defs) {
+      std::vector<Type> out;
+      for(auto &def: defs) {
+        out.push_back(type::Type { "Field", { type::Type { def->name }, *(def->type) } });
+      }
+      return out;
+    }
   }
 }

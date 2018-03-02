@@ -38,8 +38,8 @@
 %type <coral::type::Type *> TypeDef
 %type <std::vector<coral::type::Type>> TypeDefList
 
-%type <coral::ast::Def *> Param
-%type <std::vector<coral::ast::Def *>> ParamsListInner
+%type <coral::ast::Def *> Param NamedTypeDef
+%type <std::vector<coral::ast::Def *>> ParamsListInner NamedTypeDefList
 %type <std::string> GeneralIdentifier
 
 %%
@@ -73,7 +73,7 @@ Tuple : '(' ArgumentsListInner ')' { $$ = new ast::TupleLiteral($2); }
 Expr2 : Atom { $$ = $1; } // Expr2s can be unparenthesized in binary ops
 | Expr2 '.' IDENTIFIER { $$ = new ast::Member($1, $3); }
 | Expr2 Tuple { $$ = new ast::Call($1, $2); delete $2; }
-| Expr2 '(' ')' { $$ = new ast::Call($1, std::vector<ast::BaseExpr *>()); }
+| Expr2 '(' ')' { $$ = new ast::Call($1, {}); }
 | Expr2 Atom { $$ = new ast::Call($1, { $2 }); }
 Expr3 : Expr2 { $$ = $1; } | Tuple { $$ = $1; } | Expr3 OP2 Expr3 { $$ = new ast::BinOp($1, $2, $3); }
 Expr4 : Expr3 { $$ = $1; } | Expr4 OP3 Expr4 { $$ = new ast::BinOp($1, $2, $3); }
@@ -94,12 +94,12 @@ TypeDef
 : IDENTIFIER { $$ = new coral::type::Type($1); }
 | IDENTIFIER '[' TypeDefList ']' { $$ = new coral::type::Type($1, $3); }
 | ELLIPSIS { $$ = new coral::type::Type("..."); }
-| '{' TypeDefList '}' { $$ = 0; }
-| '{' NamedTypeDefList '}' { $$ = 0; }
-NamedTypeDef : GeneralIdentifier ':' TypeDef { }
+| '{' TypeDefList '}' { $$ = new type::Type("Tuple", $2); }
+| '{' NamedTypeDefList '}' { $$ = new type::Type("Tuple", ast::_defsToTypeArg($2)); }
+NamedTypeDef : GeneralIdentifier ':' TypeDef { $$ = new ast::Def($1, $3, 0); }
 NamedTypeDefList
-: NamedTypeDef { }
-| NamedTypeDefList ',' NamedTypeDef { }
+: NamedTypeDef { $$.push_back($1); }
+| NamedTypeDefList ',' NamedTypeDef { $$ = $1; $$.push_back($3); }
 TypeDefList : TypeDef { $$.push_back(*$1); delete $1; }
 | TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); delete $3; }
 ParamsListInner : Param { $$.push_back($1); }
@@ -118,8 +118,8 @@ ModuleLine
 | IfStatement { $$ = $1; }
 | WHILE Expr StatementBlock { $$ = new ast::While($2, $3); }
 | RETURN Expr { $$ = new ast::Return($2); }
-| TYPE GeneralIdentifier StructBlock { $$ = new ast::Struct($2, $3); }
-| TYPE GeneralIdentifier OP_EQ TypeDef { $$ = 0; } // new ast::TypeDecl($2, $4); }
+| TYPE GeneralIdentifier StructBlock { $$ = new ast::Tuple($2, $3); }
+| TYPE GeneralIdentifier OP_EQ TypeDef { $$ = new ast::Tuple($2, $4->params); delete $4;} // new ast::TypeDecl($2, $4); }
 | IMPORT VarPath { $$ = new ast::Import($2); }
 Function
 : FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type(""), $4, $6); }

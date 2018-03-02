@@ -12,7 +12,7 @@
   F(Block) F(Var) F(Call)                                       \
   F(StringLiteral) F(IntLiteral) F(FloatLiteral)                \
   F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member)  \
-  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Struct)
+  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple)
 
 #define MAP_ALL_EXPRS(F) F(BaseExpr) MAP_EXPRS(F)
 
@@ -291,11 +291,23 @@ namespace coral {
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 
-    class Struct : public Statement {
+    class Tuple : public BaseExpr {
     public:
       std::string name;
-      unique_ptr<BaseExpr> body;
-      Struct(std::string name, Block * body): name(name), body(body) { }
+      unique_ptr<BaseExpr> body = 0;
+      vector<unique_ptr<Def>> fields;
+	  virtual void accept(ExprVisitor * v) { v->visit(this); }
+
+      /* This is for the class-like declaration */
+      Tuple(std::string name, Block * body): name(name), body(body) { }
+
+      /* Untagged Tuples */
+      Tuple(std::string name, std::vector<type::Type> fields);
+
+      /* Tagged Tuples */
+      Tuple(std::string name, std::vector<ast::Def *> fields);
     };
+    // used for defining tuples
+    std::vector<Type> _defsToTypeArg(std::vector<Def *> defs);
   }
 }
