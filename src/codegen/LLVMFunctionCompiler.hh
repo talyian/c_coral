@@ -40,6 +40,7 @@ namespace coral {
 	  void visit(ast::IfExpr * expr);
 	  void visit(ast::Call * expr);
 	  void visit(ast::IntLiteral * expr);
+	  void visit(ast::FloatLiteral * expr);
 	  void visit(ast::StringLiteral * expr);
 	  void visit(ast::Var * expr);
 	  void visit(ast::Return * expr);

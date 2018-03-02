@@ -113,6 +113,7 @@ namespace coral {
 
 	class Module : public BaseExpr {
 	public:
+      std::string name = "module";
 	  unique_ptr<Block> body;
 	  Module();
 	  Module(vector<BaseExpr *> lines) {
@@ -181,6 +182,8 @@ namespace coral {
 	};
 	class FloatLiteral : public Value {
 	public:
+      std::string value;
+      FloatLiteral(std::string value);
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 

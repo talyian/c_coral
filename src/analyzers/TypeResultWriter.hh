@@ -62,7 +62,9 @@ namespace coral {
         if (t.name == "") return;
         l->type = t;
       }
-      void visit(ast::TupleLiteral * t) { }
+      void visit(ast::TupleLiteral *) { }
+      void visit(ast::Tuple *) { }
+      void visit(ast::FloatLiteral *) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(current_term->
     };
   }

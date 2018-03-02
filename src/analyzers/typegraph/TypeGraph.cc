@@ -16,6 +16,12 @@ void TypeUnify::equal(Term * a, Term * b) {
 }
 
 void TypeUnify::equal(Type * a, Type * b) {
+  if (b->name == "Field") {
+    // HACK: if we're unifying a T against x:T, this should type-check
+    // TODO: I wonder if we need type-level strings?
+    // probably slightly lower priority than type-level integers.
+    if (ConstraintEqualsImpl::of(a, b->params[1])) return;
+  }
   if (!ConstraintEqualsImpl::of(a, b)) {
     std::cerr << COL_LIGHT_RED << "Warning: Trying to unify " << a << ", " << b << COL_CLEAR << "\n";
     return;

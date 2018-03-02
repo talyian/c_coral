@@ -15,18 +15,26 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
   if (t->name == "Int16") return LLVMInt16TypeInContext(context);
   if (t->name == "Int32") return LLVMInt32TypeInContext(context);
   if (t->name == "Int64") return LLVMInt64TypeInContext(context);
+  if (t->name == "Float32") return LLVMFloatTypeInContext(context);
+  if (t->name == "Float64") return LLVMDoubleTypeInContext(context);
+  if (t->name == "Field") return LLVMTypeFromCoral(&t->params[1]);
   if (t->name == "Func") {
     // std::cout << "LLVMTyping: " << *t << "\n";
     auto ret_type = LLVMTypeFromCoral(&t->params.back());
     auto nparam = t->params.size() - 1;
-    auto params = new LLVMTypeRef[nparam];
-    for(ulong i=0; i<nparam; i++)
-      params[i] = LLVMTypeFromCoral(&t->params[i]);
+    std::vector<LLVMTypeRef> params;
+    auto is_variadic = false;
+    for(ulong i=0; i<nparam; i++) {
+      if (t->params[i].name == "...")
+        is_variadic = true;
+      else
+        params.push_back(LLVMTypeFromCoral(&t->params[i]));
+    }
     auto ftype = LLVMFunctionType(
       ret_type,
-      params, nparam,
-      false);
-    delete [] params;
+      &params[0], params.size(),
+      is_variadic);
+    // std::cerr << "LLVMTYPE : " << LLVMPrintTypeToString(ftype) << "\n";
     return ftype;
   }
   if (t->name == "Struct") {
@@ -94,6 +102,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::IfExpr * expr) {
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::IntLiteral * expr) {
   out = LLVMConstInt(LLVMInt32TypeInContext(context), std::stol(expr->value), false);
+}
+
+void coral::codegen::LLVMFunctionCompiler::visit(ast::FloatLiteral * expr) {
+  out = LLVMConstReal(LLVMFloatTypeInContext(context), std::stof(expr->value));
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::StringLiteral * expr) {
@@ -227,6 +239,19 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
     expr->callee->accept(this);
     auto var = (ast::Var *)expr->callee.get();
+    // std::cerr << "var " << var->name << " kind: " << ast::ExprNameVisitor::of(var->expr) << "\n";
+    if (ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::TupleKind) {
+      auto tuple_type = LLVMGetTypeByName(module, var->name.c_str());
+      auto tupleval = LLVMBuildAlloca(builder, tuple_type, var->name.c_str());
+      for(auto i = 0; i < expr->arguments.size(); i++) {
+        expr->arguments[i]->accept(this);
+        LLVMBuildStore(
+          builder, out,
+          LLVMBuildStructGEP(builder, tupleval, i, ""));
+      }
+      out = LLVMBuildLoad(builder, tupleval, "");
+      return;
+    }
     // TODO: make this an actual operator
     if (var->name == "addrof") {
       this->rawPointer = 1;
@@ -280,10 +305,12 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Let * expr) {
   auto llval = out;
   // TODO: LLVMTypeFromCoral(expr->type)
   auto local = LLVMBuildAlloca(builder, LLVMTypeOf(llval), expr->var->name.c_str());
-  // std::cerr << COL_LIGHT_BLUE;
-  // PrettyPrinter::print(expr->var.get());
-  // std::cerr << " -- " << LLVMPrintTypeToString(LLVMTypeOf(llval))
-  //           << COL_CLEAR << "\n";
+
+  std::cerr << COL_LIGHT_BLUE;
+  PrettyPrinter::print(expr->var.get());
+  std::cerr << " -- " << LLVMPrintTypeToString(LLVMTypeOf(llval))
+            << COL_CLEAR << "\n";
+
   LLVMBuildStore(builder, llval, local);
   (*info)[expr] = local;
 }

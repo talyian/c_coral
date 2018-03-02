@@ -41,16 +41,10 @@ namespace coral {
         out = LLVMConstInt(LLVMIntType(32), std::stol(e->value), false);
         info[e] = out;
       }
-	  void visit(ast::Comment * c) { }
-	  void visit(ast::Func * f) {
-		LLVMFunctionCompiler fcc(
-		  llvmContext,
-		  llvmModule,
-		  llvmBuilder,
-		  &info,
-		  f);
-		fcc.visit(f);
-	  }
+	  void visit(ast::Comment *) { }
+	  void visit(ast::Func * f);
+      void visit(ast::Extern *e);
+      void visit(ast::Tuple *e);
 	};
 
   }

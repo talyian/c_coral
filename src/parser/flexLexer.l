@@ -26,7 +26,7 @@ UNICODE {U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
 \'(\\\'|[^\'])*\'        { STRLVAL; return TOK::STRING; }
 ([_a-zA-Z]|{UNICODE})([_a-zA-Z0-9]|{UNICODE})* { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
 [0-9][0-9]*L?            { STRLVAL; return TOK::INTEGER; }
-[0-9][0-9]*[.][0-9][0-9]*  { STRLVAL; return TOK::INTEGER; }
+[0-9][0-9]*[.][0-9][0-9]*  { STRLVAL; return TOK::FLOAT; }
 [-+*/=><$!|^%@]+         { STRLVAL; return coral::Token::GetOperator(yytext); }
 [ ]                      { }
 \n[ \t]*                 { yytext[0] = ' '; return TOK::NEWLINE; }

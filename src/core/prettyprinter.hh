@@ -40,6 +40,7 @@ namespace coral {
 	virtual void visit(ast::Var * m);
 	virtual void visit(ast::Return * m);
 	virtual void visit(ast::IntLiteral * m);
+	virtual void visit(ast::FloatLiteral * m);
 	virtual void visit(ast::StringLiteral * m);
 	virtual void visit(ast::Comment * m);
 	virtual void visit(ast::IfExpr * m);

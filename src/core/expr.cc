@@ -72,6 +72,10 @@ namespace coral {
 	  }
 
 
+    FloatLiteral::FloatLiteral(std::string value) : value(value) {
+
+    }
+
 	std::string StringLiteral::getString() {
 	  auto s = value.substr(1, value.size() - 2);
 	  s = std::regex_replace(s, string_unescape, "\n");

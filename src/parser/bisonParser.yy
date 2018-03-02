@@ -15,7 +15,7 @@
 %token <std::string> COMMENT
 %token <std::string> STRING
 %token <std::string> IDENTIFIER
-%token <std::string> INTEGER
+%token <std::string> INTEGER FLOAT
 %token NEWLINE INDENT DEDENT
 %token FUNC
 %token LET SET
@@ -64,6 +64,7 @@ GeneralIdentifier
 Atom // Expr0 - Can be called without parens
 : GeneralIdentifier { $$ = new ast::Var($1); }
 | INTEGER { $$ = new ast::IntLiteral($1); }
+| FLOAT { $$ = new ast::FloatLiteral($1); }
 | STRING { $$ = new ast::StringLiteral($1); }
 | '[' ArgumentsListInner ']' { $$ = new ast::ListLiteral($2); }
 | '(' Expr ')' { $$ = $2; }

@@ -61,6 +61,7 @@ namespace coral {
 	  auto type = ast::ExprTypeVisitor::of(e->arguments[0].get());
 	  if (type == ast::ExprTypeKind::ListLiteralKind ||
 		  type == ast::ExprTypeKind::IntLiteralKind ||
+		  type == ast::ExprTypeKind::FloatLiteralKind ||
 		  type == ast::ExprTypeKind::StringLiteralKind ||
 		  type == ast::ExprTypeKind::VarKind ||
 		  type == ast::ExprTypeKind::TupleLiteralKind
@@ -88,6 +89,9 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::IntLiteral * e) {
+	cout << IND() << e->value << END(); }
+
+  void PrettyPrinter::visit(ast::FloatLiteral * e) {
 	cout << IND() << e->value << END(); }
 
   void PrettyPrinter::visit(ast::StringLiteral * s) {

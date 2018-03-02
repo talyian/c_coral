@@ -150,14 +150,21 @@ void coral::analyzers::TypeResolver::visit(ast::BinOp * op) {
         gg.type("Func", {gg.free(0), gg.free(0), gg.type("Bool")}),
         {gg.term(lvar), gg.term(rvar)}));
 }
+
 void coral::analyzers::TypeResolver::visit(ast::IntLiteral * op) {
   out = gg.AddTerm("i" + (op->value), op);
   gg.AddConstraint(out, gg.type("Int32"));
 }
 
+void coral::analyzers::TypeResolver::visit(ast::FloatLiteral * op) {
+  out = gg.AddTerm("f" + (op->value), op);
+  gg.AddConstraint(out, gg.type("Float32"));
+}
+
 void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
   // TODO: the name corresponds to both the tuple
-  //   and the constructor?
+  // and the constructor? We probably need to generate different AST
+  // nodes for constructor type access
   out = gg.AddTerm(t->name, t);
   std::vector<Constraint *> func_args;
   for(auto &field: t->fields)

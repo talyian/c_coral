@@ -28,15 +28,16 @@ namespace coral {
       void visit(ast::IfExpr * ifexpr);
       void visit(ast::Var * var);
       void visit(ast::BinOp * op);
-      void visit(ast::IntLiteral * op);
       void visit(ast::Call * call);
       void visit(ast::Return * r);
-      void visit(ast::StringLiteral * s);
       void visit(ast::Let * l);
       void visit(ast::While * w);
       void visit(ast::Set * s);
       void visit(ast::Extern * e);
       void visit(ast::Tuple * t);
+      void visit(ast::IntLiteral * op);
+      void visit(ast::FloatLiteral * op);
+      void visit(ast::StringLiteral * s);
       void visit(ast::TupleLiteral * t);
     };
   }
