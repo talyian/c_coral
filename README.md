@@ -1,5 +1,7 @@
 # Coral Language
 
+[![Join the chat at https://gitter.im/talyian-coral/Lobby](https://badges.gitter.im/talyian-coral/Lobby.svg)](https://gitter.im/talyian-coral/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build Status](https://travis-ci.org/talyian/coral.svg?branch=coral)](https://travis-ci.org/talyian/coral)
 
 A toy LLVM-based language.  
