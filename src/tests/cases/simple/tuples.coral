@@ -1,0 +1,10 @@
+type Point = {Float32, Float32}
+type Point1 = Tuple[Float32, Float32]
+type Point2 = {x:Float32, y:Float32}
+type Vec3 = {x:Float32, y:Float32, z:Float32}
+
+let p0 = Point(2.0, 3.0)
+let v0 = Vec3(100.0, 200.0, 300.0)
+let p1 = (4.0, 5.0)
+let p2 : Tuple[Float32, Float32] = (4.0, 5.0)
+let p3 : Tuple[Float32, Float32] = (4.0, 5.0)

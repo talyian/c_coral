@@ -90,9 +90,16 @@ Argument : Expr { $$ = $1; } | IDENTIFIER '=' Expr { $$ = $3; }
 Param : IDENTIFIER { $$ = new ast::Def($1, 0, 0); }
 | IDENTIFIER ':' TypeDef { $$ = new ast::Def($1, $3, 0); }
 
-TypeDef : IDENTIFIER { $$ = new coral::type::Type($1); }
+TypeDef
+: IDENTIFIER { $$ = new coral::type::Type($1); }
 | IDENTIFIER '[' TypeDefList ']' { $$ = new coral::type::Type($1, $3); }
 | ELLIPSIS { $$ = new coral::type::Type("..."); }
+| '{' TypeDefList '}' { $$ = 0; }
+| '{' NamedTypeDefList '}' { $$ = 0; }
+NamedTypeDef : GeneralIdentifier ':' TypeDef { }
+NamedTypeDefList
+: NamedTypeDef { }
+| NamedTypeDefList ',' NamedTypeDef { }
 TypeDefList : TypeDef { $$.push_back(*$1); delete $1; }
 | TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); delete $3; }
 ParamsListInner : Param { $$.push_back($1); }
@@ -112,6 +119,7 @@ ModuleLine
 | WHILE Expr StatementBlock { $$ = new ast::While($2, $3); }
 | RETURN Expr { $$ = new ast::Return($2); }
 | TYPE GeneralIdentifier StructBlock { $$ = new ast::Struct($2, $3); }
+| TYPE GeneralIdentifier OP_EQ TypeDef { $$ = 0; } // new ast::TypeDecl($2, $4); }
 | IMPORT VarPath { $$ = new ast::Import($2); }
 Function
 : FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type(""), $4, $6); }
