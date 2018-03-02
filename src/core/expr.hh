@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdio>
 #include "type.hh"
+#include <iostream>
 
 // Here is a list of all the AST node types.
 // We use the X-Macro pattern to eliminate a lot of boilerplate around setting up AST nodes
@@ -248,14 +249,8 @@ namespace coral {
 	  unique_ptr<BaseExpr> callee;
 	  vector<std::unique_ptr<BaseExpr>> arguments;
 
-	  Call(BaseExpr * callee, TupleLiteral * arguments) : callee(callee) {
-		for(auto && p : arguments->items)
-		  this->arguments.push_back(std::unique_ptr<BaseExpr>(p.release()));
-	  }
-	  Call(BaseExpr * callee, vector<BaseExpr *> arguments): callee(callee) {
-		for(auto && ptr : arguments)
-		  if (ptr) this->arguments.push_back(std::unique_ptr<BaseExpr>(ptr));
-	  }
+	  Call(BaseExpr * callee, TupleLiteral * arguments);
+	  Call(BaseExpr * callee, vector<BaseExpr *> arguments);
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};
 

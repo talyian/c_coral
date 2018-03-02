@@ -61,6 +61,17 @@ namespace coral {
       delete rtype;
     }
 
+    Call::Call(BaseExpr * callee, TupleLiteral * arguments) : callee(callee) {
+        if (arguments)
+          for(auto && p : arguments->items)
+            this->arguments.push_back(std::unique_ptr<BaseExpr>(p.release()));
+	  }
+    Call::Call(BaseExpr * callee, vector<BaseExpr *> arguments): callee(callee) {
+		for(auto && ptr : arguments)
+		  if (ptr) this->arguments.push_back(std::unique_ptr<BaseExpr>(ptr));
+	  }
+
+
 	std::string StringLiteral::getString() {
 	  auto s = value.substr(1, value.size() - 2);
 	  s = std::regex_replace(s, string_unescape, "\n");
@@ -77,7 +88,6 @@ namespace coral {
 	}
 
     Tuple::Tuple(std::string name, std::vector<type::Type> fields) : name(name) {
-      int i = 0;
       std::string item = "item";
       for(auto &f: fields)
         this->fields.emplace_back(new Def("", new type::Type(f), 0));
