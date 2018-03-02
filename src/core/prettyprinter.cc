@@ -7,10 +7,12 @@
 using std::cout;
 
 namespace coral {
-  const auto COL_KEYWORD = COL_LIGHT_BLUE;
-  const auto COL_NORMAL = COL_CLEAR;
-  const auto COL_STRING = COL_LIGHT_GREEN;
-  const auto COL_TYPE = COL_YELLOW;
+#define COL_KEYWORD COL_RGB(2, 5, 1)
+#define COL_STRING  COL_RGB(4, 3, 1)
+#define COL_TYPE COL_RGB(4, 4, 2)
+#define COL_COMMENT COL_RGB(0, 4, 0)
+#define COL_PRIMITIVE COL_RGB(3, 3, 5)
+  auto COL_NORMAL = COL_CLEAR;
 
   void coral::PrettyPrinter::visit(ast::Extern * e) {
 	cout << IND() << "extern 'C' " << e->name << " : " << *(e->type) << END();
@@ -89,10 +91,10 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::IntLiteral * e) {
-	cout << IND() << e->value << END(); }
+	cout << IND() << COL_PRIMITIVE << e->value << COL_NORMAL << END(); }
 
   void PrettyPrinter::visit(ast::FloatLiteral * e) {
-	cout << IND() << e->value << END(); }
+	cout << IND() << COL_PRIMITIVE << e->value << COL_NORMAL << END(); }
 
   void PrettyPrinter::visit(ast::StringLiteral * s) {
 	cout << IND()  << COL_STRING << s->value << COL_NORMAL << END(); }
@@ -124,7 +126,7 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Comment * c) {
-	cout << COL_GREEN;
+	cout << COL_COMMENT;
 	cout << IND() << c->value << END();
 	cout << COL_NORMAL;
   }
