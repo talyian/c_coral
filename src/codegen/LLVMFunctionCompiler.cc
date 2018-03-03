@@ -15,7 +15,8 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
   if (t->name == "Int16") return LLVMInt16TypeInContext(context);
   if (t->name == "Int32") return LLVMInt32TypeInContext(context);
   if (t->name == "Int64") return LLVMInt64TypeInContext(context);
-  if (t->name == "Float32") return LLVMFloatTypeInContext(context);
+  // TODO: This is for printf compatibility, since c automatically casts to double
+  if (t->name == "Float32") return LLVMDoubleTypeInContext(context);
   if (t->name == "Float64") return LLVMDoubleTypeInContext(context);
   if (t->name == "Field") return LLVMTypeFromCoral(&t->params[1]);
   if (t->name == "Func") {
@@ -105,7 +106,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::IntLiteral * expr) {
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::FloatLiteral * expr) {
-  out = LLVMConstReal(LLVMFloatTypeInContext(context), std::stof(expr->value));
+  out = LLVMConstReal(LLVMDoubleTypeInContext(context), std::stof(expr->value));
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::StringLiteral * expr) {
@@ -303,14 +304,17 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Let * expr) {
   out = 0;
   expr->value->accept(this);
   auto llval = out;
+  // this shouldn't happen usually
+  if (!out) { std::cerr << "warning: null LLVMinstr: " << expr->var->name << "\n"; return; }
   // TODO: LLVMTypeFromCoral(expr->type)
   auto local = LLVMBuildAlloca(builder, LLVMTypeOf(llval), expr->var->name.c_str());
 
-  std::cerr << COL_LIGHT_BLUE;
-  PrettyPrinter::print(expr->var.get());
-  std::cerr << " -- " << LLVMPrintTypeToString(LLVMTypeOf(llval))
-            << COL_CLEAR << "\n";
-
+  // std::cerr << COL_LIGHT_BLUE;
+  // PrettyPrinter::print(expr->var.get());
+  // auto str = LLVMPrintTypeToString(LLVMTypeOf(llval));
+  // std::cerr << " -- " << str
+  //           << COL_CLEAR << "\n";
+  // LLVMDisposeMessage(str);
   LLVMBuildStore(builder, llval, local);
   (*info)[expr] = local;
 }

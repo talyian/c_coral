@@ -39,6 +39,8 @@ namespace coral {
       void visit(ast::FloatLiteral * op);
       void visit(ast::StringLiteral * s);
       void visit(ast::TupleLiteral * t);
+      void visit(ast::Comment * c);
+      void visit(ast::Member * m);
     };
   }
 }

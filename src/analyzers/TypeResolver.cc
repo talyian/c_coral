@@ -80,14 +80,24 @@ void coral::analyzers::TypeResolver::visit(ast::Extern * e) {
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Var * var) {
-  if (!(out = gg.FindTerm(var->expr)))
+  if (!var->expr)
+    std::cerr << "Undefined Reference " << var->name << "\n";
+  else if (!(out = gg.FindTerm(var->expr)))
     std::cerr << "Missing Type Term " << var->name << ":" << var->expr << "\n";
 }
 
 
 void coral::analyzers::TypeResolver::visit(ast::Module * m) { m->body->accept(this); }
+
 void coral::analyzers::TypeResolver::visit(ast::Block * m) {
-  for(auto &line : m->lines) if (line) line->accept(this); }
+  TypeTerm * lastvalid = 0;
+  for(auto &line : m->lines)
+    if (line) {
+      line->accept(this);
+      if (out) lastvalid = out;
+    }
+  out = lastvalid;
+}
 void coral::analyzers::TypeResolver::visit(ast::Def * d) {
   out = gg.AddTerm(d->name, d);
   if (d->type)
@@ -103,6 +113,10 @@ void coral::analyzers::TypeResolver::visit(ast::Func * f) {
   }
   if (f->body) {
     f->body->accept(this);
+    if (!out) {
+      std::cerr << f->name << " invalid out value\n";
+      return;
+    }
     constraint->params.push_back(gg.term(out));
   }
   else if (f->type) {
@@ -171,6 +185,16 @@ void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
     func_args.push_back(gg.type(field->type.get()));
   func_args.push_back(gg.type(t->name, {}));
   gg.AddConstraint(out, gg.type("Func", func_args));
+}
+
+void coral::analyzers::TypeResolver::visit(ast::Comment *) { out = 0; }
+
+void coral::analyzers::TypeResolver::visit(ast::Member * m) {
+  m->base->accept(this);
+  auto basetype = out;
+  auto memberpath = m->member;
+
+  out = 0;
 }
 
 void coral::analyzers::TypeResolver::visit(ast::TupleLiteral * tuple) {

@@ -1,5 +1,5 @@
 import regex
-import threads.map
+import threads.parallel
 
 let input = stdin.bytes.read()
 
@@ -18,7 +18,7 @@ let q = [
 
 func run(r): format("%s %i", r, regex.count_matches(r, text))
 
-let out = threads.map(q, run)
+let out = parallel(q).map run
 
 let q = [
   ("tHa[Nt]","<4>"),
@@ -27,6 +27,6 @@ let q = [
   ("<[^>]*>","|"),
   ("\\|[^|][^|]*\\|","-")]
 
-out.add $ q.reduce(text, regex.replace >> (flip tconcat))
+let final = q.reduce((text, (pat, repl)) => regex.replace(text, pat, repl), text)
 
 printf("\n%d\n%d\n%d\n", input.length, text.length, final.length)
