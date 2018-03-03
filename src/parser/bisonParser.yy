@@ -113,7 +113,7 @@ ModuleLine
 | Function { $$ = $1; }
 | LET GeneralIdentifier OP_EQ Expr { $$ = new ast::Let(new ast::Var($2), $4); }
 | LET GeneralIdentifier ':' TypeDef OP_EQ Expr {
-    $$ = new ast::Let(new ast::Var($2), $6); ((ast::Let *)$$)->type = *$4; }
+    $$ = new ast::Let(new ast::Var($2), $6); ((ast::Let *)$$)->type = *$4; delete $4; }
 | SET GeneralIdentifier OP_EQ Expr { $$ = new ast::Set(new ast::Var($2), $4); }
 | ForLoop { $$ = $1; }
 | IfStatement { $$ = $1; }

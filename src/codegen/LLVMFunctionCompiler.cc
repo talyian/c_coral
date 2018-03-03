@@ -53,7 +53,9 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
     for(size_t i=0; i<t->params.size(); i++) {
       params[i] = LLVMTypeFromCoral(&t->params[i]);
     }
-    return LLVMStructTypeInContext(context, params, t->params.size(), true);
+    auto oo = LLVMStructTypeInContext(context, params, t->params.size(), true);
+    delete [] params;
+    return oo;
   }
   std::cerr << COL_LIGHT_BLUE << "Warning: Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
   return LLVMInt64TypeInContext(context);
@@ -364,10 +366,6 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
 void coral::codegen::LLVMFunctionCompiler::visit(ast::TupleLiteral * t) {
   auto tuple_type = LLVMTypeFromCoral(t->type.get());
   auto tupleval = LLVMBuildAlloca(builder, tuple_type, "");
-
-  std::cerr << "tuple literal " << LLVMPrintTypeToString(tuple_type) << "\n";
-  PrettyPrinter::print(t);
-  std::cerr << "\n";
 
   for(size_t i = 0; i < t->items.size(); i++) {
     t->items[i]->accept(this);

@@ -105,6 +105,7 @@ namespace coral {
       std::vector<Type> out;
       for(auto &def: defs) {
         out.push_back(type::Type { "Field", { type::Type { def->name }, *(def->type) } });
+        delete def;
       }
       return out;
     }

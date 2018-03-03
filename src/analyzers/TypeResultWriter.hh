@@ -70,8 +70,6 @@ namespace coral {
           m->memberIndex = std::stoi(dynamic_cast<::Type *>(inferredType->params[0])->name);
       }
       void visit(ast::TupleLiteral * t) {
-        std::cerr << "visiting tuple \n";
-        std::cerr << inferredType << "\n";
         t->type.reset(new Type(convert_Type(inferredType)));
       }
     };
