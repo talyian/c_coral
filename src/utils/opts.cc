@@ -7,11 +7,13 @@ int coral::opt::ShowTypeSolution = 0;
 int coral::opt::ShowIR = 0;
 int coral::opt::ShowInitialParseTree = 0;
 int coral::opt::ShowFinalParseTree = 0;
+int coral::opt::OptLevel = 0;
 
 namespace coral {
   namespace opt {
     bool on(char * s) { return s && strlen(s) && strcmp(s, "0") != 0; }
     void initOpts() {
+      if (on(std::getenv("OPT"))) OptLevel = std::stoi(std::getenv("OPT"));
       if (on(std::getenv("SHOWIR"))) ShowIR = 1;
       if (on(std::getenv("SHOWTYPE"))) ShowTypeSolution = 1;
       if (on(std::getenv("SHOWTREE"))) ShowFinalParseTree = 1;

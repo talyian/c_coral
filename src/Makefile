@@ -13,6 +13,8 @@ debug: ${BIN}/coral-jit
 	@gdb -ex 'run ${TESTFILE}' -ex quit $<
 mdebug: ${BIN}/coral-jit
 	valgrind --leak-check=full $< ${TESTFILE}
+mdebug0: ${BIN}/coral-jit
+	valgrind $< ${TESTFILE}
 parse: ${BIN}/coral-parse
 	$< ${TESTFILE}
 test: ${BIN}/coral-test

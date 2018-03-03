@@ -113,10 +113,6 @@ void coral::analyzers::TypeResolver::visit(ast::Func * f) {
   }
   if (f->body) {
     f->body->accept(this);
-    if (!out) {
-      std::cerr << f->name << " invalid out value\n";
-      return;
-    }
     constraint->params.push_back(gg.term(out));
   }
   else if (f->type) {
@@ -172,18 +168,29 @@ void coral::analyzers::TypeResolver::visit(ast::IntLiteral * op) {
 
 void coral::analyzers::TypeResolver::visit(ast::FloatLiteral * op) {
   out = gg.AddTerm("f" + (op->value), op);
-  gg.AddConstraint(out, gg.type("Float32"));
+  gg.AddConstraint(out, gg.type("Float64"));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
   // TODO: the name corresponds to both the tuple
   // and the constructor? We probably need to generate different AST
   // nodes for constructor type access
-  out = gg.AddTerm(t->name, t);
+  std::vector<Constraint *> func_fields;
   std::vector<Constraint *> func_args;
-  for(auto &field: t->fields)
-    func_args.push_back(gg.type(field->type.get()));
-  func_args.push_back(gg.type(t->name, {}));
+  for(auto &field: t->fields) {
+    auto field_info = field->type.get();
+    // if we have a named field, the func accepts the field type
+    if (field_info->name == "Field")
+      func_args.push_back(gg.type(&field_info->params[1]));
+    else
+      func_args.push_back(gg.type(field_info));
+    func_fields.push_back(gg.type(field_info));
+  }
+  auto type = gg.AddTerm(t->name, 0);
+  gg.AddConstraint(type, gg.type("Tuple", func_fields));
+
+  func_args.push_back(gg.term(type));
+  out = gg.AddTerm(t->name + ".new", t);
   gg.AddConstraint(out, gg.type("Func", func_args));
 }
 
@@ -193,8 +200,12 @@ void coral::analyzers::TypeResolver::visit(ast::Member * m) {
   m->base->accept(this);
   auto basetype = out;
   auto memberpath = m->member;
-
-  out = 0;
+  out = gg.AddTerm(basetype->name + "." + memberpath, m);
+  gg.AddConstraint(
+    out,
+    gg.call(
+      gg.type("Member", {gg.type(memberpath)}),
+      {gg.term(basetype)}));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::TupleLiteral * tuple) {

@@ -20,7 +20,7 @@ namespace coral {
     // Given the results of a Typegraph analysis, write it back out into the type fields
     class TypeResultWriter : public ast::ExprVisitor {
     private:
-      ::Type * current_term;
+      ::Type * inferredType;
     public:
       std::string visitorName() { return "TypeResultWriter"; }
       static void write(std::map<coral::ast::BaseExpr *, ::Type *> expr_terms) {
@@ -28,18 +28,18 @@ namespace coral {
       }
       TypeResultWriter (std::map<coral::ast::BaseExpr *, ::Type *> expr_terms) {
         for(auto &pair : expr_terms) {
-          current_term = pair.second;
-          if (pair.second)
+          inferredType = pair.second;
+          if (pair.second && pair.first)
             pair.first->accept(this);
         }
       }
       void visit(ast::IntLiteral *) { /* ignore */ }
       void visit(ast::StringLiteral *) { /* ignore */ }
       void visit(ast::Func * f) {
-        if (!current_term) return;
+        if (!inferredType) return;
         // std::cout << COL_GREEN << std::setw(25) << "func: " << f->name << " :: "
-        //           << current_term << COL_CLEAR << "\n";
-        Type t = convert_Type(current_term);
+        //           << inferredType << COL_CLEAR << "\n";
+        Type t = convert_Type(inferredType);
         if (t.name == "") return;
         f->type.reset(new Type(t));
 
@@ -48,24 +48,29 @@ namespace coral {
         }
       }
       void visit(ast::Def * d) {
-        if (!current_term) return;
-        d->type.reset(new Type(convert_Type(current_term)));
+        if (!inferredType) return;
+        d->type.reset(new Type(convert_Type(inferredType)));
         // std::cout << COL_GREEN << std::setw(25) << "def: " << d->name << " :: "
-        //           << current_term << COL_CLEAR << "\n";
+        //           << inferredType << COL_CLEAR << "\n";
       }
       void visit(ast::Extern *) { }
       void visit(ast::Let * l) {
-        if (!current_term) return;
+        if (!inferredType) return;
         // std::cout << COL_GREEN << std::setw(25) << "let: " << l->var->name << " :: "
-        //           << current_term << COL_CLEAR << "\n";
-        auto t = convert_Type(current_term);
+        //           << inferredType << COL_CLEAR << "\n";
+        auto t = convert_Type(inferredType);
         if (t.name == "") return;
         l->type = t;
       }
       void visit(ast::TupleLiteral *) { }
       void visit(ast::Tuple *) { }
       void visit(ast::FloatLiteral *) { }
-      // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(current_term->
+      // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(inferredType->
+      void visit(ast::Member * m) {
+        if (inferredType->name == "Index")
+          m->memberIndex = std::stoi(dynamic_cast<::Type *>(inferredType->params[0])->name);
+        std::cerr << m->member << ".member writing " << inferredType << "\n";
+      }
     };
   }
 }

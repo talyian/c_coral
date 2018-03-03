@@ -144,19 +144,55 @@ void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
   // get rid of free types in F's type signature
 
   Type * callee = (Type *)InstantiateFree::of(this, callfunc);
+  if (callee == 0) return;
+
   if (coral::opt::ShowTypeSolution)
     std::cerr << "applying" << COL_RGB(4, 5, 2) << std::setw(22) << t << " :: "
               << std::setw(20) << callfunc << " -> "
               << std::setw(20) << callee << COL_CLEAR << "\n";
-  for(size_t i = 0; i < call->args.size(); i++) {
-    if (Type * t = dynamic_cast<Type *>(callee->params[i]))
-      if (t->name == "...")
-        break;
-    AddEquality(call->args[i], callee->params[i]);
+
+  if (callee->name == "Member") {
+    if (call->args.size() == 1)
+      if (Type * tuple = dynamic_cast<Type *>(call->args[0])) {
+        if (tuple->name == "Tuple") {
+          // here we both have to register the output type of the field
+          // but also register the lookup index so the codegenerator
+          // knows what the offset is
+          int fieldindex = 0;
+          for(auto * _field : tuple->params)
+          {
+            if (auto field = dynamic_cast<Type *>(_field)) {
+              auto fieldname = dynamic_cast<Type *>(field->params[0])->name;
+              auto fieldtype = dynamic_cast<Type *>(field->params[1]);
+              if (fieldname == dynamic_cast<Type *>(callee->params[0])->name) {
+                // std::cerr << COL_LIGHT_RED << fieldname << COL_CLEAR << "\n";
+
+                AddEquality(term(t), fieldtype);
+                auto indexTerm = AddTerm(t->name + ".index", t->expr);
+                AddEquality(term(indexTerm), type("Index", {type(std::to_string(fieldindex))}));
+                // v.x :: Float32
+                // v.x.index:: 0
+                this->RemoveConstraint(t, call);
+                return;
+              }
+            }
+            fieldindex++;
+          }
+        }
+      }
   }
-  AddEquality(term(t->name), callee->params.back());
-  this->RemoveConstraint(t, call);
-  changes++;
+
+  if (callee->name == "Func") {
+    for(size_t i = 0; i < call->args.size(); i++) {
+      if (Type * t = dynamic_cast<Type *>(callee->params[i]))
+        if (t->name == "...")
+          break;
+      AddEquality(call->args[i], callee->params[i]);
+    }
+    AddEquality(term(t->name), callee->params.back());
+    this->RemoveConstraint(t, call);
+    changes++;
+  }
 }
 
 void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons) {
@@ -241,10 +277,11 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
 
   // If we're Calling a term, we might as well substitute its definition into the
   // call.
-
   if (Type * func = dynamic_cast<Type *>(cons)) {
-    if (func->name == "Func") {
+    // if (func->name == "Func") {
       auto dependents = Dependents::of(graph, term);
+      // if (func->name == "Tuple")
+      //   std::cerr << COL_RGB(2, 2, 5) << term << " is a tuple! " << dependents.size() << "\n";
       for(auto &dep: dependents) {
         if (Call * call = dynamic_cast<Call *>(dep)) {
           if (coral::opt::ShowTypeSolution)
@@ -256,7 +293,7 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
           }
         }
       }
-    }
+      // }
   }
   return;
 }

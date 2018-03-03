@@ -1,9 +1,9 @@
 c_extern printf: Func[Ptr, ..., Void]
 
-# type Point = {Float32, Float32}
-# type Point1 = Tuple[Float32, Float32]
-# type Point2 = {x:Float32, y:Float32}
-# type Vec3 = {x:Float32, y:Float32, z:Float32}
+type Point = {Float64, Float64}
+type Point1 = Tuple[Float64, Float64]
+type Point2 = {x:Float64, y:Float64}
+type Vec3 = {x:Float64, y:Float64, z:Float64}
 
 func main():
   printf "Tuples Test\n"
@@ -11,10 +11,19 @@ func main():
   # # printf("p %f %f\n", p[0], p[1])
   let v = Vec3(100.0, 200.0, 300.0)
   let x = v.x
+  printf("v.x: %f\n", x)
+  printf("v.y: %f\n", v.y)
+  printf("v.y: %f\n", v.z)
   # # printf("v %f %f %f\n", v.x, v.y, v.z)
   # let t = (3, "Three", 3.33)
   # # printf("t %d %s %f\n", t[0], t[1], t[2])
   # # let p1 = (4.0, 5.0)
-  # # let p2 : {Float32, Float32} = (4.0, 5.0)
-  # # let p3 : Tuple[Float32, Float32] = (4.0, 5.0)
+  # # let p2 : {Float64, Float64} = (4.0, 5.0)
+  # # let p3 : Tuple[Float64, Float64] = (4.0, 5.0)
   0
+
+
+# v :: {x:Float32, y:Float32, z:Float32}
+# v.x :: Call(Member[x], {x:Float32, y:Float32, z:Float32})
+# v.x :: Float32
+# v.x :: Index(0)

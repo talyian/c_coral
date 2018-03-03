@@ -339,7 +339,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   w->base->accept(this);
   this->rawPointer = 0;
   auto baseinstr = out;
-  auto n = std::stoi(w->member.substr(5));
+  auto n = w->memberIndex;
   LLVMValueRef index[2] = {
     LLVMConstInt(LLVMInt32TypeInContext(context), 0, false),
     LLVMConstInt(LLVMInt32TypeInContext(context), n, false)};

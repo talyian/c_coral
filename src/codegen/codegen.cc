@@ -42,9 +42,9 @@ namespace coral {
 
     auto mpass = LLVMCreatePassManager();
     auto pmb = LLVMPassManagerBuilderCreate();
-    LLVMPassManagerBuilderSetOptLevel(pmb, 1);
+    LLVMPassManagerBuilderSetOptLevel(pmb, coral::opt::OptLevel);
     LLVMPassManagerBuilderPopulateModulePassManager(pmb, mpass);
-    // LLVMRunPassManager(mpass, llvmModule);
+    LLVMRunPassManager(mpass, llvmModule);
     LLVMPassManagerBuilderDispose(pmb);
     LLVMDisposePassManager(mpass);
     // LLVMPassManagerBuilderPopulateFunctionPassManager(pmb, fpass);

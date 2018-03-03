@@ -225,6 +225,7 @@ namespace coral {
 	public:
 	  unique_ptr<BaseExpr> base = 0;
 	  std::string member;
+      int memberIndex = 0;
 	  Member(BaseExpr * base, std::string member) : base(base), member(member) { }
 	  virtual void accept(ExprVisitor * v) { v->visit(this); }
 	};

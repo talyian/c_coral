@@ -4,6 +4,7 @@ namespace coral {
     extern int ShowIR;
     extern int ShowInitialParseTree;
     extern int ShowFinalParseTree;
+    extern int OptLevel;
     void initOpts();
   }
 }

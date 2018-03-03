@@ -1,5 +1,7 @@
 #include "analyzers/typegraph/constraint.hh"
 
+#include <sstream>
+
 std::ostream& operator << (std::ostream&out, TypeTerm * tt) {
   return tt ? (out << tt->name) : (out << "(null)"); }
 
@@ -13,12 +15,14 @@ void Free::accept(ConstraintVisitor * v) { v->visit(this); }
 void Call::accept(ConstraintVisitor * v) { v->visit(this); }
 
 std::string Type::toString() {
-  auto s = name;
+  std::stringstream out;
+  out << COL_RGB(5, 4, 2) << name << COL_CLEAR;
   if(params.size()) {
-    s += "(";
-    for(auto &p : params) { if (&p != &params.front()) s += ", "; s += p->toString();}
-    s += ")";
+    out <<  "(";
+    for(auto &p : params) { if (&p != &params.front()) out << ", "; out <<  p->toString();}
+    out <<  ")";
   }
+  auto s = out.str();
   return s;
 }
 std::string Free::toString() { return "*T" + std::to_string(v); }
