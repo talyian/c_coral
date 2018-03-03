@@ -1,3 +1,5 @@
+c_extern printf : Func[Ptr, ..., Void]
+
 func factorial_while(m):
   let s = 1
   let n = m

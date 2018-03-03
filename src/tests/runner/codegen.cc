@@ -58,7 +58,7 @@ namespace coral {
     void CodegenTests::RunFactorialWhile() {
       auto factorial = TestFunction<int(*)(int)>("factorial_while", "tests/cases/simple/while.coral");
       BeginTest("Factorial While");
-      ASSERT((factorial.Call(10) == 3628800), "Factorial While");
+      ASSERT((factorial.Call(9) == 362880), "Factorial While");
       EndTest();
     }
 

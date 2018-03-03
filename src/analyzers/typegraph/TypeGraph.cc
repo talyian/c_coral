@@ -12,7 +12,8 @@ void TypeUnify::equal(Term * b, Type * a) {
 }
 
 void TypeUnify::equal(Term * a, Term * b) {
-  graph->AddConstraint(a->term, b);
+  if (a->term != b->term)
+    graph->AddConstraint(a->term, b);
 }
 
 void TypeUnify::equal(Type * a, Type * b) {
@@ -55,11 +56,11 @@ void TypeTermReplacer::visit(Type * t) {
   out = t;
 }
 void TypeTermReplacer::visit(Term * t) {
-  // std::cerr << t->term << " !! term \n";
   if (t->term == search) {
-    // std::cerr << COL_YELLOW << std::setw(30)
-    //           << subject << ".." << t << " " << COL_CLEAR
-    //           << "\tReplacing " << search << " with " << replace << "\n";
+    if (coral::opt::ShowTypeSolution)
+      std::cerr
+        << COL_YELLOW << "replacing " << std::setw(20) << subject << " "
+        << COL_CLEAR << search << " with " << replace << "\n";
     graph->changes++;
     out = replace;
   } else
@@ -246,6 +247,44 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
     }
   }
 
+  // Sometimes a term appears on the right hand side multiple times.
+  // In this case, we can remove all those constraints and replace with
+  // unifying all the remaining terms against a representative
+  // (they should all be equivalent)
+  if (Term * right_term = dynamic_cast<Term *>(cons)) {
+
+    auto shared_terms = AllTerms::of(graph, right_term);
+    auto shared_constraints = AllConstraints::of(graph, right_term->term);
+
+    auto skip_unify = false;
+    for(auto &c: shared_constraints)
+      if (dynamic_cast<Call *>(c))
+        skip_unify = true;
+
+    if (!skip_unify) {
+      auto combined_constraints = std::set<Constraint *>(shared_constraints);
+      for(auto &t: shared_terms)
+        combined_constraints.insert(graph->term(t.first));
+
+      if (combined_constraints.size() > 1) {
+        if (coral::opt::ShowTypeSolution)
+          std::cerr << right_term << ": unifying with right-hand terms\n";
+
+        auto representative = *combined_constraints.begin();
+        for(auto &&pair : shared_terms)
+          if (pair.first != right_term->term)
+            graph->RemoveConstraint(pair.first, pair.second);
+        for(auto &&c : shared_constraints)
+          graph->RemoveConstraint(right_term->term, c);
+        for(auto &c: combined_constraints)
+          if(c != representative)
+            graph->AddEquality(representative, c);
+        graph->AddEquality(representative, right_term);
+        return;
+      }
+    }
+  }
+
   // Unification - Terms and Simple Types
   // if {a :: foo, a::bar, a::baz, a::Func[*T -> *T]}
   auto shared_constraints = AllConstraints::of(graph, term);
@@ -264,7 +303,7 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
       auto representative = *shared_constraints.begin();
       for(auto &c: shared_constraints)
         if (c != representative)
-          graph->RemoveConstraint(0, c);
+          graph->RemoveConstraint(term, c);
       for(auto &c: shared_constraints)
         if (c != representative)
           graph->AddEquality(c, representative);
@@ -272,23 +311,6 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
     }
   }
 
-  // Sometimes a term appears on the right hand side multiple times.
-  // In this case, we can remove all those constraints and replace with
-  // unifying all the remaining terms against a representative
-  // (they should all be equivalent)
-  if (Term * right_term = dynamic_cast<Term *>(cons)) {
-    auto shared_terms = AllTerms::of(graph, right_term);
-    if (shared_terms.size() > 1) {
-      if (coral::opt::ShowTypeSolution)
-        std::cerr << "unifying with right-hand terms\n";
-      auto representative = *shared_terms.begin();
-      for(auto &&pair: shared_terms) graph->RemoveConstraint(pair.first, pair.second);
-      for(auto &&pair: shared_terms)
-        if (pair.first != representative.first)
-          graph->AddEquality(graph->term(pair.first), graph->term(representative.first));
-      return;
-    }
-  }
 
   // If we're Calling a term, we might as well substitute its definition into the
   // call.

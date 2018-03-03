@@ -1,3 +1,5 @@
+c_extern printf : Func[Ptr, ..., Void]
+
 # Basic example
 func factorial (n):
   if n < 2:

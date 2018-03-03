@@ -21,6 +21,7 @@ public:
 
   void equal(Constraint * a, Constraint * b)  {
     std::cerr << "Unhandled Unify: (" << a << ", " << b << ")\n";
+    exit(1);
   }
   void equal(Type * a, Term * b);
   void equal(Term * a, Type * b);

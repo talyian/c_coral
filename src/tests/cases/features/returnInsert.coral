@@ -1,3 +1,5 @@
+c_extern printf : Func[Ptr, ..., Void]
+
 func foo1() : 1234
 func foo2() :
   1234
@@ -25,5 +27,5 @@ func foo7():
   return 1234
 
 func main():
-  printf("While Test -- call functions manually\n")
+  printf("ReturnInsert Test -- call functions manually\n")
   0

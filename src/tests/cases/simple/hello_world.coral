@@ -1,3 +1,5 @@
+c_extern printf : Func[Ptr, ..., Void]
+
 func main ():
   printf("Hello, %s!\n", "World")
   printf("Goodbye, World!\n")
