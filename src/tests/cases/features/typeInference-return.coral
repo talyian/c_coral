@@ -1,3 +1,5 @@
+c_extern printf: Func[Ptr, ..., Void]
+
 # Return Type Inference is the most basic type inference.
 # If a function returns value of type T, its return type is also T
 func returnsInt (): 5

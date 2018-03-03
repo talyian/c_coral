@@ -87,6 +87,7 @@ namespace coral {
 	  T->parse_and_print("Unicode Strings", "tests/cases/simple/unicode-strings.coral");
       T->checkTypeInferenceReturn();
       T->checkTypeInferenceParam();
+	  T->parse_and_print("Structs", "tests/cases/simple/tuples.coral");
 	  return T;
 	}
 

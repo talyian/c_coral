@@ -25,6 +25,7 @@ coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
 
 
 void coral::analyzers::TypeResolver::visit(ast::Call * call) {
+  out = 0;
   call->callee->accept(this);
   auto calleevar = out;
   std::vector<Constraint *> args;

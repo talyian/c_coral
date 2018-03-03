@@ -191,6 +191,7 @@ void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
   }
 
   if (callee->name == "Func") {
+    // std::cerr << "hmmm " << call << "\n";
     for(size_t i = 0; i < call->args.size(); i++) {
       if (Type * t = dynamic_cast<Type *>(callee->params[i]))
         if (t->name == "...")
@@ -258,7 +259,8 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
     if (!skip_unify) {
       // to unify, first, we remove all the old constraints
       // then we merge each constraint against a representative constraint.
-      std::cerr << "unifying with shared constraints\n";
+      if (coral::opt::ShowTypeSolution)
+        std::cerr << "unifying with shared constraints\n";
       auto representative = *shared_constraints.begin();
       for(auto &c: shared_constraints)
         if (c != representative)
@@ -277,7 +279,8 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
   if (Term * right_term = dynamic_cast<Term *>(cons)) {
     auto shared_terms = AllTerms::of(graph, right_term);
     if (shared_terms.size() > 1) {
-      std::cerr << "unifying with right-hand terms\n";
+      if (coral::opt::ShowTypeSolution)
+        std::cerr << "unifying with right-hand terms\n";
       auto representative = *shared_terms.begin();
       for(auto &&pair: shared_terms) graph->RemoveConstraint(pair.first, pair.second);
       for(auto &&pair: shared_terms)
