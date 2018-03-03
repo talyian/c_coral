@@ -51,6 +51,7 @@ namespace coral {
 	  void visit(ast::Set * expr);
 	  void visit(ast::Member * expr);
 	  void visit(ast::Comment * w);
+	  void visit(ast::TupleLiteral * w);
 	};
   }
 }

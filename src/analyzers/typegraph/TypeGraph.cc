@@ -152,6 +152,7 @@ void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
               << std::setw(20) << callee << COL_CLEAR << "\n";
 
   if (callee->name == "Member") {
+    auto memberName = dynamic_cast<Type *>(callee->params[0])->name;
     if (call->args.size() == 1)
       if (Type * tuple = dynamic_cast<Type *>(call->args[0])) {
         if (tuple->name == "Tuple") {
@@ -159,21 +160,28 @@ void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
           // but also register the lookup index so the codegenerator
           // knows what the offset is
           int fieldindex = 0;
-          for(auto * _field : tuple->params)
-          {
+          for(auto * _field : tuple->params) {
             if (auto field = dynamic_cast<Type *>(_field)) {
-              auto fieldname = dynamic_cast<Type *>(field->params[0])->name;
-              auto fieldtype = dynamic_cast<Type *>(field->params[1]);
-              if (fieldname == dynamic_cast<Type *>(callee->params[0])->name) {
-                // std::cerr << COL_LIGHT_RED << fieldname << COL_CLEAR << "\n";
+              if (field->name == "Field") {
+                auto fieldname = dynamic_cast<Type *>(field->params[0])->name;
+                auto fieldtype = dynamic_cast<Type *>(field->params[1]);
+                if (fieldname == memberName) {
+                  // std::cerr << COL_LIGHT_RED << fieldname << COL_CLEAR << "\n";
+                  AddEquality(term(t), fieldtype);
+                  auto indexTerm = AddTerm(t->name + ".index", t->expr);
+                  AddEquality(term(indexTerm), type("Index", {type(std::to_string(fieldindex))}));
+                  this->RemoveConstraint(t, call);
+                  return;
+                }
+              } else {
+                if (memberName == "Item" + std::to_string(fieldindex)) {
+                  AddEquality(term(t), field);
+                  auto indexTerm = AddTerm(t->name + ".index", t->expr);
+                  AddEquality(term(indexTerm), type("Index", {type(std::to_string(fieldindex))}));
+                  this->RemoveConstraint(t, call);
+                  return;
+                }
 
-                AddEquality(term(t), fieldtype);
-                auto indexTerm = AddTerm(t->name + ".index", t->expr);
-                AddEquality(term(indexTerm), type("Index", {type(std::to_string(fieldindex))}));
-                // v.x :: Float32
-                // v.x.index:: 0
-                this->RemoveConstraint(t, call);
-                return;
               }
             }
             fieldindex++;
@@ -250,8 +258,11 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
     if (!skip_unify) {
       // to unify, first, we remove all the old constraints
       // then we merge each constraint against a representative constraint.
+      std::cerr << "unifying with shared constraints\n";
       auto representative = *shared_constraints.begin();
-      for(auto &c: shared_constraints) graph->RemoveConstraint(0, c);
+      for(auto &c: shared_constraints)
+        if (c != representative)
+          graph->RemoveConstraint(0, c);
       for(auto &c: shared_constraints)
         if (c != representative)
           graph->AddEquality(c, representative);
@@ -266,6 +277,7 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
   if (Term * right_term = dynamic_cast<Term *>(cons)) {
     auto shared_terms = AllTerms::of(graph, right_term);
     if (shared_terms.size() > 1) {
+      std::cerr << "unifying with right-hand terms\n";
       auto representative = *shared_terms.begin();
       for(auto &&pair: shared_terms) graph->RemoveConstraint(pair.first, pair.second);
       for(auto &&pair: shared_terms)

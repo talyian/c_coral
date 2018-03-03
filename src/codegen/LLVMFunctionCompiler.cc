@@ -48,6 +48,13 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
   if (t->name == "String") {
     return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
   }
+  if (t->name == "Tuple") {
+    auto params = new LLVMTypeRef[t->params.size()];
+    for(size_t i=0; i<t->params.size(); i++) {
+      params[i] = LLVMTypeFromCoral(&t->params[i]);
+    }
+    return LLVMStructTypeInContext(context, params, t->params.size(), true);
+  }
   std::cerr << COL_LIGHT_BLUE << "Warning: Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
   return LLVMInt64TypeInContext(context);
 }
@@ -146,6 +153,9 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
       //           << "\n";
       out = LLVMBuildLoad(builder, info->find(var->expr)->second, var->name.c_str()) ;
     }
+    return;
+  case ast::ExprTypeKind::ExternKind:
+    out = info->find(var->expr)->second;
     return;
   default:
     std::cerr << "unknown var kind : " << var->name << " :: " << ast::ExprNameVisitor::of(var->expr) << "\n";
@@ -348,6 +358,24 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   // std::cerr << LLVMPrintValueToString(baseinstr) << "\n";
   // std::cerr << LLVMPrintValueToString(out) << "\n";
   // std::cerr << "Not implemented yet: Member Codegen\n";
+}
+
+
+void coral::codegen::LLVMFunctionCompiler::visit(ast::TupleLiteral * t) {
+  auto tuple_type = LLVMTypeFromCoral(t->type.get());
+  auto tupleval = LLVMBuildAlloca(builder, tuple_type, "");
+
+  std::cerr << "tuple literal " << LLVMPrintTypeToString(tuple_type) << "\n";
+  PrettyPrinter::print(t);
+  std::cerr << "\n";
+
+  for(size_t i = 0; i < t->items.size(); i++) {
+    t->items[i]->accept(this);
+    LLVMBuildStore(
+      builder, out,
+      LLVMBuildStructGEP(builder, tupleval, i, ""));
+  }
+  out = LLVMBuildLoad(builder, tupleval, "");
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::While * w) {

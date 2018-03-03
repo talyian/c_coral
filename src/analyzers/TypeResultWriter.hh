@@ -62,14 +62,17 @@ namespace coral {
         if (t.name == "") return;
         l->type = t;
       }
-      void visit(ast::TupleLiteral *) { }
       void visit(ast::Tuple *) { }
       void visit(ast::FloatLiteral *) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(inferredType->
       void visit(ast::Member * m) {
         if (inferredType->name == "Index")
           m->memberIndex = std::stoi(dynamic_cast<::Type *>(inferredType->params[0])->name);
-        std::cerr << m->member << ".member writing " << inferredType << "\n";
+      }
+      void visit(ast::TupleLiteral * t) {
+        std::cerr << "visiting tuple \n";
+        std::cerr << inferredType << "\n";
+        t->type.reset(new Type(convert_Type(inferredType)));
       }
     };
   }

@@ -242,6 +242,7 @@ namespace coral {
 	class TupleLiteral : public Value {
 	public:
 	  std::vector<unique_ptr<BaseExpr>> items;
+      std::unique_ptr<Type> type = 0;
 	  TupleLiteral(std::vector<BaseExpr *> items) {
 		for(auto && pp : items) if (pp) this->items.push_back(std::unique_ptr<BaseExpr>(pp));
 	  }
