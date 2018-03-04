@@ -319,7 +319,8 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Let * expr) {
   // this shouldn't happen usually
   if (!out) { std::cerr << "warning: null LLVMinstr: " << expr->var->name << "\n"; return; }
   // TODO: LLVMTypeFromCoral(expr->type)
-  auto local = LLVMBuildAlloca(builder, LLVMTypeOf(llval), expr->var->name.c_str());
+  auto vartype = expr->type.name != "" ? LLVMTypeFromCoral(&expr->type) : LLVMTypeOf(llval);
+  auto local = LLVMBuildAlloca(builder, vartype, expr->var->name.c_str());
 
   // std::cerr << COL_LIGHT_BLUE;
   // PrettyPrinter::print(expr->var.get());

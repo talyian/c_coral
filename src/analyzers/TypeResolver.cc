@@ -81,10 +81,21 @@ void coral::analyzers::TypeResolver::visit(ast::Extern * e) {
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Var * var) {
-  if (!var->expr)
+  if (var->name == "addrof") {
+    out = gg.AddTerm(var->name, var);
+    gg.AddConstraint(out, gg.type("Func", {gg.type("..."), gg.type("Ptr")}));
+  }
+  else if (var->name == "derefi") {
+    out = gg.AddTerm(var->name, var);
+    gg.AddConstraint(out, gg.type("Func", {gg.type("Ptr"), gg.type("Int32")}));
+  }
+  else if (!var->expr)
     std::cerr << "Undefined Reference " << var->name << "\n";
-  else if (!(out = gg.FindTerm(var->expr)))
+  else if ((out = gg.FindTerm(var->expr)))
+    return;
+  else
     std::cerr << "Missing Type Term " << var->name << ":" << var->expr << "\n";
+
 }
 
 
