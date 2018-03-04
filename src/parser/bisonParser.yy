@@ -122,6 +122,7 @@ ModuleLine
 | TYPE GeneralIdentifier StructBlock { $$ = new ast::Tuple($2, $3); }
 | TYPE GeneralIdentifier OP_EQ TypeDef { $$ = new ast::Tuple($2, $4->params); delete $4;} // new ast::TypeDecl($2, $4); }
 | IMPORT VarPath { $$ = new ast::Import($2); }
+
 Function
 : FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type(""), $4, $6); }
 | FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' StatementBlock {
@@ -129,10 +130,6 @@ Function
 | FUNC IDENTIFIER ':' TypeDef '(' ')' StatementBlock {
    $$ = new ast::Func($2, $4, {}, $7); }
 | FUNC IDENTIFIER '(' ')' StatementBlock { $$ = new ast::Func($2, new Type(""), {}, $5); }
-| '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' {
-  $$ = new ast::Func($4, $6, $8, 0); }
-| '`' IDENTIFIER FUNC IDENTIFIER ':' TypeDef '(' ')' {
-  $$ = new ast::Func($4, $6, {}, 0); }
 
 ForLoop
 : FOR GeneralIdentifier IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }

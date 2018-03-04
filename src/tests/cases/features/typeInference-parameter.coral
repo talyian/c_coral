@@ -1,6 +1,6 @@
 # Argument Type Inference is where you can propagate a known
 # Parameter type of a function or operator to an unknown argument / operand
-`extern func strlen : Int64 (s:Ptr)
+c_extern strlen : Func[Ptr, Int64]
 
 func StringParameter(s):
   return strlen(s)

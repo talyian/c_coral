@@ -1,4 +1,4 @@
-`extern func itoa : Ptr(n: Int32)
+c_extern itoa : Func[Int32, Ptr]
 
 func fizzbuzz : Ptr(n: Int32):
   if n % 15 = 0: "fizzbuzz"
