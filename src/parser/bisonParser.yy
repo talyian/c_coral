@@ -6,7 +6,7 @@
 %parse-param {ParserParam pp}
 
 %{
-#include "lexer-internal.hh"
+#include "parser/lexer-internal.hh"
 #include <cstdio>
 %}
 

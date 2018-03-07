@@ -2,10 +2,11 @@
 %option bison-bridge
 %option reentrant
 %option yylineno
+%option nounistd never-interactive
 %{
-#include "lexer-internal.hh"
-#include "bisonParser.tab.hh"
-#include "tokens.hh"
+#include "parser/lexer-internal.hh"
+#include "parser/bisonParser.tab.hh"
+#include "parser/tokens.hh"
 
 #define STRLVAL yylval->build(std::string(yytext, yyleng))
 %}
@@ -24,7 +25,7 @@ UNICODE {U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
 #.*                      { STRLVAL; return TOK::COMMENT; }
 \"(\\\"|[^\"])*\"        { STRLVAL; return TOK::STRING; }
 \'(\\\'|[^\'])*\'        { STRLVAL; return TOK::STRING; }
-([_a-zA-Z]|{UNICODE})([_a-zA-Z0-9]|{UNICODE})* { STRLVAL; return coral::Token::GetKeyword(yytext) ?: TOK::IDENTIFIER; }
+([_a-zA-Z]|{UNICODE})([_a-zA-Z0-9]|{UNICODE})* { STRLVAL; return coral::Token::GetKeyword(yytext) ? coral::Token::GetKeyword(yytext): TOK::IDENTIFIER; }
 [0-9][0-9]*L?            { STRLVAL; return TOK::INTEGER; }
 [0-9][0-9]*[.][0-9][0-9]*  { STRLVAL; return TOK::FLOAT; }
 [-+*/=><$!|^%@]+         { STRLVAL; return coral::Token::GetOperator(yytext); }
