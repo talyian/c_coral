@@ -38,11 +38,13 @@ add_library(core OBJECT
   core/prettyprinter.cc core/expr.cc utils/opts.cc)
 
 find_package(BISON)
-bison_target(bisonParser parser/bisonParser.yy parser/bisonParser.tab.cc)
+bison_target(bisonParser parser/bisonParser.yy ${CMAKE_SOURCE_DIR}/parser/bisonParser.tab.cc)
 find_package(FLEX)
-flex_target(flexLexer parser/flexLexer.l parser/flexLexer.cc)
+flex_target(flexLexer parser/flexLexer.l ${CMAKE_SOURCE_DIR}/parser/flexLexer.cc)
 add_library(parser OBJECT
   parser/lexer.cc parser/parser.cc ${FLEX_flexLexer_OUTPUTS} ${BISON_bisonParser_OUTPUT_SOURCE})
+
+# include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 add_library(analyzers OBJECT
   analyzers/TypeResolver.cc analyzers/NameResolver.cc analyzers/ReturnInserter.cc
