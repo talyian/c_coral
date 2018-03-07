@@ -16,12 +16,6 @@ namespace coral {
         if (dynamic_cast<ast::Import *>(it.get()))
           it.release();
     }
-    void ImportResolver::visit(ast::Module * m) {
-      m->body->accept(this);
-    }
-    void ImportResolver::visit(ast::Block * m) {
-      for(auto &line: m->lines) if (line) line->accept(this);
-    }
     void ImportResolver::visit(ast::Import * m) {
       std::string path;
       for(auto &part : m->path) {

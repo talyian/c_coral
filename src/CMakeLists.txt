@@ -35,7 +35,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Source Files
 add_library(core OBJECT
-  core/prettyprinter.cc core/expr.cc utils/opts.cc)
+  core/prettyprinter.cc core/expr.cc utils/opts.cc core/exprVisitor.cc)
 
 find_package(BISON)
 bison_target(bisonParser parser/bisonParser.yy ${CMAKE_SOURCE_DIR}/parser/bisonParser.tab.cc)
@@ -80,3 +80,11 @@ add_executable (coral-test
   tests/runner/parser.cc
   tests/runner/main_test.cc)
 target_link_libraries(coral-test ${llvm_libs})
+
+add_custom_target(run-test ${CMAKE_BINARY_DIR}/bin/coral-test
+  DEPENDS coral-test
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+add_custom_target(wip ${CMAKE_BINARY_DIR}/bin/coral-jit tests/cases/wip.coral
+  DEPENDS coral-jit
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
