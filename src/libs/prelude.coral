@@ -1,7 +1,7 @@
-c_extern printf:  Func[..., Void]
-c_extern malloc:  Func[IntSize, Ptr]
+c_extern printf:  Func[Ptr, ..., Void]
+c_extern malloc:  Func[Int64, Ptr]
 c_extern free:    Func[Ptr, Void]
-c_extern realloc: Func[Ptr, IntSize, Ptr]
+c_extern realloc: Func[Ptr, Int64, Ptr]
 
 func hello():
   printf ("Hello, %s\n", "World!")

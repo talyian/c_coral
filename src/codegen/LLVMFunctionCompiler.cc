@@ -204,8 +204,13 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
 }
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
   returns++;
-  if (expr->val)
-    out = LLVMBuildRet(builder, compile(expr->val.get()));
+  if (expr->val) {
+    out = compile(expr->val.get());
+    if (LLVMGetTypeKind(LLVMTypeOf(out)) == LLVMVoidTypeKind)
+      out = LLVMBuildRetVoid(builder);
+    else
+      out = LLVMBuildRet(builder, out);
+  }
   else
     out = LLVMBuildRetVoid(builder);
 }

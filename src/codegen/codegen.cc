@@ -23,6 +23,7 @@ namespace coral {
 	fclose(f);
 	parser =  coralParseModule(path);
 	module = (ast::Module *)_coralModule(parser);
+	analyzers::ImportResolver iresolver(module);	
 	analyzers::NameResolver nresolver(module);
 	analyzers::TypeResolver tresolver(module);
 	analyzers::ReturnInserter returner(module);

@@ -2,6 +2,7 @@
 #include <vector>
 #include <memory>
 
+#include "analyzers/ImportResolver.hh"
 #include "analyzers/NameResolver.hh"
 #include "analyzers/TypeResolver.hh"
 #include "analyzers/ReturnInserter.hh"

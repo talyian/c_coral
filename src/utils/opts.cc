@@ -16,7 +16,7 @@ namespace coral {
       if (on(std::getenv("OPT"))) OptLevel = std::stoi(std::getenv("OPT"));
       if (on(std::getenv("SHOWIR"))) ShowIR = 1;
       if (on(std::getenv("SHOWTYPE"))) ShowTypeSolution = 1;
-      if (on(std::getenv("SHOWTREE"))) ShowFinalParseTree = 1;
+      if (on(std::getenv("SHOWTREE"))) ShowFinalParseTree = 1; ShowInitialParseTree = 1;
       if (on(std::getenv("VERBOSE"))) {
         ShowTypeSolution = ShowIR = ShowFinalParseTree = 1;
       }

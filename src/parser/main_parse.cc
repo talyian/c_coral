@@ -3,6 +3,7 @@
 #include "utils/opts.hh"
 #include "core/prettyprinter.hh"
 #include "analyzers/ReturnInserter.hh"
+#include "analyzers/ImportResolver.hh"
 #include "analyzers/NameResolver.hh"
 #include "analyzers/TypeResolver.hh"
 
@@ -15,6 +16,8 @@ void showFile(const char * filename) {
 	auto parser = coralParseModule(filename);
 	auto module = (coral::ast::Module *)_coralModule(parser);
 	if (module) {
+	  if (coral::opt::ShowInitialParseTree) coral::PrettyPrinter::print(module);          
+          coral::analyzers::ImportResolver iri(module);
 	  coral::analyzers::NameResolver nri(module);
 	  coral::analyzers::TypeResolver tri(module);
 	  coral::analyzers::ReturnInserter ri(module);

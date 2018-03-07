@@ -7,24 +7,24 @@ find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 llvm_map_components_to_libnames(llvm_libs support core irreader
-  Analysis
-  BitReader
-  Core
-  ExecutionEngine
-  InstCombine
-  Interpreter
-  MC
-  MCDisassembler
+  # Analysis
+  # BitReader
+  # Core
+  # ExecutionEngine
+  # InstCombine
+  # Interpreter
+  # MC
+  # MCDisassembler
   MCJIT
-  Object
-  OrcJIT
+  # Object
+  # OrcJIT
   Passes
-  RuntimeDyld
-  ScalarOpts
-  Support
-  Target
-  TransformUtils
-  native
+  # RuntimeDyld
+  # ScalarOpts
+  # Support
+  # Target
+  # TransformUtils
+  # native
   nativecodegen
   )
 
@@ -44,10 +44,9 @@ flex_target(flexLexer parser/flexLexer.l ${CMAKE_SOURCE_DIR}/parser/flexLexer.cc
 add_library(parser OBJECT
   parser/lexer.cc parser/parser.cc ${FLEX_flexLexer_OUTPUTS} ${BISON_bisonParser_OUTPUT_SOURCE})
 
-# include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-
 add_library(analyzers OBJECT
   analyzers/TypeResolver.cc analyzers/NameResolver.cc analyzers/ReturnInserter.cc
+  analyzers/ImportResolver.cc
   analyzers/typegraph/constraint.cc analyzers/typegraph/TypeGraph.cc
   analyzers/typegraph/TypeGraph.cc
 )

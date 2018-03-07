@@ -1,0 +1,3 @@
+c_extern printf: Func[Ptr, ..., Void]
+c_extern malloc: Func[Int64, Ptr]
+c_extern free: Func[Ptr, Void]
