@@ -3,6 +3,7 @@
 #include "../core/expr.hh"
 #include <iostream>
 #include <map>
+#include <string>
 namespace coral {
   namespace codegen {
 	class LLVMFunctionCompiler : public ast::ExprVisitor {

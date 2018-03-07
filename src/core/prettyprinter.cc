@@ -3,6 +3,7 @@
 #include "utils/ansicolor.hh"
 
 #include <iostream>
+#include <string>
 
 using std::cout;
 

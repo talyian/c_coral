@@ -9,10 +9,6 @@
 
 #include <cstdio>
 
-extern "C" const char * itoa(int i) {
-  return (new std::string(std::to_string(i)))->c_str();
-}
-
 namespace coral {
 
   void Run(const char * path) {

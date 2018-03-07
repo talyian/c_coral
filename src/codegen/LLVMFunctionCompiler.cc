@@ -5,6 +5,7 @@
 #include "core/prettyprinter.hh"
 #include "utils/ansicolor.hh"
 #include <algorithm>
+#include <string>
 
 LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type::Type * t) {
   if (!t) return LLVMVoidTypeInContext(context);
@@ -25,7 +26,7 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
     auto nparam = t->params.size() - 1;
     std::vector<LLVMTypeRef> params;
     auto is_variadic = false;
-    for(ulong i=0; i<nparam; i++) {
+    for(size_t i=0; i<nparam; i++) {
       if (t->params[i].name == "...")
         is_variadic = true;
       else
@@ -68,7 +69,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
     LLVMTypeFromCoral(expr->type.get()));
   (*info)[expr] = function;
 
-  for(ulong i=0; i<expr->params.size(); i++) {
+  for(size_t i=0; i<expr->params.size(); i++) {
     (*info)[expr->params[i].get()] = LLVMGetParam(function, i);
   }
   if (expr->body) {
@@ -297,7 +298,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   auto llvmArgs = new LLVMValueRef[expr->arguments.size()];
   // std::cerr << "Function " << expr->callee.get() << "\n";
   // std::cerr << LLVMPrintValueToString(llvmVarRef) << "\n";
-  for(ulong i=0; i<expr->arguments.size(); i++) {
+  for(size_t i=0; i<expr->arguments.size(); i++) {
     // std::cerr << "  arg[" << i << "]"<< expr->arguments[i].get() << "\n";
     expr->arguments[i]->accept(this);
     llvmArgs[i] = out;

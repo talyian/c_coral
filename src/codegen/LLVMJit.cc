@@ -30,7 +30,7 @@ namespace coral {
 	void JIT::compileObjectFile(const char * path, const char * triple) {
 	  char * err = 0;
 	  machine = LLVMCreateTargetMachine(
-		target, triple ?: this->triple, "", "",
+		target, triple ? triple : this->triple, "", "",
 		LLVMCodeGenLevelAggressive, LLVMRelocDefault, LLVMCodeModelDefault);
 	  LLVMTargetMachineEmitToFile(
 		machine, module, (char *)path, LLVMObjectFile, &err);
