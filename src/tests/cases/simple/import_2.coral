@@ -1,0 +1,5 @@
+import import_1
+
+func main():
+  printf("Import test")
+  0

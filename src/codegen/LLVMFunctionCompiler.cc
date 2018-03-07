@@ -58,7 +58,7 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
     delete [] params;
     return oo;
   }
-  std::cerr << COL_LIGHT_BLUE << "Warning: Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
+  std::cerr << COL_LIGHT_BLUE << "Codegen WARN: Using Int64 for Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
   return LLVMInt64TypeInContext(context);
 }
 

@@ -1,5 +1,17 @@
 import prelude
 
+type Vec2 = {x:Float64, y:Float64}
+# func Vec2.lengthSquared(): x * x + y * y
+# func Vec2.length(): sqrt(lengthSquared())
+
+type Vec3 = {x:Float64, y:Float64, z:Float64}
+# func Vec3.length(): sqrt(x * x + y * y + z * z)
+
+type Vertex = {pos:Vec3, nor:Vec3, uv:Vec2, col:Vec3}
+
 func main():
   printf("moo\n")
+  let uv = Vec2(3.14, sqrt 2.0)
+  printf("v: (%f, %f)\n", uv.x, uv.y)
+  let unit3 = Vec3(1.0, 1.0, 1.0)
   0

@@ -1,0 +1,7 @@
+c_extern printf: Func[Ptr, ..., Void]
+
+func hello():
+  return "hello"
+
+func goodbye():
+  return 1
