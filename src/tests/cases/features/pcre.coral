@@ -1,50 +1,50 @@
-`extern func strlen : Int32 (str:Ptr)
-`extern func pcre2_match_data_create_8 : Ptr (size:Int32, context:Ptr)
-`extern func pcre2_compile_8 : Ptr (pat:Ptr, len:Int64, opt:Int32, err:Ptr, offset:Ptr, context:Ptr)
-`extern func pcre2_get_ovector_pointer_8 : Ptr (data:Ptr)
-`extern func pcre2_match_8 : Int32 (regex:Ptr, subject:Ptr, len:Int64, start:Int64, opt:Int32, data:Ptr, context:Ptr)
+c_extern strlen : Func[Ptr, Int64]
+c_extern pcre2_compile_8 : Func[Ptr, Int64, Int32, Ptr, Ptr, Ptr, Ptr]
+c_extern pcre2_match_data_create_8: Func[Int32, Ptr, Ptr]
+c_extern pcre2_match_8 : Func[Ptr, Ptr, Int64, Int64, Int32, Ptr, Ptr, Int32]
+c_extern pcre2_get_ovector_pointer_8 : Func[Ptr, Ptr]
+c_extern printf : Func[Ptr, ..., Void]
+c_extern atoi : Func[Ptr, Int32]
 
-# Construct a Pattern object
-func regex_Pattern_new : Ptr (pattern:Ptr):
+type Pattern = {pattern: Ptr, len: Int64, regex: Ptr}
+func compile (pattern:Ptr):
   let error = 5
-  let offset = 5
+  let offset : Int64 = strlen ""
   let len : Int64 = strlen pattern
-  let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, 0)
+  let z0 : Ptr = 0
+  let l0 = strlen ""
+  let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, z0)
   if error <= 100:
-    regex
+    Pattern(pattern, len, regex)
   else:
     printf("[Pos %d] Error: %d\n", offset, error)
+    Pattern("", l0, "")
 
-# Construct a Matches object
-func regex_matches (regex:Ptr, subject:Ptr):
-  let len = strlen subject
-  let pos = 0
-  let matchdata = pcre2_match_data_create_8(10, 0)
-  struct(regex=regex, subject=subject, len=len, matchdata=matchdata, pos=0, ov=addrof pos)
+func Pattern.show(): printf("regex: [%s]\n", self.pattern)
 
-# Move the matches object
-func regex_Matches_move (m):
-  let m = m
-  let matchdata = m.field3
-  let c : Int64 = 0
-  if pcre2_match_8(m.field0, m.field1, m.field2, m.field4, 0, matchdata, c) > 0:
-    let ov = pcre2_get_ovector_pointer_8(matchdata)
-    struct(r=m.field0,t=m.field1,l=m.field2,m=matchdata,s=derefi (ov + 8),ov=ov)
-  else:
-    struct(r=0,t=0,l=0,m=0,s=1,a=0)
+type RegexRun = {pattern:Pattern, subject:Ptr, len: Int64, pos: Int64, data: Ptr}
 
-func regex_Matches_printCurrent (m):
-  let m = m
-  let ov : Ptr = m.field5
-  let start = derefi ov
-  let end = derefi (ov + 8)
-  if start >= 0:
-    printf("  Match: %.*s\n", end - start, (m.field1 + start))
-  return void
+func Pattern.matches(subject:Ptr):
+  let data = pcre2_match_data_create_8(10, 0)
+  RegexRun(self, subject, strlen subject, 0, data)
 
+func RegexRun.show():
+  let pat = self.pattern
+  let regex = pat.regex
+  let res = pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, 0)
+  printf("match: %d\n", res)
+  # let res = pcre2_match_8(self.pattern.regex, self.subject, self.len, self.pos, 0, self.data, 0)
+  # if res > 0:
+  #   let ov = pcre2_get_ovector_pointer_8(self.data)
+  #   let start = derefi ov
+  #   let end = derefi (ov + 8)
+  #   printf("%d-%d\n", start, end)
+  # else:
+  #   printf ""
 func main():
-  let pattern = regex_Pattern_new "\b\w+?\b"
-  let matches = regex_matches(pattern, "'crabcakes' contains abc but not abcde!!!")
-  while matches.field4 < matches.field2:
-    set matches = regex_Matches_move matches
-    regex_Matches_printCurrent matches
+  let regex = compile "a.."
+  let dd = regex.matches "a cat in a hat"
+  let subject = dd.subject
+  let pat = dd.pattern
+  dd.show()
+  0

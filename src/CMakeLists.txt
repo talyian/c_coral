@@ -28,7 +28,8 @@ llvm_map_components_to_libnames(llvm_libs support core irreader
   nativecodegen
   )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g")
+set(CMAKE_CXX_COMPILER "clang++-5.0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -68,8 +69,8 @@ add_executable (coral-jit
   $<TARGET_OBJECTS:parser>
   $<TARGET_OBJECTS:core>
   $<TARGET_OBJECTS:codegen>
-  codegen/main_jit.cc ) #
-target_link_libraries(coral-jit ${llvm_libs})
+  codegen/main_jit.cc)
+target_link_libraries(coral-jit ${llvm_libs} pcre2-8)
 
 add_executable (coral-test
   $<TARGET_OBJECTS:analyzers>

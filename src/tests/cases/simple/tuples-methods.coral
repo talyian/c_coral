@@ -8,6 +8,8 @@ func Person.print():
 func Person.bmi():
   self.weight / (self.height * self.height)
 
+type Couple = {x:Person, y: Person}
+
 func ShowPerson(person:Person):
   person.print()
   printf("%s's BMI: %f\n", person.name, person.bmi())
@@ -16,6 +18,8 @@ func main():
   printf "Tuples Methods Test\n"
   let bob = Person("Robert", 5, 1.04, 33.0)
   let sue = Person("Susan", 6, 1.2, 25.3)
+  let couple = Couple(sue, bob)
   ShowPerson(bob)
   ShowPerson(sue)
+  printf("[%s <-> %s]\n", couple.x.name, couple.y.name)
   0

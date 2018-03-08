@@ -45,7 +45,8 @@ void analyzers::NameResolver::visit(ast::Func * f) {
       ast::Tuple * t = dynamic_cast<ast::Tuple *>(Klass.expr);
       f->tuple = t;
       if (t) {
-        f->params.push_back(
+        f->params.insert(
+          f->params.begin(),
           std::unique_ptr<ast::Def>(
             new ast::Def("self", new Type(t->name), 0)));
       } else {
