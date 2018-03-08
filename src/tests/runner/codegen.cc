@@ -90,6 +90,8 @@ namespace coral {
 	  T->RunFactorialWhile();
 	  T->RunReturnInserter();
       T->RunCollatz();
+      T->Run("tests/cases/simple/tuples.coral");
+      T->Run("tests/cases/simple/tuples-methods.coral");
       // T->Run("tests/cases/features/pcre.coral");
       T->show(0);
       return T;

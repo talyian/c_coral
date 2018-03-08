@@ -3,10 +3,10 @@ c_extern printf : Func[Ptr, ..., Void]
 type Person = {name:Ptr, age:Int32, height:Float64, weight:Float64}
 
 func Person.print():
-  printf("Person: %s, %d, %f\n", name, age, height)
+  printf("Person: %s, %d, %f\n", self.name, self.age, self.height)
 
 func Person.bmi():
-  weight / (height * height)
+  self.weight / (self.height * self.height)
 
 func ShowPerson(person:Person):
   person.print()
@@ -16,4 +16,6 @@ func main():
   printf "Tuples Methods Test\n"
   let bob = Person("Robert", 5, 1.04, 33.0)
   let sue = Person("Susan", 6, 1.2, 25.3)
+  ShowPerson(bob)
+  ShowPerson(sue)
   0

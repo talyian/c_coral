@@ -154,11 +154,10 @@ bool ApplyTuple(TypeGraph * graph, TypeTerm * t, Call * call, Type * field, Type
       auto tf = dynamic_cast<Type *>(tuple->params[i]);
       auto name = tf->name == "Field" ? (dynamic_cast<Type *>(tf->params[0])->name) : "Item" + std::to_string(i);
       auto type = tf->name == "Field" ? (dynamic_cast<Type *>(tf->params[1])) : tf;
-
-      std::cerr
-        << COL_RGB(0, 5, 5) << name << ", "
-        << tuple->name << ", "
-        << field->name << COL_CLEAR << "\n";
+      // std::cerr
+      //   << COL_RGB(0, 5, 5) << name << ", "
+      //   << tuple->name << ", "
+      //   << field->name << COL_CLEAR << "\n";
       if (name == field->name) {
         graph->RemoveConstraint(t, call);
         graph->AddConstraint(t, type);

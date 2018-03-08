@@ -66,8 +66,8 @@ namespace coral {
       void visit(ast::FloatLiteral *) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(inferredType->
       void visit(ast::Member * m) {
-        std::cerr << COL_LIGHT_GREEN << "member: " << m->member << "\n";
-        std::cerr << inferredType << "\n" << COL_CLEAR;
+        // std::cerr << COL_LIGHT_GREEN << "member: " << m->member << "\n";
+        // std::cerr << inferredType << "\n" << COL_CLEAR;
         if (inferredType->name == "Index")
           m->memberIndex = std::stoi(dynamic_cast<::Type *>(inferredType->params[0])->name);
       }

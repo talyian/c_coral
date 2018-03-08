@@ -184,28 +184,55 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
     }
     return;
   }
-  if (expr->op == "-")
-    out = LLVMBuildSub(builder, lhs, rhs, "");
-  else if (expr->op == "+")
-    out = LLVMBuildAdd(builder, lhs, rhs, "");
-  else if (expr->op == "%")
-    out = LLVMBuildSRem(builder, lhs, rhs, "");
-  else if (expr->op == "*")
-    out = LLVMBuildMul(builder, lhs, rhs, "");
-  else if (expr->op == "/")
-    out = LLVMBuildSDiv(builder, lhs, rhs, "");
-  else if (expr->op == "=")
-    out = LLVMBuildICmp(builder, LLVMIntEQ, lhs, rhs, "");
-  else if (expr->op == "!=")
-    out = LLVMBuildICmp(builder, LLVMIntNE, lhs, rhs, "");
-  else if (expr->op == "<")
-    out = LLVMBuildICmp(builder, LLVMIntSLT, lhs, rhs, "");
-  else if (expr->op == "<=")
-    out = LLVMBuildICmp(builder, LLVMIntSLE, lhs, rhs, "");
-  else if (expr->op == ">")
-    out = LLVMBuildICmp(builder, LLVMIntSGT, lhs, rhs, "");
-  else if (expr->op == ">=")
-    out = LLVMBuildICmp(builder, LLVMIntSGE, lhs, rhs, "");
+
+
+  if (LLVMGetTypeKind(LLVMTypeOf(lhs)) == LLVMIntegerTypeKind) {
+    if (expr->op == "-")
+      out = LLVMBuildSub(builder, lhs, rhs, "");
+    else if (expr->op == "+")
+      out = LLVMBuildAdd(builder, lhs, rhs, "");
+    else if (expr->op == "%")
+      out = LLVMBuildSRem(builder, lhs, rhs, "");
+    else if (expr->op == "*")
+      out = LLVMBuildMul(builder, lhs, rhs, "");
+    else if (expr->op == "/")
+      out = LLVMBuildSDiv(builder, lhs, rhs, "");
+    else if (expr->op == "=")
+      out = LLVMBuildICmp(builder, LLVMIntEQ, lhs, rhs, "");
+    else if (expr->op == "!=")
+      out = LLVMBuildICmp(builder, LLVMIntNE, lhs, rhs, "");
+    else if (expr->op == "<")
+      out = LLVMBuildICmp(builder, LLVMIntSLT, lhs, rhs, "");
+    else if (expr->op == "<=")
+      out = LLVMBuildICmp(builder, LLVMIntSLE, lhs, rhs, "");
+    else if (expr->op == ">")
+      out = LLVMBuildICmp(builder, LLVMIntSGT, lhs, rhs, "");
+    else if (expr->op == ">=")
+      out = LLVMBuildICmp(builder, LLVMIntSGE, lhs, rhs, "");
+  } else if (LLVMGetTypeKind(LLVMTypeOf(lhs)) == LLVMDoubleTypeKind) {
+    if (expr->op == "-")
+      out = LLVMBuildFSub(builder, lhs, rhs, "");
+    else if (expr->op == "+")
+      out = LLVMBuildFAdd(builder, lhs, rhs, "");
+    else if (expr->op == "%")
+      out = LLVMBuildFRem(builder, lhs, rhs, "");
+    else if (expr->op == "*")
+      out = LLVMBuildFMul(builder, lhs, rhs, "");
+    else if (expr->op == "/")
+      out = LLVMBuildFDiv(builder, lhs, rhs, "");
+    else if (expr->op == "=")
+      out = LLVMBuildFCmp(builder, LLVMRealOEQ, lhs, rhs, "");
+    else if (expr->op == "!=")
+      out = LLVMBuildFCmp(builder, LLVMRealONE, lhs, rhs, "");
+    else if (expr->op == "<")
+      out = LLVMBuildFCmp(builder, LLVMRealOLT, lhs, rhs, "");
+    else if (expr->op == "<=")
+      out = LLVMBuildFCmp(builder, LLVMRealOLE, lhs, rhs, "");
+    else if (expr->op == ">")
+      out = LLVMBuildFCmp(builder, LLVMRealOGT, lhs, rhs, "");
+    else if (expr->op == ">=")
+      out = LLVMBuildFCmp(builder, LLVMRealOGE, lhs, rhs, "");
+  }
 }
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Return * expr) {
   returns++;
@@ -260,10 +287,7 @@ namespace coral {
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   // if this is a methodcall, convert it into a direct call
-  std::cerr << "----------------------------------------\n";
-  PrettyPrinter::print(expr);
   expr->methodCallInvert();
-  PrettyPrinter::print(expr);
 
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
     expr->callee->accept(this);
@@ -372,9 +396,6 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   this->rawPointer = 0;
   auto baseinstr = out;
 
-  std::cerr << "Compile: L " << LLVMGetTypeKind(LLVMTypeOf(baseinstr)) << "\n";
-  std::cerr << "Compile: C " << ast::ExprNameVisitor::of(w->base.get()) << "\n";
-
   if (w->methodPtr) {
     out = (*info)[w->methodPtr];
     return;
@@ -384,8 +405,6 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   if (n < 0) {
     std::cerr << "Compile Error: Member Index not found: " << w->member << "\n";
     exit(5);
-  } else {
-    std::cerr << "Compile: " << w->member << " ["<< w->memberIndex << "]\n";
   }
 
   // build either a GEP or extractvalue instruction.
@@ -399,9 +418,6 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   } else {
     out = LLVMBuildExtractValue(builder, baseinstr, n, w->member.c_str());
   }
-  // std::cerr << LLVMPrintValueToString(baseinstr) << "\n";
-  // std::cerr << LLVMPrintValueToString(out) << "\n";
-  // std::cerr << "Not implemented yet: Member Codegen\n";
 }
 
 
