@@ -259,6 +259,11 @@ namespace coral {
 }
 
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
+  // if this is a methodcall, convert it into a direct call
+  std::cerr << "----------------------------------------\n";
+  PrettyPrinter::print(expr);
+  expr->methodCallInvert();
+  PrettyPrinter::print(expr);
 
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
     expr->callee->accept(this);
@@ -301,8 +306,11 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
       out = LLVMAddFunction(
         module, var->name.c_str(),
         LLVMFunctionType(LLVMVoidTypeInContext(context), 0, 0, true));
-  } else if (!out) {
-    std::cerr << "missing var " << ast::ExprNameVisitor::of(expr->callee.get()) << "\n";
+  } else {
+    expr->callee->accept(this);
+    if (!out) {
+      std::cerr << "missing var " << ast::ExprNameVisitor::of(expr->callee.get()) << "\n";
+    }
   }
   auto llvmVarRef = out;
   auto llvmArgs = new LLVMValueRef[expr->arguments.size()];
@@ -363,6 +371,15 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   w->base->accept(this);
   this->rawPointer = 0;
   auto baseinstr = out;
+
+  std::cerr << "Compile: L " << LLVMGetTypeKind(LLVMTypeOf(baseinstr)) << "\n";
+  std::cerr << "Compile: C " << ast::ExprNameVisitor::of(w->base.get()) << "\n";
+
+  if (w->methodPtr) {
+    out = (*info)[w->methodPtr];
+    return;
+  }
+
   auto n = w->memberIndex;
   if (n < 0) {
     std::cerr << "Compile Error: Member Index not found: " << w->member << "\n";
@@ -370,11 +387,18 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   } else {
     std::cerr << "Compile: " << w->member << " ["<< w->memberIndex << "]\n";
   }
-  LLVMValueRef index[2] = {
-    LLVMConstInt(LLVMInt32TypeInContext(context), 0, false),
-    LLVMConstInt(LLVMInt32TypeInContext(context), n, false)};
-  out = LLVMBuildGEP(builder, baseinstr, index, 2, w->member.c_str());
-  out = LLVMBuildLoad(builder, out, w->member.c_str());
+
+  // build either a GEP or extractvalue instruction.
+  // HACK: this is probably not the best way to handle this....
+  if (LLVMGetTypeKind(LLVMTypeOf(baseinstr)) == LLVMPointerTypeKind) {
+    LLVMValueRef index[2] = {
+      LLVMConstInt(LLVMInt32TypeInContext(context), 0, false),
+      LLVMConstInt(LLVMInt32TypeInContext(context), n, false)};
+    out = LLVMBuildGEP(builder, baseinstr, index, 2, w->member.c_str());
+    out = LLVMBuildLoad(builder, out, w->member.c_str());
+  } else {
+    out = LLVMBuildExtractValue(builder, baseinstr, n, w->member.c_str());
+  }
   // std::cerr << LLVMPrintValueToString(baseinstr) << "\n";
   // std::cerr << LLVMPrintValueToString(out) << "\n";
   // std::cerr << "Not implemented yet: Member Codegen\n";

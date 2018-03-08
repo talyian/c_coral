@@ -21,6 +21,7 @@ namespace coral {
     class TypeResultWriter : public ast::ExprVisitor {
     private:
       ::Type * inferredType;
+      ast::BaseExpr * out = 0;
     public:
       std::string visitorName() { return "TypeResultWriter"; }
       static void write(std::map<coral::ast::BaseExpr *, ::Type *> expr_terms) {
@@ -33,12 +34,11 @@ namespace coral {
             pair.first->accept(this);
         }
       }
+
       void visit(ast::IntLiteral *) { /* ignore */ }
       void visit(ast::StringLiteral *) { /* ignore */ }
       void visit(ast::Func * f) {
         if (!inferredType) return;
-        // std::cout << COL_GREEN << std::setw(25) << "func: " << f->name << " :: "
-        //           << inferredType << COL_CLEAR << "\n";
         Type t = convert_Type(inferredType);
         if (t.name == "") return;
         f->type.reset(new Type(t));
@@ -66,9 +66,12 @@ namespace coral {
       void visit(ast::FloatLiteral *) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(inferredType->
       void visit(ast::Member * m) {
+        std::cerr << COL_LIGHT_GREEN << "member: " << m->member << "\n";
+        std::cerr << inferredType << "\n" << COL_CLEAR;
         if (inferredType->name == "Index")
           m->memberIndex = std::stoi(dynamic_cast<::Type *>(inferredType->params[0])->name);
       }
+      void visit(ast::Call *) { }
       void visit(ast::TupleLiteral * t) {
         t->type.reset(new Type(convert_Type(inferredType)));
       }

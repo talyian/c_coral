@@ -34,7 +34,7 @@ void coral::analyzers::TypeResolver::visit(ast::Call * call) {
     args.push_back(gg.term(out));
   }
   if (calleevar) {
-    out = gg.AddTerm("call." + calleevar->name);
+    out = gg.AddTerm("call." + calleevar->name, call);
     gg.AddConstraint(out, gg.call(gg.term(calleevar), args));
   }
 }
@@ -116,7 +116,8 @@ void coral::analyzers::TypeResolver::visit(ast::Def * d) {
     gg.AddConstraint(out, gg.type(d->type.get()));
 }
 void coral::analyzers::TypeResolver::visit(ast::Func * f) {
-  auto term = gg.AddTerm(f->name, f);
+  auto func_name = f->tuple ? f->tuple->name + "::" + f->name : f->name;
+  auto term = gg.AddTerm(func_name, f);
   auto constraint = gg.type("Func");
   term_map[term] = f;
   for(auto &p: f->params) {

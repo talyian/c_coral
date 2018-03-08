@@ -37,13 +37,17 @@ void analyzers::NameResolver::visit(ast::Var * v) {
 }
 
 void analyzers::NameResolver::visit(ast::Func * f) {
+  // add self-param
   if (f->container.size()) {
     ast::Var Klass(f->container.back());
     Klass.accept(this);
     if (Klass.expr) {
       ast::Tuple * t = dynamic_cast<ast::Tuple *>(Klass.expr);
+      f->tuple = t;
       if (t) {
-        f->params.push_back(std::unique_ptr<ast::Def>(new ast::Def("self", new Type(t->name), 0)));
+        f->params.push_back(
+          std::unique_ptr<ast::Def>(
+            new ast::Def("self", new Type(t->name), 0)));
       } else {
         std::cerr << COL_LIGHT_RED << "unknown type kind " << f->container.back() << "\n";
       }

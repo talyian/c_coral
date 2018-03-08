@@ -133,6 +133,7 @@ namespace coral {
     public:
       std::vector<std::string> container; // a namespace or container type
       std::string name;
+      Tuple * tuple = 0;
 
       std::unique_ptr<coral::Type> type;
       vector<unique_ptr<coral::ast::Def>> params;
@@ -267,6 +268,7 @@ namespace coral {
       Call(BaseExpr * callee, TupleLiteral * arguments);
       Call(BaseExpr * callee, vector<BaseExpr *> arguments);
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
+      void methodCallInvert();
     };
 
 

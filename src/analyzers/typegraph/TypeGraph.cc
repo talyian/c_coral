@@ -176,12 +176,33 @@ bool ApplyTuple(TypeGraph * graph, TypeTerm * t, Call * call, Type * field, Type
     graph->RemoveConstraint(t, call);
     graph->AddConstraint(t, graph->term(field_term));
     auto member = dynamic_cast<coral::ast::Member *>(t->expr);
+
+    auto expr = field_term->expr;
+    coral::ast::Func * func = dynamic_cast<coral::ast::Func *>(expr);
+    if (func)
+      member->methodPtr = func;
+
+    // try to match by field name
     auto indexData = graph->GetTermByName(field_term_name + ".index");
-    auto type = graph->GetTypeConstraintForTerm(indexData);
-    member->memberIndex = std::stoi(type->name);
-    return true;
+    if (indexData) {
+      auto type = graph->GetTypeConstraintForTerm(indexData);
+      member->memberIndex = std::stoi(type->name);
+      return true;
+    }
   }
 
+  // Method call
+  auto method_term = graph->GetTermByName(field_term_name + "@self");
+  if (method_term) {
+    std::cerr
+      << COL_GREEN << "method: " << tuple->name << "." << field->name
+      << "\t" << coral::ast::ExprNameVisitor::of(method_term->expr)
+      << COL_CLEAR << "\n";
+    auto member = dynamic_cast<coral::ast::Member *>(t->expr);
+    member->methodPtr = dynamic_cast<coral::ast::Func *>(method_term->expr);
+    // graph->RemoveConstraint(t, call);
+    // graph->AddConstraint(t, graph->term(field_term));
+  }
   // for(auto * _field : tuple->params) {
   //   if (auto field = dynamic_cast<Type *>(_field)) {
   //     // if (field->name == "Field") {

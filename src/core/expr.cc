@@ -1,4 +1,5 @@
 #include "expr.hh"
+#include "core/utils.hh"
 
 #include <cstdio>
 #include <iostream>
@@ -76,7 +77,19 @@ namespace coral {
 		for(auto && ptr : arguments)
 		  if (ptr) this->arguments.push_back(std::unique_ptr<BaseExpr>(ptr));
 	  }
-
+    // flips the AST tree -- from call(member(foo, bar), [a, b])
+    // to call(Foo:bar, [foo, a, b])
+    void Call::methodCallInvert() {
+      auto member = dynamic_cast<Member *>(callee.get());
+      if (member && member->methodPtr) {
+        auto instance = member->base.release();
+        auto method = member->methodPtr;
+        this->arguments.insert(this->arguments.begin(), std::make_unique(instance));
+        auto vv = new ast::Var(method->name);
+        vv->expr = method;
+        this->callee.reset(vv);
+      }
+    }
 
     FloatLiteral::FloatLiteral(std::string value) : value(value) {
 

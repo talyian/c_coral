@@ -1,29 +1,14 @@
 c_extern printf: Func[Ptr, ..., Void]
 
-func testAnonymousTuple():
-  let x = (3, "Three", 3.33)
-  let x0 = x.Item0
-  let x1 = x.Item1
-  let x2 = x.Item2
-  printf("t: (%d, %s, %f)\n", x0, x1, x2)
-
 type Foo = {x:Int32, y: Ptr}
-func testTaggedTuple():
-  let v = Foo(4, "Four")
-  let v0 = v.x
-  let v1 = v.y
-  printf("v: (%d, %s)\n", v0, v1)
-
-type Bar = {Int32, Int32}
-func testUntaggedTuple():
-  let b = Bar(1, 2)
-  let b0 = b.Item0
-  let b1 = b.Item1
-  printf("b: (%d, %ld)\n", b0, b1)
+func Foo.bar():
+  self.x * 3 + 1
 
 func main():
   printf "Tuples Test\n"
-  testAnonymousTuple()
-  testTaggedTuple()
-  testUntaggedTuple()
+  let foo = Foo(3, "frob")
+  let a = foo.x
+  let b = foo.y
+  let c = foo.bar()
+  printf("%d -- %s (%d)\n", a, b, c)
   0
