@@ -316,6 +316,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
       expr->arguments[0]->accept(this);
       this->rawPointer = 0;
       return;
+    } else if (var->name == "int64") {
+      expr->arguments[0]->accept(this);
+      out = LLVMBuildSExt(builder, out, LLVMInt64TypeInContext(context), "");
+      return;
     } else if (var->name == "ptr") {
       auto literal = dynamic_cast<ast::IntLiteral *>(expr->arguments[0].get());
       auto val = std::stoull(literal->value);

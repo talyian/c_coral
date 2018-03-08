@@ -90,6 +90,10 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
     out = gg.AddTerm(var->name, var);
     gg.AddConstraint(out, gg.type("Func", {gg.type("Ptr"), gg.type("Int32")}));
   }
+  else if (var->name == "int64") {
+    out = gg.AddTerm(var->name, var);
+    gg.AddConstraint(out, gg.type("Func", {gg.type("Int32"), gg.type("Int64")}));
+  }
   else if (var->name == "ptr") {
     out = gg.AddTerm(var->name, var);
     gg.AddConstraint(out, gg.type("Func", {gg.type("Int32"), gg.type("Ptr")}));

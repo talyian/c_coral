@@ -1,5 +1,5 @@
 c_extern strlen : Func[Ptr, Int64]
-c_extern pcre2_compile_8 : Func[Ptr, Int64, Int32, Ptr, Ptr, Ptr, Ptr]
+c_extern pcre2_compile_8 : Func[Ptr, Int64, Int32, Ptr[Int32], Ptr[Int64], Ptr, Ptr]
 c_extern pcre2_match_data_create_8: Func[Int32, Ptr, Ptr]
 c_extern pcre2_match_8 : Func[Ptr, Ptr, Int64, Int64, Int32, Ptr, Ptr, Int32]
 c_extern pcre2_get_ovector_pointer_8 : Func[Ptr, Ptr]
@@ -10,14 +10,14 @@ type Pattern = {pattern: Ptr, len: Int64, regex: Ptr}
 func compile (pattern:Ptr):
   let error = 5
   let eaddr = addrof error
-  let offset : Int64 = strlen ""
+  let offset = int64 0
   let len : Int64 = strlen pattern
   let regex = pcre2_compile_8(pattern, len, 0, eaddr, addrof offset, ptr 0)
   if error <= 100:
     Pattern(pattern, len, regex)
   else:
     printf("[Pos %d] Error: %d\n", offset, error)
-    Pattern("", 0, "")
+    Pattern("", len, "")
 
 func Pattern.show(): printf("regex: [%s]\n", self.pattern)
 
@@ -25,7 +25,8 @@ type RegexRun = {pattern:Pattern, subject:Ptr, len: Int64, pos: Int64, data: Ptr
 
 func Pattern.matches(subject:Ptr):
   let data = pcre2_match_data_create_8(10, ptr 0)
-  RegexRun(self, subject, strlen subject, 0, data)
+  let pos = int64 0
+  RegexRun(self, subject, strlen subject, pos, data)
 
 func RegexRun.showrun():
   let pat = self.pattern
@@ -33,18 +34,17 @@ func RegexRun.showrun():
   let res = pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, ptr 0)
   if res > 0:
     let ov = pcre2_get_ovector_pointer_8(self.data)
-    let start = derefi ov
+    let start: Int32 = derefi ov
     let end = derefi (ov + 8)
     printf("[%.*s]\n", end - start, self.subject + start)
-    let next = RegexRun(self.pattern, self.subject, self.len, end, self.data)
+    let next = RegexRun(self.pattern, self.subject, self.len, int64 end, self.data)
     next.showrun()
   else:
     printf ""
+  0
 
 func main():
-  let regex = compile "a.."
+  let regex = compile "[a-z]+"
   let dd = regex.matches "a cat in a hat"
-  let subject = dd.subject
-  let pat = dd.pattern
   dd.showrun()
   0
