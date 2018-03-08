@@ -189,19 +189,30 @@ void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
   // nodes for constructor type access
   std::vector<Constraint *> func_fields;
   std::vector<Constraint *> func_args;
+  int index = -1;
   for(auto &field: t->fields) {
+    index++;
     auto field_info = field->type.get();
-    // if we have a named field, the func accepts the field type
-    if (field_info->name == "Field")
-      func_args.push_back(gg.type(&field_info->params[1]));
-    else
-      func_args.push_back(gg.type(field_info));
-    func_fields.push_back(gg.type(field_info));
+
+    std::string name;
+    Type type("");
+    if (field_info->name == "Field") {
+      type = field_info->params[1];
+      name = field_info->params[0].name;
+    }else {
+      type = *field_info;
+      name = "Item" + std::to_string(index);
+    }
+
+    auto field_term = gg.AddTerm(t->name + "::" + name, 0);
+    gg.AddConstraint(field_term, gg.type(&type));
+
+    auto field_term_index = gg.AddTerm(t->name + "::" + name + ".index", 0);
+    gg.AddConstraint(field_term_index, gg.type(std::to_string(index)));
+    func_args.push_back(gg.type(&type));
   }
   auto type = gg.AddTerm(t->name, 0);
-  gg.AddConstraint(type, gg.type("Tuple", func_fields));
-
-  func_args.push_back(gg.term(type));
+  func_args.push_back(gg.type(t->name));
   out = gg.AddTerm(t->name + ".new", t);
   gg.AddConstraint(out, gg.type("Func", func_args));
 }

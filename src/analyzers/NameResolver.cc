@@ -1,6 +1,7 @@
-#include "NameResolver.hh"
-#include <iostream>
+#include "analyzers/NameResolver.hh"
+#include "utils/ansicolor.hh"
 
+#include <iostream>
 using namespace coral;
 
 void analyzers::NameResolver::visit(ast::Module * m) { m->body->accept(this); }
@@ -36,6 +37,20 @@ void analyzers::NameResolver::visit(ast::Var * v) {
 }
 
 void analyzers::NameResolver::visit(ast::Func * f) {
+  if (f->container.size()) {
+    ast::Var Klass(f->container.back());
+    Klass.accept(this);
+    if (Klass.expr) {
+      ast::Tuple * t = dynamic_cast<ast::Tuple *>(Klass.expr);
+      if (t) {
+        f->params.push_back(std::unique_ptr<ast::Def>(new ast::Def("self", new Type(t->name), 0)));
+      } else {
+        std::cerr << COL_LIGHT_RED << "unknown type kind " << f->container.back() << "\n";
+      }
+    } else {
+      std::cerr << COL_LIGHT_RED << "unknown type " << f->container.back() << "\n";
+    }
+  }
   info[f->name].expr = f;
   info[f->name].kind = ast::ExprTypeKind::FuncKind;
   for(auto && param : f->params) {

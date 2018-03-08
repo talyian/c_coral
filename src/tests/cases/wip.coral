@@ -1,17 +1,29 @@
-import prelude
+c_extern printf: Func[Ptr, ..., Void]
 
-type Vec2 = {x:Float64, y:Float64}
-# func Vec2.lengthSquared(): x * x + y * y
-# func Vec2.length(): sqrt(lengthSquared())
+func testAnonymousTuple():
+  let x = (3, "Three", 3.33)
+  let x0 = x.Item0
+  let x1 = x.Item1
+  let x2 = x.Item2
+  printf("t: (%d, %s, %f)\n", x0, x1, x2)
 
-type Vec3 = {x:Float64, y:Float64, z:Float64}
-# func Vec3.length(): sqrt(x * x + y * y + z * z)
+type Foo = {x:Int32, y: Ptr}
+func testTaggedTuple():
+  let v = Foo(4, "Four")
+  let v0 = v.x
+  let v1 = v.y
+  printf("v: (%d, %s)\n", v0, v1)
 
-type Vertex = {pos:Vec3, nor:Vec3, uv:Vec2, col:Vec3}
+type Bar = {Int32, Int32}
+func testUntaggedTuple():
+  let b = Bar(1, 2)
+  let b0 = b.Item0
+  let b1 = b.Item1
+  printf("b: (%d, %ld)\n", b0, b1)
 
 func main():
-  printf("moo\n")
-  let uv = Vec2(3.14, sqrt 2.0)
-  printf("v: (%f, %f)\n", uv.x, uv.y)
-  let unit3 = Vec3(1.0, 1.0, 1.0)
+  printf "Tuples Test\n"
+  testAnonymousTuple()
+  testTaggedTuple()
+  testUntaggedTuple()
   0

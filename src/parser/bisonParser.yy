@@ -39,7 +39,7 @@
 %type <std::vector<coral::type::Type>> TypeDefList
 
 %type <coral::ast::Def *> Param NamedTypeDef
-%type <std::vector<coral::ast::Def *>> ParamsListInner NamedTypeDefList
+%type <std::vector<coral::ast::Def *>> ParamsListInner ParamsListOuter NamedTypeDefList
 %type <std::string> GeneralIdentifier
 
 %%
@@ -60,6 +60,7 @@ StatementBlock
 GeneralIdentifier
 : IDENTIFIER { $$ = $1; }
 | MATCH { $$ = "match"; }
+| IMPORT { $$ = "import"; }
 
 Atom // Expr0 - Can be called without parens
 : GeneralIdentifier { $$ = new ast::Var($1); }
@@ -105,6 +106,8 @@ TypeDefList : TypeDef { $$.push_back(*$1); delete $1; }
 | TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); delete $3; }
 ParamsListInner : Param { $$.push_back($1); }
 | ParamsListInner ',' Param { $$ = $1; $$.push_back($3); }
+ParamsListOuter : '(' ')' { }
+| '(' ParamsListInner ')' { $$ = $2; }
 
 ModuleLine
 : COMMENT { $$ = new ast::Comment($1); }
@@ -124,12 +127,8 @@ ModuleLine
 | IMPORT VarPath { $$ = new ast::Import($2); }
 
 Function
-: FUNC IDENTIFIER '(' ParamsListInner ')' StatementBlock { $$ = new ast::Func($2, new Type(""), $4, $6); }
-| FUNC IDENTIFIER ':' TypeDef '(' ParamsListInner ')' StatementBlock {
-   $$ = new ast::Func($2, $4, $6, $8); }
-| FUNC IDENTIFIER ':' TypeDef '(' ')' StatementBlock {
-   $$ = new ast::Func($2, $4, {}, $7); }
-| FUNC IDENTIFIER '(' ')' StatementBlock { $$ = new ast::Func($2, new Type(""), {}, $5); }
+: FUNC VarPath ParamsListOuter StatementBlock { $$ = new ast::Func($2, new Type(""), $3, $4); }
+| FUNC VarPath ':' TypeDef ParamsListOuter StatementBlock { $$ = new ast::Func($2, $4, $5, $6); }
 
 ForLoop
 : FOR GeneralIdentifier IN Expr StatementBlock { $$ = new ast::ForExpr(new ast::Var($2), $4, $5); }

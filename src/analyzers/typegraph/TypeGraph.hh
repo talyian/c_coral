@@ -142,6 +142,7 @@ public:
     constraintStore.push_back(std::unique_ptr<Constraint>(p));
     return p;
   }
+  TypeTerm * GetTermByName(std::string name) { return termnames[name]; }
   Type * type(std::string name, std::vector<Constraint *> v) {
     return addcons(new Type(name, v)); }
   Type * type(std::string name) { return addcons(new Type(name)); }

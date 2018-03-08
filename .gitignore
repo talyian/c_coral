@@ -1,3 +1,7 @@
 .#*
 build
 /TAGS
+/src/GPATH
+/src/GRTAGS
+/src/GSYMS
+/src/GTAGS

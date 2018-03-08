@@ -3,6 +3,8 @@
 #include <cstdio>
 #include <iostream>
 #include <regex>
+#include <string>
+#include <vector>
 
 namespace coral {
 
@@ -43,10 +45,14 @@ namespace coral {
 	std::regex string_unescape("\\\\n");
 
     Func::Func(
-      std::string name,
+      std::vector<std::string> path,
       Type * rtype,
       vector<coral::ast::Def *> params,
-      Block * body) : name(name), body(body) {
+      Block * body) : body(body) {
+
+      name = path.back();
+      path.pop_back();
+      container = path;
 
       this->type = std::unique_ptr<coral::type::Type>(new Type("Func"));
       for(auto && p : params) {

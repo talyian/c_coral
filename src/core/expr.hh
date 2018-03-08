@@ -131,11 +131,13 @@ namespace coral {
 
     class Func : public Value {
     public:
+      std::vector<std::string> container; // a namespace or container type
       std::string name;
+
       std::unique_ptr<coral::Type> type;
       vector<unique_ptr<coral::ast::Def>> params;
       unique_ptr<Block> body;
-      Func(std::string name,
+      Func(std::vector<std::string> name,
            Type * type,
            vector<coral::ast::Def *> params,
            Block * body);
@@ -232,7 +234,8 @@ namespace coral {
     public:
       unique_ptr<BaseExpr> base = 0;
       std::string member;
-      int memberIndex = 0;
+      ast::Func * methodPtr = 0;
+      int memberIndex = -1;
       Member(BaseExpr * base, std::string member) : base(base), member(member) { }
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
     };

@@ -20,7 +20,11 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Func * e) {
-    cout << IND() << COL_KEYWORD << "func " << COL_NORMAL << e->name;
+    cout << IND() << COL_KEYWORD << "func ";
+    for(auto &part: e->container) {
+      cout << COL_TYPE << part << COL_NORMAL << ".";
+    }
+    cout << e->name;
     if (e->type && e->type->params.size() && e->type->params.back().name != "")
       cout << ": " << COL_TYPE << e->type->params.back() << COL_NORMAL;
     cout << "(";

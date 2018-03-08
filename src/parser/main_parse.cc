@@ -12,18 +12,18 @@
 void showFile(const char * filename) {
   FILE * f = fopen(filename, "r");
   if (f) {
-	fclose(f);
-	auto parser = coralParseModule(filename);
-	auto module = (coral::ast::Module *)_coralModule(parser);
-	if (module) {
-	  if (coral::opt::ShowInitialParseTree) coral::PrettyPrinter::print(module);          
-          coral::analyzers::ImportResolver iri(module);
-	  coral::analyzers::NameResolver nri(module);
-	  coral::analyzers::TypeResolver tri(module);
-	  coral::analyzers::ReturnInserter ri(module);
-	  coral::PrettyPrinter::print(module);
-	}
-	coralDestroyModule(parser);
+    fclose(f);
+    auto parser = coralParseModule(filename);
+    auto module = (coral::ast::Module *)_coralModule(parser);
+    if (module) {
+      if (coral::opt::ShowInitialParseTree) coral::PrettyPrinter::print(module);
+      coral::analyzers::ImportResolver iri(module);
+      coral::analyzers::NameResolver nri(module);
+      coral::analyzers::TypeResolver tri(module);
+      coral::analyzers::ReturnInserter ri(module);
+      coral::PrettyPrinter::print(module);
+    }
+    coralDestroyModule(parser);
   } else { printf("%sNot found: %s%s\n", COL_LIGHT_RED, filename, COL_CLEAR); }
   printf("\n");
 }

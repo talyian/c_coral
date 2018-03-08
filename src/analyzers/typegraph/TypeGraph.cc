@@ -33,7 +33,7 @@ void TypeGraph::Show(std::string header) {
   std::cout << "------------------------------" << header << '\n';
   for(auto &&pair: relations) {
     std::cerr << COL_RGB(5, 2, 3) << std::setw(20) << pair.second
-              // << "(" << std::to_string((unsigned long)pair.second) << ")"
+      // << "(" << std::to_string((unsigned long)pair.second) << ")"
               << COL_RGB(3, 3, 3) << "  ::  "
               << pair.first << COL_CLEAR "\n";
   }
@@ -140,6 +140,76 @@ void TypeGraph::RemoveConstraint(TypeTerm * tt, Constraint * cc) {
 }
 
 
+bool ApplyTuple(TypeGraph * graph, TypeTerm * t, Call * call, Type * field, Type * tuple) {
+  // this is called when we have a Call(Member(Item0), TupleType)
+  // here we both have to register the output type of the field
+  // but also register the lookup index so the codegenerator
+  // knows what the offset is
+  int fieldindex = 0;
+  auto memberName = dynamic_cast<Type *>(field)->name;
+
+  // Option1: Literal Tuple
+  if (tuple->name == "Tuple") {
+    for(size_t i = 0; i < tuple->params.size(); i++) {
+      auto tf = dynamic_cast<Type *>(tuple->params[i]);
+      auto name = tf->name == "Field" ? (dynamic_cast<Type *>(tf->params[0])->name) : "Item" + std::to_string(i);
+      auto type = tf->name == "Field" ? (dynamic_cast<Type *>(tf->params[1])) : tf;
+
+      std::cerr
+        << COL_RGB(0, 5, 5) << name << ", "
+        << tuple->name << ", "
+        << field->name << COL_CLEAR << "\n";
+      if (name == field->name) {
+        graph->RemoveConstraint(t, call);
+        graph->AddConstraint(t, type);
+        auto member = dynamic_cast<coral::ast::Member *>(t->expr);
+        member->memberIndex = i;
+        return true;
+      }
+    }
+  }
+
+  // Option2: Named Tuple
+  auto field_term_name = tuple->name + "::" + field->name;
+  auto field_term = graph->GetTermByName(field_term_name);
+  if (field_term) {
+    graph->RemoveConstraint(t, call);
+    graph->AddConstraint(t, graph->term(field_term));
+    auto member = dynamic_cast<coral::ast::Member *>(t->expr);
+    auto indexData = graph->GetTermByName(field_term_name + ".index");
+    auto type = graph->GetTypeConstraintForTerm(indexData);
+    member->memberIndex = std::stoi(type->name);
+    return true;
+  }
+
+  // for(auto * _field : tuple->params) {
+  //   if (auto field = dynamic_cast<Type *>(_field)) {
+  //     // if (field->name == "Field") {
+  //     //   auto fieldname = dynamic_cast<Type *>(field->params[0])->name;
+  //     //   auto fieldtype = dynamic_cast<Type *>(field->params[1]);
+  //     //   if (fieldname == memberName) {
+  //     //     // std::cerr << COL_LIGHT_RED << fieldname << COL_CLEAR << "\n";
+  //     //     graph->AddEquality(graph->term(t), fieldtype);
+  //     //     auto indexTerm = graph->AddTerm(t->name + ".index", t->expr);
+  //     //     graph->AddEquality(graph->term(indexTerm), graph->type("Index", {graph->type(std::to_string(fieldindex))}));
+  //     //     graph->RemoveConstraint(t, call);
+  //     //     return true;
+  //     //   }
+  //     // } else {
+  //     //   if (memberName == "Item" + std::to_string(fieldindex)) {
+  //     //     graph->AddEquality(graph->term(t), field);
+  //     //     auto indexTerm = graph->AddTerm(t->name + ".index", t->expr);
+  //     //     graph->AddEquality(graph->term(indexTerm), graph->type("Index", {graph->type(std::to_string(fieldindex))}));
+  //     //     graph->RemoveConstraint(t, call);
+  //     //     return true;
+  //     //   }
+  //     // }
+  //   }
+  //   fieldindex++;
+  // }
+  return false;
+}
+
 void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
   // TODO: this can be implemented as a unify operation on two Funcs
   // get rid of free types in F's type signature
@@ -153,42 +223,11 @@ void TypeGraph::Apply(TypeTerm * t, Call * call, Type * callfunc) {
               << std::setw(20) << callee << COL_CLEAR << "\n";
 
   if (callee->name == "Member") {
-    auto memberName = dynamic_cast<Type *>(callee->params[0])->name;
-    if (call->args.size() == 1)
+    if (call->args.size() == 1) {
       if (Type * tuple = dynamic_cast<Type *>(call->args[0])) {
-        if (tuple->name == "Tuple") {
-          // here we both have to register the output type of the field
-          // but also register the lookup index so the codegenerator
-          // knows what the offset is
-          int fieldindex = 0;
-          for(auto * _field : tuple->params) {
-            if (auto field = dynamic_cast<Type *>(_field)) {
-              if (field->name == "Field") {
-                auto fieldname = dynamic_cast<Type *>(field->params[0])->name;
-                auto fieldtype = dynamic_cast<Type *>(field->params[1]);
-                if (fieldname == memberName) {
-                  // std::cerr << COL_LIGHT_RED << fieldname << COL_CLEAR << "\n";
-                  AddEquality(term(t), fieldtype);
-                  auto indexTerm = AddTerm(t->name + ".index", t->expr);
-                  AddEquality(term(indexTerm), type("Index", {type(std::to_string(fieldindex))}));
-                  this->RemoveConstraint(t, call);
-                  return;
-                }
-              } else {
-                if (memberName == "Item" + std::to_string(fieldindex)) {
-                  AddEquality(term(t), field);
-                  auto indexTerm = AddTerm(t->name + ".index", t->expr);
-                  AddEquality(term(indexTerm), type("Index", {type(std::to_string(fieldindex))}));
-                  this->RemoveConstraint(t, call);
-                  return;
-                }
-
-              }
-            }
-            fieldindex++;
-          }
-        }
+        if (ApplyTuple(this, t, call, dynamic_cast<Type *>(callee->params[0]), tuple)) return;
       }
+    }
   }
 
   if (callee->name == "Func") {
@@ -316,21 +355,21 @@ void StepSingleConstraint(TypeGraph * graph, TypeTerm * term, Constraint * cons)
   // call.
   if (Type * func = dynamic_cast<Type *>(cons)) {
     // if (func->name == "Func") {
-      auto dependents = Dependents::of(graph, term);
-      // if (func->name == "Tuple")
-      //   std::cerr << COL_RGB(2, 2, 5) << term << " is a tuple! " << dependents.size() << "\n";
-      for(auto &dep: dependents) {
-        if (Call * call = dynamic_cast<Call *>(dep)) {
-          if (coral::opt::ShowTypeSolution)
-            std::cerr
-              << COL_BLUE << call->callee << " "
-              << (call->callee == func) << "   call \n" << COL_CLEAR;
-          if (ConstraintEqualsImpl::of(call->callee, graph->term(term))) {
-            graph->Substitute(call, term, cons);
-          }
+    auto dependents = Dependents::of(graph, term);
+    // if (func->name == "Tuple")
+    //   std::cerr << COL_RGB(2, 2, 5) << term << " is a tuple! " << dependents.size() << "\n";
+    for(auto &dep: dependents) {
+      if (Call * call = dynamic_cast<Call *>(dep)) {
+        if (coral::opt::ShowTypeSolution)
+          std::cerr
+            << COL_BLUE << call->callee << " "
+            << (call->callee == func) << "   call \n" << COL_CLEAR;
+        if (ConstraintEqualsImpl::of(call->callee, graph->term(term))) {
+          graph->Substitute(call, term, cons);
         }
       }
-      // }
+    }
+    // }
   }
   return;
 }
@@ -362,8 +401,8 @@ void TypeGraph::Step() {
     for(auto && c : relations) {
       StepSingleConstraint(this, c.second, c.first);
       if (changes != old_changes) {
-      //   Show("--");
-      //   getchar();
+        //   Show("--");
+        //   getchar();
         break;
       }
     }

@@ -58,6 +58,11 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
     delete [] params;
     return oo;
   }
+
+  auto defined_type = LLVMGetTypeByName(module, t->name.c_str());
+  if (defined_type) {
+    return defined_type;
+  }
   std::cerr << COL_LIGHT_BLUE << "Codegen WARN: Using Int64 for Unhandled Type: '" << *t << "'" << COL_CLEAR << "\n";
   return LLVMInt64TypeInContext(context);
 }
@@ -359,6 +364,12 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   this->rawPointer = 0;
   auto baseinstr = out;
   auto n = w->memberIndex;
+  if (n < 0) {
+    std::cerr << "Compile Error: Member Index not found: " << w->member << "\n";
+    exit(5);
+  } else {
+    std::cerr << "Compile: " << w->member << " ["<< w->memberIndex << "]\n";
+  }
   LLVMValueRef index[2] = {
     LLVMConstInt(LLVMInt32TypeInContext(context), 0, false),
     LLVMConstInt(LLVMInt32TypeInContext(context), n, false)};
