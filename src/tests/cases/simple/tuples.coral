@@ -22,8 +22,6 @@ func testUntaggedTuple():
   printf("b: (%d, %ld)\n", b0, b1)
 
 func takeFoo(z:Foo):
-  # TODO: we should automate this
-  let z = z
   let x = z.x
   let y = z.y
   printf("z: %d %s\n", x, y)
