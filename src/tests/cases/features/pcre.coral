@@ -28,23 +28,24 @@ func Pattern.matches(subject:Ptr):
   let data = pcre2_match_data_create_8(10, 0)
   RegexRun(self, subject, strlen subject, 0, data)
 
-func RegexRun.show():
+func RegexRun.showrun():
   let pat = self.pattern
   let regex = pat.regex
   let res = pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, 0)
-  printf("match: %d\n", res)
-  # let res = pcre2_match_8(self.pattern.regex, self.subject, self.len, self.pos, 0, self.data, 0)
-  # if res > 0:
-  #   let ov = pcre2_get_ovector_pointer_8(self.data)
-  #   let start = derefi ov
-  #   let end = derefi (ov + 8)
-  #   printf("%d-%d\n", start, end)
-  # else:
-  #   printf ""
+  if res > 0:
+    let ov = pcre2_get_ovector_pointer_8(self.data)
+    let start = derefi ov
+    let end = derefi (ov + 8)
+    printf("[%.*s]\n", end - start, self.subject + start)
+    let next = RegexRun(self.pattern, self.subject, self.len, end, self.data)
+    next.showrun()
+  else:
+    printf ""
+
 func main():
   let regex = compile "a.."
   let dd = regex.matches "a cat in a hat"
   let subject = dd.subject
   let pat = dd.pattern
-  dd.show()
+  dd.showrun()
   0
