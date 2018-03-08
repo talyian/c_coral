@@ -8,7 +8,6 @@
 #include "parser/parser.hh"
 
 #include "codegen.hh"
-#include <dlfcn.h>
 namespace coral {
   namespace tests {
     template<typename T>

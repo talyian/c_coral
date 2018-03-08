@@ -37,12 +37,9 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
       else
         params.push_back(LLVMTypeFromCoral(&t->params[i]));
     }
-    auto ftype = LLVMFunctionType(
-      ret_type,
-      &params[0], params.size(),
-      is_variadic);
-    // std::cerr << "LLVMTYPE : " << LLVMPrintTypeToString(ftype) << "\n";
-    return ftype;
+    return params.empty() ?
+      LLVMFunctionType(ret_type, 0, 0, is_variadic) :
+      LLVMFunctionType(ret_type, &params[0], params.size(), is_variadic);
   }
   if (t->name == "Struct") {
     auto params = new LLVMTypeRef[t->params.size()];
@@ -301,7 +298,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
     if (ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::TupleKind) {
       auto tuple_type = LLVMGetTypeByName(module, var->name.c_str());
       auto tupleval = LLVMBuildAlloca(builder, tuple_type, var->name.c_str());
-      for(auto i = 0; i < expr->arguments.size(); i++) {
+      for(size_t i = 0; i < expr->arguments.size(); i++) {
         expr->arguments[i]->accept(this);
         LLVMBuildStore(
           builder, out,

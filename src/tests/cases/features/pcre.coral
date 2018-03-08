@@ -17,7 +17,7 @@ func compile (pattern:Ptr):
     Pattern(pattern, len, regex)
   else:
     printf("[Pos %d] Error: %d\n", offset, error)
-    Pattern("", len, "")
+    Pattern(pattern, len, ptr 0)
 
 func Pattern.show(): printf("regex: [%s]\n", self.pattern)
 
@@ -25,14 +25,12 @@ type RegexRun = {pattern:Pattern, subject:Ptr, len: Int64, pos: Int64, data: Ptr
 
 func Pattern.matches(subject:Ptr):
   let data = pcre2_match_data_create_8(10, ptr 0)
-  let pos = int64 0
-  RegexRun(self, subject, strlen subject, pos, data)
+  RegexRun(self, subject, strlen subject, int64 0, data)
 
 func RegexRun.showrun():
   let pat = self.pattern
   let regex = pat.regex
-  let res = pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, ptr 0)
-  if res > 0:
+  if pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, ptr 0) > 0:
     let ov = pcre2_get_ovector_pointer_8(self.data)
     let start: Int32 = derefi ov
     let end = derefi (ov + 8)
@@ -41,7 +39,6 @@ func RegexRun.showrun():
     next.showrun()
   else:
     printf ""
-  0
 
 func main():
   let regex = compile "[a-z]+"

@@ -2,6 +2,7 @@
 #include "utils/ansicolor.hh"
 
 #include <iostream>
+#include <string>
 using namespace coral;
 
 void analyzers::NameResolver::visit(ast::Module * m) { m->body->accept(this); }
