@@ -21,9 +21,17 @@ func testUntaggedTuple():
   let b1 = b.Item1
   printf("b: (%d, %ld)\n", b0, b1)
 
+func takeFoo(z:Foo):
+  # TODO: we should automate this
+  let z = z
+  let x = z.x
+  let y = z.y
+  printf("z: %d %s\n", x, y)
+
 func main():
   printf "Tuples Test\n"
   testAnonymousTuple()
   testTaggedTuple()
   testUntaggedTuple()
+  takeFoo(Foo(1000, "Thousand"))
   0
