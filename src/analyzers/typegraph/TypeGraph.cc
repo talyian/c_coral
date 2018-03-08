@@ -37,6 +37,7 @@ void TypeGraph::Show(std::string header) {
               << COL_RGB(3, 3, 3) << "  ::  "
               << pair.first << COL_CLEAR "\n";
   }
+  std::cerr << COL_RGB(2, 5, 2) << changes << " changes made.\n" << COL_CLEAR;
 }
 
 TypeTermReplacer::TypeTermReplacer(

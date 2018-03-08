@@ -1,14 +1,8 @@
 c_extern printf: Func[Ptr, ..., Void]
-
-type Foo = {x:Int32, y: Ptr}
-func Foo.bar():
-  self.x * 3 + 1
-
+c_extern scanf: Func[Ptr, Ptr[Int32], Void]
 func main():
-  printf "Tuples Test\n"
-  let foo = Foo(3, "frob")
-  let a = foo.x
-  let b = foo.y
-  let c = foo.bar()
-  printf("%d -- %s (%d)\n", a, b, c)
+  let a = 0
+  let b = addrof a
+  scanf("%d", addrof a)
+  printf("[%d]\n", a)
   0

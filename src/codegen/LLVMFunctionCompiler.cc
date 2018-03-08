@@ -10,7 +10,12 @@
 LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type::Type * t) {
   if (!t) return LLVMVoidTypeInContext(context);
   if (t->name == "Void") return LLVMVoidTypeInContext(context);
-  if (t->name == "Ptr") return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
+  if (t->name == "Ptr") {
+    if (t->params.size() == 0)
+      return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
+    else
+      return LLVMPointerType(LLVMTypeFromCoral(&t->params[0]), 0);
+  }
   if (t->name == "Bool") return LLVMInt1TypeInContext(context);
   if (t->name == "Int8") return LLVMInt8TypeInContext(context);
   if (t->name == "Int16") return LLVMInt16TypeInContext(context);
@@ -310,6 +315,14 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
       this->rawPointer = 1;
       expr->arguments[0]->accept(this);
       this->rawPointer = 0;
+      return;
+    } else if (var->name == "ptr") {
+      auto literal = dynamic_cast<ast::IntLiteral *>(expr->arguments[0].get());
+      auto val = std::stoull(literal->value);
+      auto ptrtype = coral::type::Type("Ptr");
+      out = LLVMConstPointerCast(
+        LLVMConstInt(LLVMInt64TypeInContext(context), val, false),
+        LLVMTypeFromCoral(&ptrtype));
       return;
     } else if (var->name == "derefi") {
       // TODO typed pointers should eliminate the need for a "deref-as-integer" builtin

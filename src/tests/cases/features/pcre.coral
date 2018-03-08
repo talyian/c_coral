@@ -9,29 +9,28 @@ c_extern atoi : Func[Ptr, Int32]
 type Pattern = {pattern: Ptr, len: Int64, regex: Ptr}
 func compile (pattern:Ptr):
   let error = 5
+  let eaddr = addrof error
   let offset : Int64 = strlen ""
   let len : Int64 = strlen pattern
-  let z0 : Ptr = 0
-  let l0 = strlen ""
-  let regex = pcre2_compile_8(pattern, len, 0, addrof error, addrof offset, z0)
+  let regex = pcre2_compile_8(pattern, len, 0, eaddr, addrof offset, ptr 0)
   if error <= 100:
     Pattern(pattern, len, regex)
   else:
     printf("[Pos %d] Error: %d\n", offset, error)
-    Pattern("", l0, "")
+    Pattern("", 0, "")
 
 func Pattern.show(): printf("regex: [%s]\n", self.pattern)
 
 type RegexRun = {pattern:Pattern, subject:Ptr, len: Int64, pos: Int64, data: Ptr}
 
 func Pattern.matches(subject:Ptr):
-  let data = pcre2_match_data_create_8(10, 0)
+  let data = pcre2_match_data_create_8(10, ptr 0)
   RegexRun(self, subject, strlen subject, 0, data)
 
 func RegexRun.showrun():
   let pat = self.pattern
   let regex = pat.regex
-  let res = pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, 0)
+  let res = pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, ptr 0)
   if res > 0:
     let ov = pcre2_get_ovector_pointer_8(self.data)
     let start = derefi ov
