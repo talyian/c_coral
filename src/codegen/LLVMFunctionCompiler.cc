@@ -308,12 +308,22 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
       return;
     }
     // TODO: make this an actual operator
+
     if (var->name == "addrof") {
       this->rawPointer = 1;
       expr->arguments[0]->accept(this);
       this->rawPointer = 0;
       return;
-    } else if (var->name == "int64") {
+    }
+    else if (var->name == "negate") {
+      expr->arguments[0]->accept(this);
+      if (LLVMGetTypeKind(LLVMTypeOf(out)) == LLVMIntegerTypeKind)
+        out = LLVMBuildMul(builder, LLVMConstInt(LLVMTypeOf(out), -1, false), out, "");
+      else
+        out = LLVMBuildFMul(builder, LLVMConstReal(LLVMTypeOf(out), -1.0), out, "");
+      return;
+    }
+    else if (var->name == "int64") {
       expr->arguments[0]->accept(this);
       out = LLVMBuildSExt(builder, out, LLVMInt64TypeInContext(context), "");
       return;

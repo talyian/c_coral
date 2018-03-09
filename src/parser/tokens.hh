@@ -14,8 +14,8 @@ namespace coral {
 		s == "*" ? TOK::OP2 :
 		s == "/" ? TOK::OP2 :
 		s == "%" ? TOK::OP2 :
-		s == "+" ? TOK::OP3 :
-		s == "-" ? TOK::OP3 :
+		s == "+" ? TOK::OP_ADD :
+		s == "-" ? TOK::OP_SUB :
 		s == "<" ? TOK::OP4 :
 		s == ">" ? TOK::OP4 :
 		s == "=" ? TOK::OP4 :

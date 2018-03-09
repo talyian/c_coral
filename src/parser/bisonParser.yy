@@ -10,7 +10,7 @@
 #include <cstdio>
 %}
 
-%token <std::string> OP OP4 OP3 OP2 OP1
+%token <std::string> OP OP4 OP_ADD OP_SUB OP2 OP1 OP_MINUS
 %token <std::string> OP_EQ
 %token <std::string> COMMENT
 %token <std::string> STRING
@@ -77,8 +77,11 @@ Expr2 : Atom { $$ = $1; } // Expr2s can be unparenthesized in binary ops
 | Expr2 Tuple { $$ = new ast::Call($1, $2); delete $2; }
 | Expr2 '(' ')' { $$ = new ast::Call($1, {}); }
 | Expr2 Atom { $$ = new ast::Call($1, { $2 }); }
+| OP_SUB Expr2 { $$ = new ast::Call(new ast::Var("negate"), { $2 }); }
 Expr3 : Expr2 { $$ = $1; } | Tuple { $$ = $1; } | Expr3 OP2 Expr3 { $$ = new ast::BinOp($1, $2, $3); }
-Expr4 : Expr3 { $$ = $1; } | Expr4 OP3 Expr4 { $$ = new ast::BinOp($1, $2, $3); }
+Expr4 : Expr3 { $$ = $1; }
+| Expr4 OP_ADD Expr4 { $$ = new ast::BinOp($1, $2, $3); }
+| Expr4 OP_SUB Expr4 { $$ = new ast::BinOp($1, $2, $3); }
 Expr : Expr4 { $$ = $1; }
 | Expr4 OP4 Expr4  { $$ = new ast::BinOp($1, $2, $3); }
 | Expr4 OP_EQ Expr4  { $$ = new ast::BinOp($1, $2, $3); }

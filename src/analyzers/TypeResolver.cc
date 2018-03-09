@@ -81,7 +81,12 @@ void coral::analyzers::TypeResolver::visit(ast::Extern * e) {
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Var * var) {
-  if (var->name == "addrof") {
+  if (var->name == "negate") {
+    out = gg.AddTerm(var->name, var);
+    auto free = gg.free(0);
+    gg.AddConstraint(out, gg.type("Func", {free, free}));
+  }
+  else if (var->name == "addrof") {
     out = gg.AddTerm(var->name, var);
     auto free = gg.free(101);
     gg.AddConstraint(out, gg.type("Func", {free, gg.type("Ptr", {free})}));
