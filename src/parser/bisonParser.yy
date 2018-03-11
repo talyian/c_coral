@@ -10,7 +10,7 @@
 #include <cstdio>
 %}
 
-%token <std::string> OP OP4 OP_ADD OP_SUB OP2 OP1 OP_MINUS
+%token <std::string> OP OP4 OP_ADD OP_SUB OP2 OP1
 %token <std::string> OP_EQ
 %token <std::string> COMMENT
 %token <std::string> STRING
@@ -40,7 +40,7 @@
 
 %type <coral::ast::Def *> Param NamedTypeDef
 %type <std::vector<coral::ast::Def *>> ParamsListInner ParamsListOuter NamedTypeDefList
-%type <std::string> GeneralIdentifier
+%type <std::string> GeneralIdentifier Operator
 
 %%
 
@@ -61,6 +61,16 @@ GeneralIdentifier
 : IDENTIFIER { $$ = $1; }
 | MATCH { $$ = "match"; }
 | IMPORT { $$ = "import"; }
+| '(' Operator ')' { $$ = $2; }
+
+Operator
+: OP { $$ = $1; }
+| OP4 { $$ = $1; }
+| OP_ADD { $$ = $1; }
+| OP_SUB { $$ = $1; }
+| OP2 { $$ = $1; }
+| OP1 { $$ = $1; }
+| OP_EQ { $$ = $1; }
 
 Atom // Expr0 - Can be called without parens
 : GeneralIdentifier { $$ = new ast::Var($1); }

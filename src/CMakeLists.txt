@@ -86,6 +86,6 @@ add_custom_target(run-test ${CMAKE_BINARY_DIR}/bin/coral-test
   DEPENDS coral-test
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-add_custom_target(wip ${CMAKE_BINARY_DIR}/bin/coral-jit tests/cases/features/pcre.coral
+add_custom_target(wip ${CMAKE_BINARY_DIR}/bin/coral-jit tests/cases/wip.coral
   DEPENDS coral-jit
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

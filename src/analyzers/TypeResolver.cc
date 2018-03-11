@@ -103,13 +103,13 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
     out = gg.AddTerm(var->name, var);
     gg.AddConstraint(out, gg.type("Func", {gg.type("Int32"), gg.type("Ptr")}));
   }
-  else if (!var->expr)
-    std::cerr << "Undefined Reference " << var->name << "\n";
-  else if ((out = gg.FindTerm(var->expr)))
+  else if (!var->expr) {
+    if (var->name.substr(0, 10) != "_llvmBuild")
+      std::cerr << "Undefined Reference " << var->name << "\n";
+  } else if ((out = gg.FindTerm(var->expr)))
     return;
   else
     std::cerr << "Missing Type Term " << var->name << ":" << var->expr << "\n";
-
 }
 
 

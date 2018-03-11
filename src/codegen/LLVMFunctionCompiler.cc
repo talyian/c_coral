@@ -294,6 +294,8 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
     expr->callee->accept(this);
     auto var = (ast::Var *)expr->callee.get();
+
+    // Tuple Constructor..... need a better way to do this
     // std::cerr << "var " << var->name << " kind: " << ast::ExprNameVisitor::of(var->expr) << "\n";
     if (ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::TupleKind) {
       auto tuple_type = LLVMGetTypeByName(module, var->name.c_str());
@@ -309,7 +311,24 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
     }
     // TODO: make this an actual operator
 
-    if (var->name == "addrof") {
+    else if (var->name.substr(0, 10) == "_llvmBuild") {
+      if (var->name == "_llvmBuildAdd") {
+        expr->arguments[0]->accept(this);
+        auto lhs = out;
+        expr->arguments[1]->accept(this);
+        auto rhs = out;
+        out = LLVMBuildAdd(builder, lhs, rhs, "");
+      }
+      if (var->name == "_llvmBuildFAdd") {
+        expr->arguments[0]->accept(this);
+        auto lhs = out;
+        expr->arguments[1]->accept(this);
+        auto rhs = out;
+        out = LLVMBuildFAdd(builder, lhs, rhs, "");
+      }
+      return;
+    }
+    else if (var->name == "addrof") {
       this->rawPointer = 1;
       expr->arguments[0]->accept(this);
       this->rawPointer = 0;

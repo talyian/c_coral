@@ -15,7 +15,7 @@
 
 (defvar coral-font-lock-keywords '(
    ("^[ ]+\\<set\\>" . font-lock-keyword-face)
-   ("\\<\\(impl\\|class\\)\\>" . font-lock-keyword-face)
+   ("\\<\\(operator\\|impl\\|class\\)\\>" . font-lock-keyword-face)
    ("\\<\\(return\\|set\\|pass\\|if\\|then\\|for\\|in\\|func\\|let\\|type\\|with\\|module\\)\\>" . font-lock-keyword-face)
    ("\\(^\\|[^a-zA-Z0-9_$]\\)match\\>" . font-lock-keyword-face)
    ("=>\\|\[$@<>=+*/%-\]" . font-lock-function-name-face)

@@ -1,8 +1,20 @@
-c_extern printf: Func[Ptr, ..., Void]
-c_extern scanf: Func[Ptr, Ptr[Int32], Void]
+import prelude
+
+# Operator Overloading Feature
+type Vec3 = {x:Float64,y:Float64,z:Float64}
+func (+) (a:Int32, b:Int32): _llvmBuildAdd(a, b)
+func (+) (a:Int64, b:Int64): _llvmBuildAdd(a, b)
+func (+) (a:Float32, b:Float32): _llvmBuildFAdd(a, b)
+func (+) (a:Float64, b:Float64): _llvmBuildFAdd(a, b)
+func (+) (v:Vec3, w:Vec3): Vec3(v.x + w.x, v.y + w.y, v.z + w.z)
+
 func main():
-  let a = 0
-  let b = addrof a
-  scanf("%d", addrof a)
-  printf("[%d]\n", a)
+  let a = int64 1
+  let b = 2
+  let c = 3.14
+  let d = Vec3(1.0, 2.0, 3.0)
+  let a2 = _llvmBuildAdd(a, a)
+  let b2 = _llvmBuildAdd(b, b)
+  let c2 = _llvmBuildFAdd(c, c)
+  printf("%d, %d, %f\n", a2, b2, c2)
   0
