@@ -1,0 +1,33 @@
+This is the constraint solver for Coral's type system.
+We have our own CMakeLists and should be independent of the rest of the codebase
+
+* [0/6] Coral Type Graph
+  :PROPERTIES:
+  :COOKIE_DATA: todo recursive
+  :END:
+   # Input Assertions are of the form term :: constraint
+   let a = foo(b, c)   -> a :: call(foo, {b, c})
+   let a = 3           -> a :: Int32
+   let a = b.x         -> a :: member("x", b)
+
+   # All term names are unique
+   let a = 1       a :: Int32
+   let a = "3"     a.1 :: String
+   let a = 5.0     a.2 :: Float64  \_ these get unified? dunno...
+   set a = 3       a.2 :: Int32    /  maybe set-exprs don't add type qualifications
+** TODO Implement Member unification
+** TODO Functions can be overloaded
+*** TODO Overloaded unary functions
+   func pi (a: Int32): 3
+   func pi (a: Float64): 3.14
+   func pi (a: String): "π"
+   pi 1
+   pi 1.0
+   pi "one"
+*** TODO nullary overloads
+   func Int32.zero(): 0
+   func Float64.zero(): 0.0
+   func String.zero(): ""
+*** TODO Generic Values
+   let i : Int32 = 3
+   Vec3(1, 2, 3) * i

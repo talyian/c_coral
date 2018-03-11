@@ -9,20 +9,42 @@
 #include <set>
 #include <algorithm>
 
-#include "analyzers/typegraph/TypeGraph.hh"
+#include "typegraph/typegraph.hh"
 #include "analyzers/TypeResultWriter.hh"
+
+using namespace typegraph;
+
+namespace typegraph {
+  extern bool showSteps;
+}
+
+typegraph::Type * typeconvert(TypeGraph * gg, coral::type::Type * ct) {
+  auto t = gg->type(ct->name);
+  for(auto &p : ct->params)
+    t->params.push_back(typeconvert(gg, &p));
+  return t;
+}
+
+coral::type::Type * typeRevConvert(typegraph::Type * ct) {
+  auto t = new coral::type::Type(ct->name);
+  for(auto &p : ct->params) {
+    t->params.push_back(*typeRevConvert(dynamic_cast<typegraph::Type *>(p)));
+  }
+  return t;
+}
 
 coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
   m->accept(this);
-  if (coral::opt::ShowTypeSolution) gg.Show("module");
-  gg.Step();
-  if (coral::opt::ShowTypeSolution) gg.Show("module");
-  std::map<ast::BaseExpr *, ::Type *> translation;
-  for(auto &pair : gg.expr_terms)
-    translation[pair.first] = gg.GetTypeConstraintForTerm(pair.second);
+  // if (coral::opt::ShowTypeSolution) gg.Show("module");
+  typegraph::showSteps = false;
+  auto solution = gg.solve();
+  // gg.Step();
+  // if (coral::opt::ShowTypeSolution) gg.Show("module");
+  std::map<ast::BaseExpr *,typegraph::Type *> translation;
+  for(auto &pair: solution.knowns)
+    translation[(ast::BaseExpr *)pair.first->expr] = pair.second;
   TypeResultWriter::write(translation);
 }
-
 
 void coral::analyzers::TypeResolver::visit(ast::Call * call) {
   out = 0;
@@ -34,8 +56,8 @@ void coral::analyzers::TypeResolver::visit(ast::Call * call) {
     args.push_back(gg.term(out));
   }
   if (calleevar) {
-    out = gg.AddTerm("call." + calleevar->name, call);
-    gg.AddConstraint(out, gg.call(gg.term(calleevar), args));
+    out = gg.addTerm("call." + calleevar->name, call);
+    gg.constrain(out, gg.call(gg.term(calleevar), args));
   }
 }
 
@@ -44,69 +66,69 @@ void coral::analyzers::TypeResolver::visit(ast::Return * r) {
 }
 
 void coral::analyzers::TypeResolver::visit(ast::StringLiteral * s) {
-  out = gg.AddTerm("str." + s->value, s);
-  gg.AddConstraint(out, gg.type("Ptr"));
+  out = gg.addTerm("str." + s->value, s);
+  gg.constrain(out, gg.type("Ptr"));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Let * l) {
   l->value->accept(this);
   auto valueterm = out;
-  out = gg.AddTerm(l->var->name, l);
+  out = gg.addTerm(l->var->name, l);
   if (l->type.name.size())
-    gg.AddConstraint(out, gg.type(&l->type));
-  gg.AddConstraint(out, gg.term(valueterm));
+    gg.constrain(out, (typeconvert(&gg, &(l->type))));
+  gg.constrain(out, gg.term(valueterm));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::While * w) {
   w->body->accept(this);
   w->cond->accept(this);
-  gg.AddConstraint(out, gg.type("Bool"));
-  out = gg.AddTerm("while", w);
+  gg.constrain(out, gg.type("Bool"));
+  out = gg.addTerm("while", w);
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Set * s) {
   s->value->accept(this);
   auto valueterm = out;
-  auto term = gg.FindTerm(s->var->expr);
+  auto term = gg.findTerm(s->var->expr);
   if (term)
-    gg.AddConstraint(term, gg.term(valueterm));
+    gg.constrain(term, gg.term(valueterm));
   else
     std::cerr << "Warning: term not found for set: " << s->var->name << "\n";
-  out = gg.AddTerm("set", s);
+  out = gg.addTerm("set", s);
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Extern * e) {
-  out = gg.AddTerm(e->name, e);
-  gg.AddConstraint(out, gg.type(e->type.get()));
+  out = gg.addTerm(e->name, e);
+  gg.constrain(out, typeconvert(&gg, e->type.get()));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Var * var) {
   if (var->name == "negate") {
-    out = gg.AddTerm(var->name, var);
+    out = gg.addTerm(var->name, var);
     auto free = gg.free(0);
-    gg.AddConstraint(out, gg.type("Func", {free, free}));
+    gg.constrain(out, gg.type("Func", {free, free}));
   }
   else if (var->name == "addrof") {
-    out = gg.AddTerm(var->name, var);
+    out = gg.addTerm(var->name, var);
     auto free = gg.free(101);
-    gg.AddConstraint(out, gg.type("Func", {free, gg.type("Ptr", {free})}));
+    gg.constrain(out, gg.type("Func", {free, gg.type("Ptr", {free})}));
   }
   else if (var->name == "derefi") {
-    out = gg.AddTerm(var->name, var);
-    gg.AddConstraint(out, gg.type("Func", {gg.type("Ptr"), gg.type("Int32")}));
+    out = gg.addTerm(var->name, var);
+    gg.constrain(out, gg.type("Func", {gg.type("Ptr"), gg.type("Int32")}));
   }
   else if (var->name == "int64") {
-    out = gg.AddTerm(var->name, var);
-    gg.AddConstraint(out, gg.type("Func", {gg.type("Int32"), gg.type("Int64")}));
+    out = gg.addTerm(var->name, var);
+    gg.constrain(out, gg.type("Func", {gg.type("Int32"), gg.type("Int64")}));
   }
   else if (var->name == "ptr") {
-    out = gg.AddTerm(var->name, var);
-    gg.AddConstraint(out, gg.type("Func", {gg.type("Int32"), gg.type("Ptr")}));
+    out = gg.addTerm(var->name, var);
+    gg.constrain(out, gg.type("Func", {gg.type("Int32"), gg.type("Ptr")}));
   }
   else if (!var->expr) {
     if (var->name.substr(0, 10) != "_llvmBuild")
       std::cerr << "Undefined Reference " << var->name << "\n";
-  } else if ((out = gg.FindTerm(var->expr)))
+  } else if ((out = gg.findTerm(var->expr)))
     return;
   else
     std::cerr << "Missing Type Term " << var->name << ":" << var->expr << "\n";
@@ -125,13 +147,13 @@ void coral::analyzers::TypeResolver::visit(ast::Block * m) {
   out = lastvalid;
 }
 void coral::analyzers::TypeResolver::visit(ast::Def * d) {
-  out = gg.AddTerm(d->name, d);
+  out = gg.addTerm(d->name, d);
   if (d->type)
-    gg.AddConstraint(out, gg.type(d->type.get()));
+    gg.constrain(out, typeconvert(&gg, d->type.get()));
 }
 void coral::analyzers::TypeResolver::visit(ast::Func * f) {
   auto func_name = f->tuple ? f->tuple->name + "::" + f->name : f->name;
-  auto term = gg.AddTerm(func_name, f);
+  auto term = gg.addTerm(func_name, f);
   auto constraint = gg.type("Func");
   term_map[term] = f;
   for(auto &p: f->params) {
@@ -143,24 +165,24 @@ void coral::analyzers::TypeResolver::visit(ast::Func * f) {
     constraint->params.push_back(gg.term(out));
   }
   else if (f->type) {
-    auto t = gg.type(f->type.get());
+    auto t = typeconvert(&gg, f->type.get());
     constraint->params = t->params;
   } else {
     constraint->params.push_back(gg.free(100));
   }
 
-  gg.AddConstraint(term, constraint);
+  gg.constrain(term, constraint);
   out = term;
 }
 
 void coral::analyzers::TypeResolver::visit(ast::IfExpr * ifexpr) {
   ifexpr->cond->accept(this);
-  gg.AddConstraint(out, gg.type("Bool"));
-  auto term = gg.AddTerm("if");
+  gg.constrain(out, gg.type("Bool"));
+  auto term = gg.addTerm("if", ifexpr);
   ifexpr->ifbody->accept(this);
-  gg.AddConstraint(term, gg.term(out));
+  gg.constrain(term, gg.term(out));
   ifexpr->elsebody->accept(this);
-  gg.AddConstraint(term, gg.term(out));
+  gg.constrain(term, gg.term(out));
   out = term;
 }
 
@@ -170,32 +192,32 @@ void coral::analyzers::TypeResolver::visit(ast::BinOp * op) {
   op->rhs->accept(this);
   auto rvar = out;
 
-  out = gg.AddTerm("op." + op->op);
+  out = gg.addTerm("op." + op->op, op);
 
   if (op->op == "%" ||
       op->op == "+" ||
       op->op == "-" ||
       op->op == "*" ||
       op->op == "/")
-    gg.AddConstraint(
+    gg.constrain(
       out, gg.call(
         gg.type("Func", {gg.free(0), gg.free(0), gg.free(0)}),
         {gg.term(lvar), gg.term(rvar)}));
   else if (op->op == "=")
-    gg.AddConstraint(
+    gg.constrain(
       out, gg.call(
         gg.type("Func", {gg.free(0), gg.free(0), gg.type("Bool")}),
         {gg.term(lvar), gg.term(rvar)}));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::IntLiteral * op) {
-  out = gg.AddTerm("i" + (op->value), op);
-  gg.AddConstraint(out, gg.type("Int32"));
+  out = gg.addTerm("i" + (op->value), op);
+  gg.constrain(out, gg.type("Int32"));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::FloatLiteral * op) {
-  out = gg.AddTerm("f" + (op->value), op);
-  gg.AddConstraint(out, gg.type("Float64"));
+  out = gg.addTerm("f" + (op->value), op);
+  gg.constrain(out, gg.type("Float64"));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
@@ -219,17 +241,17 @@ void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
       name = "Item" + std::to_string(index);
     }
 
-    auto field_term = gg.AddTerm(t->name + "::" + name, 0);
-    gg.AddConstraint(field_term, gg.type(&type));
+    auto field_term = gg.addTerm(t->name + "::" + name, 0);
+    gg.constrain(field_term, typeconvert(&gg, &type));
 
-    auto field_term_index = gg.AddTerm(t->name + "::" + name + ".index", 0);
-    gg.AddConstraint(field_term_index, gg.type(std::to_string(index)));
-    func_args.push_back(gg.type(&type));
+    auto field_term_index = gg.addTerm(t->name + "::" + name + ".index", 0);
+    gg.constrain(field_term_index, gg.type(std::to_string(index)));
+    func_args.push_back(typeconvert(&gg, &type));
   }
-  auto type = gg.AddTerm(t->name, 0);
+  auto type = gg.addTerm(t->name, 0);
   func_args.push_back(gg.type(t->name));
-  out = gg.AddTerm(t->name + ".new", t);
-  gg.AddConstraint(out, gg.type("Func", func_args));
+  out = gg.addTerm(t->name + ".new", t);
+  gg.constrain(out, gg.type("Func", func_args));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Comment *) { out = 0; }
@@ -238,8 +260,8 @@ void coral::analyzers::TypeResolver::visit(ast::Member * m) {
   m->base->accept(this);
   auto basetype = out;
   auto memberpath = m->member;
-  out = gg.AddTerm(basetype->name + "." + memberpath, m);
-  gg.AddConstraint(
+  out = gg.addTerm(basetype->name + "." + memberpath, m);
+  gg.constrain(
     out,
     gg.call(
       gg.type("Member", {gg.type(memberpath)}),
@@ -252,6 +274,6 @@ void coral::analyzers::TypeResolver::visit(ast::TupleLiteral * tuple) {
     item->accept(this);
     terms.push_back(gg.term(out));
   }
-  out = gg.AddTerm("tuple", tuple);
-  gg.AddConstraint(out, gg.type("Tuple", terms));
+  out = gg.addTerm("tuple", tuple);
+  gg.constrain(out, gg.type("Tuple", terms));
 }

@@ -1,7 +1,8 @@
 cmake_minimum_required (VERSION 3.5)
 project (coral)
-include_directories(.)
+add_subdirectory(typegraph)
 
+include_directories(.)
 # LLVM settings
 find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
@@ -48,8 +49,7 @@ add_library(parser OBJECT
 add_library(analyzers OBJECT
   analyzers/TypeResolver.cc analyzers/NameResolver.cc analyzers/ReturnInserter.cc
   analyzers/ImportResolver.cc
-  analyzers/typegraph/constraint.cc analyzers/typegraph/TypeGraph.cc
-  analyzers/typegraph/TypeGraph.cc
+  typegraph/typegraph.cc typegraph/constraints.cc typegraph/solution.cc
 )
 add_library(codegen OBJECT
   codegen/codegen.cc

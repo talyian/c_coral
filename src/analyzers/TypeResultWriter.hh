@@ -1,12 +1,12 @@
 #include "core/expr.hh"
+#include "typegraph/constraints.hh"
 
 namespace coral {
-
   // changes a typegraph type back to a coral type
-  coral::type::Type convert_Type(::Type * tt) {
+  coral::type::Type convert_Type(typegraph::Type * tt) {
     coral::type::Type f(tt->name);
     for(auto &p: tt->params) {
-      if (::Type * pt = dynamic_cast<::Type *>(p))
+      if (typegraph::Type * pt = dynamic_cast<typegraph::Type *>(p))
         f.params.push_back(convert_Type(pt));
       else {
         f.name = "";
@@ -20,14 +20,14 @@ namespace coral {
     // Given the results of a Typegraph analysis, write it back out into the type fields
     class TypeResultWriter : public ast::ExprVisitor {
     private:
-      ::Type * inferredType;
+      typegraph::Type * inferredType;
       ast::BaseExpr * out = 0;
     public:
       std::string visitorName() { return "TypeResultWriter"; }
-      static void write(std::map<coral::ast::BaseExpr *, ::Type *> expr_terms) {
+      static void write(std::map<coral::ast::BaseExpr *, typegraph::Type *> expr_terms) {
         TypeResultWriter writer { expr_terms };
       }
-      TypeResultWriter (std::map<coral::ast::BaseExpr *, ::Type *> expr_terms) {
+      TypeResultWriter (std::map<coral::ast::BaseExpr *, typegraph::Type *> expr_terms) {
         for(auto &pair : expr_terms) {
           inferredType = pair.second;
           if (pair.second && pair.first)
@@ -69,9 +69,11 @@ namespace coral {
         // std::cerr << COL_LIGHT_GREEN << "member: " << m->member << "\n";
         // std::cerr << inferredType << "\n" << COL_CLEAR;
         if (inferredType->name == "Index")
-          m->memberIndex = std::stoi(dynamic_cast<::Type *>(inferredType->params[0])->name);
+          m->memberIndex = std::stoi(dynamic_cast<typegraph::Type *>(inferredType->params[0])->name);
       }
       void visit(ast::Call *) { }
+      void visit(ast::BinOp *) { }
+      void visit(ast::IfExpr *) { }
       void visit(ast::TupleLiteral * t) {
         t->type.reset(new Type(convert_Type(inferredType)));
       }

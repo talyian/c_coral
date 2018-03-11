@@ -3,8 +3,8 @@
 #include "core/expr.hh"
 #include <iostream>
 
-#include "analyzers/typegraph/constraint.hh"
-#include "analyzers/typegraph/TypeGraph.hh"
+#include "typegraph/constraints.hh"
+#include "typegraph/typegraph.hh"
 
 namespace coral {
   namespace analyzers {
@@ -14,9 +14,9 @@ namespace coral {
       ast::BaseExpr * target;
       std::string name;
 
-      TypeGraph gg;
-      std::map<TypeTerm *, ast::BaseExpr *> term_map;
-      TypeTerm * out;
+      typegraph::TypeGraph gg;
+      std::map<typegraph::TypeTerm *, ast::BaseExpr *> term_map;
+      typegraph::TypeTerm * out;
 
       TypeResolver(ast::Module * m);
       virtual std::string visitorName() { return "TypeResolver"; }
