@@ -24,10 +24,12 @@ namespace coral {
       ast::BaseExpr * out = 0;
     public:
       std::string visitorName() { return "TypeResultWriter"; }
-      static void write(std::map<coral::ast::BaseExpr *, typegraph::Type *> expr_terms) {
+      static void write(
+        std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) {
         TypeResultWriter writer { expr_terms };
       }
-      TypeResultWriter (std::map<coral::ast::BaseExpr *, typegraph::Type *> expr_terms) {
+      TypeResultWriter (
+        std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) {
         for(auto &pair : expr_terms) {
           inferredType = pair.second;
           if (pair.second && pair.first)
@@ -66,8 +68,8 @@ namespace coral {
       void visit(ast::FloatLiteral *) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(inferredType->
       void visit(ast::Member * m) {
-        // std::cerr << COL_LIGHT_GREEN << "member: " << m->member << "\n";
-        // std::cerr << inferredType << "\n" << COL_CLEAR;
+        std::cout << COL_GREEN << std::setw(25) << "member: " << m->member << " :: "
+                  << inferredType << COL_CLEAR << "\n";
         if (inferredType->name == "Index")
           m->memberIndex = std::stoi(dynamic_cast<typegraph::Type *>(inferredType->params[0])->name);
       }

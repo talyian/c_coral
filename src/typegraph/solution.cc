@@ -190,6 +190,60 @@ namespace typegraph {
                 std::cerr << "Deleting: " << it->first << " :: " << it->second << "\n";
               gg->relations.erase(it);
               goto START;
+            } else if (callee->name == "Member") {
+              bool skip = false;
+              if (dynamic_cast<Type *>(callee->params[0]) &&
+                  dynamic_cast<Type *>(call->arguments[0])) {
+                auto field = dynamic_cast<Type *>(callee->params[0])->name;
+                auto type = dynamic_cast<Type *>(call->arguments[0]);
+
+                if (type->name == "Tuple") {
+                  for(size_t i = 0; i < type->params.size(); i++) {
+                    if (field == "Item" + std::to_string(i)) {
+                      auto tuple_field = type->params[i];
+                      gg->constrain(it->first, tuple_field);
+                      auto instance_index_term = gg->addTerm(
+                        it->first->name + ".index", it->first->expr);
+                      knowns.insert(std::make_pair(
+                                      instance_index_term,
+                                      gg->type("Index",  {gg->type(std::to_string(i))})));
+                      gg->constrain(
+                        instance_index_term,
+                        gg->type("Index",  {gg->type(std::to_string(i))}));
+                      if (showSteps) {
+                        std::cerr << "Deleting: " << it->first << " :: " << it->second << "\n";
+                      }
+                      gg->relations.erase(it);
+                      goto START;
+                    }
+                  }
+                }
+                else if (gg->termByName[type->name + "::" + field] && gg->termByName[type->name + "::" + field + ".index"])
+                {
+                  auto type_term =
+                    gg->relations.find(gg->termByName[type->name + "::" + field]);
+                  auto index_term =
+                    gg->relations.find(gg->termByName[type->name + "::" + field + ".index"]);
+
+                  if (type_term != gg->relations.end() && index_term != gg->relations.end()) {
+                    auto out_type = type_term->second;
+                    auto out_index = std::stoi(dynamic_cast<Type *>(index_term->second)->name);
+                    gg->constrain(it->first, out_type);
+                    auto instance_index_term = gg->addTerm("index", it->first->expr);
+                    gg->constrain(
+                      instance_index_term,
+                      gg->type("Index",  {index_term->second}));
+                    knowns.insert(std::make_pair(instance_index_term,
+                                                 gg->type("Index",  {index_term->second})));
+                    if (showSteps) {
+                      std::cerr << "Member " << instance_index_term
+                                << " :: " << gg->type("Index",  {index_term->second}) << "\n";
+                      std::cerr << "Deleting: " << it->first << " :: " << it->second << "\n";
+                    }
+                    gg->relations.erase(it);
+                    goto START;
+                  }
+                }}
             }
           }
         }
@@ -228,5 +282,18 @@ namespace typegraph {
       }
     }
     return 0;
+  }
+
+  std::unordered_multimap<TypeTerm *, Type *> Solution::allKnownTypes() {
+    std::unordered_multimap<TypeTerm *, Type *> result;
+    for(auto &pair: knowns) {
+      auto term = pair.first;
+      auto range = gg->relations.equal_range(term);
+      for(auto it = range.first; it != range.second; it++) {
+        if (isConcreteType(it->second))
+          result.insert(std::make_pair(term, dynamic_cast<Type *>(it->second)));
+      }
+    }
+    return result;
   }
 }

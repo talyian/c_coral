@@ -1,13 +1,24 @@
 #include "../typegraph.hh"
+#include "test_tuples.cc"
 #include "test_factorial.cc"
 #include "testcase.hh"
 
 using namespace typegraph;
 #include <iostream>
 #include <iomanip>
-
+namespace typegraph {
+  extern bool showSteps;
+}
 class BasicTest : public TestCase {
 public:
+  BasicTest() {
+    test_concrete_type();
+    test_typegraph_terms();
+    test_type_constraints();
+    test_function_call_inference();
+    test_simple_polymorphism();
+  }
+
   void test_typegraph_terms() {
     TypeGraph gg;
     std::string frob = "frobString";
@@ -71,23 +82,13 @@ public:
     gg.constrain(left, gg.type("Func", {gg.free(0), gg.free(1), gg.free(0)}));
     gg.constrain(right, gg.type("Func", {gg.free(0), gg.free(1), gg.free(1)}));
   }
-
-  void summary() {
-    printf("----------------------------------------------------------------------\n");
-    printf("%d/%d (%d%%) passed\n", success, count, success * 100 / count);
-  }
 };
 
 int main() {
+  showSteps = false;
   std::cout << "Basic Tests\n";
-  BasicTest basic_test;
-  basic_test.test_concrete_type();
-  basic_test.test_typegraph_terms();
-  basic_test.test_type_constraints();
-  basic_test.test_function_call_inference();
-  basic_test.test_simple_polymorphism();
-  basic_test.summary();
-  Factorial ftest;
-  ftest.test_typegraph_terms();
-  return basic_test.count - basic_test.success;
+  BasicTest().summary();
+  Factorial().summary();
+  TupleTest().summary();
+  return 0;
 }

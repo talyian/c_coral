@@ -36,14 +36,16 @@ coral::type::Type * typeRevConvert(typegraph::Type * ct) {
 coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
   m->accept(this);
   // if (coral::opt::ShowTypeSolution) gg.Show("module");
-  typegraph::showSteps = false;
+  typegraph::showSteps = true;
   auto solution = gg.solve();
   // gg.Step();
   // if (coral::opt::ShowTypeSolution) gg.Show("module");
-  std::map<ast::BaseExpr *,typegraph::Type *> translation;
-  for(auto &pair: solution.knowns)
-    translation[(ast::BaseExpr *)pair.first->expr] = pair.second;
-  TypeResultWriter::write(translation);
+  std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms;
+  for(auto &pair: solution.allKnownTypes()) {
+    std::cerr << "|  " << std::setw(40) << pair.first << "\t" << pair.second << "\n";
+    expr_terms.push_back(std::make_pair((coral::ast::BaseExpr*)pair.first->expr, pair.second));
+  }
+  TypeResultWriter::write(expr_terms);
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Call * call) {

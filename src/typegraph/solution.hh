@@ -15,5 +15,6 @@ namespace typegraph {
     Solution(TypeGraph * gg);
     Type * getType(TypeTerm *);
     void showKnowns();
+    std::unordered_multimap<TypeTerm *, Type *> allKnownTypes();
   };
 }
