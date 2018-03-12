@@ -1,20 +1,10 @@
 import prelude
 
-# Operator Overloading Feature
-type Vec3 = {x:Float64,y:Float64,z:Float64}
-func (+) (a:Int32, b:Int32): _llvmBuildAdd(a, b)
-func (+) (a:Int64, b:Int64): _llvmBuildAdd(a, b)
-func (+) (a:Float32, b:Float32): _llvmBuildFAdd(a, b)
-func (+) (a:Float64, b:Float64): _llvmBuildFAdd(a, b)
-func (+) (v:Vec3, w:Vec3): Vec3(v.x + w.x, v.y + w.y, v.z + w.z)
-
+type Person = {age:Int32, name:Ptr}
+func Person.say():
+  printf("hello my name is \"%s\"\n", self.name)
 func main():
-  let a = int64 1
-  let b = 2
-  let c = 3.14
-  let d = Vec3(1.0, 2.0, 3.0)
-  let a2 = _llvmBuildAdd(a, a)
-  let b2 = _llvmBuildAdd(b, b)
-  let c2 = _llvmBuildFAdd(c, c)
-  printf("%d, %d, %f\n", a2, b2, c2)
+  let bob = Person(30, "bob")
+  printf("person: [%s] (%d)\n", bob.name, bob.age)
+  bob.say()
   0

@@ -45,7 +45,7 @@ coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
     std::cerr << "|  " << std::setw(40) << pair.first << "\t" << pair.second << "\n";
     expr_terms.push_back(std::make_pair((coral::ast::BaseExpr*)pair.first->expr, pair.second));
   }
-  TypeResultWriter::write(expr_terms);
+  TypeResultWriter::write(&gg, expr_terms);
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Call * call) {

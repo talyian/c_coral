@@ -62,7 +62,6 @@ namespace typegraph {
     Solution solve() {
       // show();
       return Solution(this);
-
     }
   };
 }

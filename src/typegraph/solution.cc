@@ -1,7 +1,7 @@
 #include "constraints.hh"
 #include "solution.hh"
 #include "typegraph.hh"
-
+#include "utils/ansicolor.hh"
 
 namespace typegraph {
   // show verbose debugging log
@@ -169,6 +169,8 @@ namespace typegraph {
 
       range = gg->relations.equal_range(term);
       // Apply Calls
+      // Warning: The following block of code is pretty sketchy.
+      // The intention is that it will be "functional" enough to support coral-alpha
       for(auto it = range.first; it != range.second; it++) {
         if (Call * call = dynamic_cast<Call *>(it->second)) {
           if (Type * callee = dynamic_cast<Type *>(call->callee)) {
@@ -182,8 +184,13 @@ namespace typegraph {
                 if (Type * type_param = dynamic_cast<Type *>(param))
                   if (type_param->name == "...")
                     break;
-                auto arg = call->arguments[i];
-                Unify(this, param, arg);
+                if (i >= call->arguments.size())
+                  std::cerr << "\033[31mWarning: size mismstach in call arguments: "
+                            << call << "\033[0m\n";
+                else {
+                  auto arg = call->arguments[i];
+                  Unify(this, param, arg);
+                }
               }
               Unify(this, gg->term(term), callee->params.back());
               if (showSteps)
@@ -242,8 +249,39 @@ namespace typegraph {
                     }
                     gg->relations.erase(it);
                     goto START;
+                  } else if (type_term != gg->relations.end()) {
+                    std::cerr << COL_LIGHT_RED << "warning: index field not found for "
+                              << type->name << "::" << field << "\n" << COL_CLEAR;
+                  } else {
+                    std::cerr << COL_LIGHT_RED << "warning: data not found for "
+                              << type->name << "::" << field << "\n" << COL_CLEAR;
                   }
-                }}
+                }
+                else if (gg->termByName[type->name + "::" + field]) {
+                  auto term = gg->termByName[type->name + "::" + field];
+                  auto constraint = gg->relations.find(term)->second;
+                  if (Type * func = dynamic_cast<Type *>(constraint)) {
+                    if (func->name == "Func") {
+                      // add a pointer to the referent method
+                      auto funcptr = gg->addTerm(it->first->name + ".func", it->first->expr);
+                      gg->constrain(funcptr, gg->type("Term", {gg->type(type->name + "::" + field)}));
+                      knowns.insert(std::make_pair(
+                                      funcptr,
+                                      gg->type("Term", {gg->type(type->name + "::" + field)})));
+                      gg->constrain(it->first, func);
+                      gg->relations.erase(it);
+                      goto START;
+                    }
+                  }
+                  std::cerr
+                    << COL_LIGHT_RED << "No index? "
+                    << type->name << "::" << field << "\n" << COL_CLEAR;
+                } else {
+                  std::cerr
+                    << COL_LIGHT_RED << "where am I? "
+                    << type->name << "::" << field << "\n" << COL_CLEAR;
+                }
+              }
             }
           }
         }

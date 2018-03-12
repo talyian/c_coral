@@ -22,16 +22,20 @@ namespace coral {
     private:
       typegraph::Type * inferredType;
       ast::BaseExpr * out = 0;
+      typegraph::TypeGraph * gg;
     public:
       std::string visitorName() { return "TypeResultWriter"; }
       static void write(
+        typegraph::TypeGraph * gg,
         std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) {
-        TypeResultWriter writer { expr_terms };
+        TypeResultWriter writer { gg, expr_terms };
       }
       TypeResultWriter (
-        std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) {
+        typegraph::TypeGraph * gg,
+        std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) : gg(gg) {
         for(auto &pair : expr_terms) {
           inferredType = pair.second;
+          // std::cerr << "writing " << pair.first << " :: " << pair.second << "\n";
           if (pair.second && pair.first)
             pair.first->accept(this);
         }
@@ -71,7 +75,15 @@ namespace coral {
         std::cout << COL_GREEN << std::setw(25) << "member: " << m->member << " :: "
                   << inferredType << COL_CLEAR << "\n";
         if (inferredType->name == "Index")
-          m->memberIndex = std::stoi(dynamic_cast<typegraph::Type *>(inferredType->params[0])->name);
+          m->memberIndex = std::stoi(
+            dynamic_cast<typegraph::Type *>(
+              inferredType->params[0])->name);
+        else if (inferredType->name == "Term") {
+          // std::cerr << COL_LIGHT_CYAN << "OOOHH TERM " << m->member << " :: " << inferredType << "\n";
+          auto func_term = dynamic_cast<typegraph::Type *>(inferredType->params[0])->name;
+          auto expr = static_cast<ast::BaseExpr *>(gg->term(func_term)->term->expr);
+          m->methodPtr = dynamic_cast<ast::Func *>(expr);
+        }
       }
       void visit(ast::Call *) { }
       void visit(ast::BinOp *) { }
