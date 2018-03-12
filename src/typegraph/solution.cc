@@ -1,7 +1,6 @@
 #include "constraints.hh"
 #include "solution.hh"
 #include "typegraph.hh"
-#include "utils/ansicolor.hh"
 
 namespace typegraph {
   // show verbose debugging log
@@ -250,11 +249,11 @@ namespace typegraph {
                     gg->relations.erase(it);
                     goto START;
                   } else if (type_term != gg->relations.end()) {
-                    std::cerr << COL_LIGHT_RED << "warning: index field not found for "
-                              << type->name << "::" << field << "\n" << COL_CLEAR;
+                    std::cerr << "warning: index field not found for "
+                              << type->name << "::" << field << "\n";
                   } else {
-                    std::cerr << COL_LIGHT_RED << "warning: data not found for "
-                              << type->name << "::" << field << "\n" << COL_CLEAR;
+                    std::cerr << "warning: data not found for "
+                              << type->name << "::" << field << "\n";
                   }
                 }
                 else if (gg->termByName[type->name + "::" + field]) {
@@ -273,13 +272,9 @@ namespace typegraph {
                       goto START;
                     }
                   }
-                  std::cerr
-                    << COL_LIGHT_RED << "No index? "
-                    << type->name << "::" << field << "\n" << COL_CLEAR;
+                  std::cerr << "No index? " << type->name << "::" << field << "\n";
                 } else {
-                  std::cerr
-                    << COL_LIGHT_RED << "where am I? "
-                    << type->name << "::" << field << "\n" << COL_CLEAR;
+                  std::cerr << "Where am I? " << type->name << "::" << field << "\n";
                 }
               }
             }
