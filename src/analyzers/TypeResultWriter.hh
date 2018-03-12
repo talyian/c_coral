@@ -97,13 +97,13 @@ namespace coral {
           if (var) {
             auto overload = dynamic_cast<ast::OverloadedFunc*>(var->expr);
             if (overload) {
-              std::cerr << "setting overload to " << inferred_index << "\n";
+              // std::cerr << "setting overload to " << inferred_index << "\n";
               var->expr = overload->funcs[inferred_index];
               return;
             }
           }
         }
-        std::cerr << "error calling " << ast::ExprNameVisitor::of(call->callee.get()) << "\n";
+        // std::cerr << "error calling " << ast::ExprNameVisitor::of(call->callee.get()) << "\n";
       }
       void visit(ast::OverloadedFunc *) { }
       void visit(ast::BinOp *) { }

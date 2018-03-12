@@ -159,7 +159,7 @@ match constraint:
               }
             }
             else if (callee->name == "Or") {
-              std::cerr << "\033[31m Applying OR!!! \033[0m\n";
+              // std::cerr << "\033[31m Applying OR!!! \033[0m\n";
               auto args = call->arguments;
               int option_id = -1;
               for(auto &option:callee->params) {
@@ -213,12 +213,12 @@ match constraint:
                   << call << "\033[0m\n";
       else {
         auto arg = call->arguments[i];
-        std::cerr << "Unifying call argument\n";
-        std::cerr << callee << " at index " << i << "\n";
+        // std::cerr << "Unifying call argument\n";
+        // std::cerr << callee << " at index " << i << "\n";
         Unify(this, term, param, arg);
       }
     }
-    std::cerr << "Unifying call retval\n";
+    // std::cerr << "Unifying call retval\n";
     Unify(this, term, gg->term(term), callee->params.back());
     if (showSteps)
       std::cerr << "Deleting: " << term << " :: " << call << "\n";

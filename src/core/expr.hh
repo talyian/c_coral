@@ -209,7 +209,7 @@ namespace coral {
     public:
       std::unique_ptr<BaseExpr> lhs, rhs;
       std::string op;
-      ast::Func * funcptr;
+      ast::Func * funcptr = 0;
       BinOp(BaseExpr * lhs, std::string op, BaseExpr * rhs) : lhs(lhs), rhs(rhs), op(op) { }
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
     };

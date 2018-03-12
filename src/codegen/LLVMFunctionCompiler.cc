@@ -179,6 +179,9 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
   auto rhs = compile(expr->rhs.get());
   if (expr->funcptr) {
     auto func = (*info)[expr->funcptr];
+    if (!func) {
+      std::cerr << "Warning: missing info for function pointer " << expr->funcptr->name << "\n";
+    }
     LLVMValueRef args[2] = {lhs, rhs};
     out = LLVMBuildCall(builder, func, args, 2, expr->op.c_str());
     return;

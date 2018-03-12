@@ -82,7 +82,8 @@ void analyzers::NameResolver::visit(ast::Func * f) {
     }
   }
   else if (info[f->name].kind == ast::ExprTypeKind::OverloadedFuncKind) {
-    std::cerr << COL_LIGHT_RED << "warning: overloading " << f->name << "\033[0m\n";
+    auto overload = dynamic_cast<ast::OverloadedFunc *>(info[f->name].expr);
+    overload->addOverload(f);
   }
   else {
     auto existing_expr = info[f->name].expr;
