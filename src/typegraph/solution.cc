@@ -28,9 +28,8 @@ namespace typegraph {
       for(auto it = range.first; it != range.second; it++) {
         auto sub = SubstituteKnowns(&knowns, gg, it->second);
         it->second = sub.output;
-        if (showSteps) {
+        if (sub.count && showSteps) {
           std::cerr << "Substituting: " << it->first << " :: " << it->second << "\n";
-          std::cerr << "wtf         : " << sub.output << "\n";
         }
         subcount += sub.count;
       }
@@ -143,10 +142,11 @@ match constraint:
                     if (func->name == "Func") {
                       // add a pointer to the referent method
                       auto funcptr = gg->addTerm(it->first->name + ".func", it->first->expr);
-                      gg->constrain(funcptr, gg->type("Term", {gg->type(type->name + "::" + field)}));
-                      knowns.insert(std::make_pair(
-                                      funcptr,
-                                      gg->type("Term", {gg->type(type->name + "::" + field)})));
+                      gg->constrain(funcptr, gg->type("FuncTerm", {gg->type(type->name + "::" + field)}));
+                      knowns.insert(
+                        std::make_pair(
+                          funcptr,
+                          gg->type("FuncTerm", {gg->type(type->name + "::" + field)})));
                       gg->constrain(it->first, func);
                       gg->relations.erase(it);
                       goto START;
@@ -160,6 +160,36 @@ match constraint:
             }
             else if (callee->name == "Or") {
               std::cerr << "\033[31m Applying OR!!! \033[0m\n";
+              auto args = call->arguments;
+              int option_id = -1;
+              for(auto &option:callee->params) {
+                option_id++;
+                Type * func = 0;
+                if ((func = dynamic_cast<Type *>(option)) && func->name == "Func") {
+                  bool mismatch = false;
+                  for(size_t i = 0; i < call->arguments.size(); i++) {
+                    if (!ConsEquals(func->params[i], call->arguments[i]).out)
+                      mismatch = true;
+                  }
+                  if (!mismatch) {
+                    for(size_t i = 0; i < call->arguments.size(); i++) {
+                      Unify(this, term, func->params[i], call->arguments[i]);
+                    }
+                    Unify(this, term, gg->term(term), func->params.back());
+                    auto overload_id = gg->addTerm(term->name + ".overload", term->expr);
+                    gg->constrain(
+                      overload_id,
+                      gg->type("OverloadID", {gg->type(std::to_string(option_id))}));
+                    knowns.insert(std::make_pair(
+                      overload_id,
+                      gg->type("OverloadID", {gg->type(std::to_string(option_id))})));
+                    gg->relations.erase(it);
+                    goto START;
+                  }
+                }
+                // // applyFunction(term, option, call->arguments[0]);
+                // }
+              }
             }
           }
         }
@@ -208,11 +238,9 @@ match constraint:
     }
   }
   void Solution::showKnowns() {
-    if (knowns.size()) {
-      std::cout << "Knowns:\n";
-      for (auto &x: knowns) {
-        std::cout << std::setw(20) << x.first << " :: " << x.second << "\n";
-      }
+    std::cout << "Knowns:\n";
+    for (auto &x: knowns) {
+      std::cout << std::setw(20) << x.first << " :: " << x.second << "\n";
     }
   }
   Type * Solution::getType(TypeTerm * term) {

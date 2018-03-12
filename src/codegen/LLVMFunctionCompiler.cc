@@ -146,12 +146,12 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
   switch (ast::ExprTypeVisitor::of(var->expr)) {
   case ast::ExprTypeKind::DefKind:
     out = info->find(var->expr)->second;
-    // std::cout << "codegening: var def " << ((ast::Def *)var->expr)->name << "\n";
-    // std::cout << "saved: " << LLVMPrintValueToString(out) << "\n";
     return;
   case ast::ExprTypeKind::FuncKind:
-    // std::cout << "codegening: var fun " << ((ast::Func *)var->expr)->name << "\n";
+    // std::cerr << "var codegen" << var->name << "--------------------\n";
     out = info->find(var->expr)->second;
+    // PrettyPrinter::print(var->expr);
+    // std::cerr << LLVMPrintValueToString(out) << "\n";
     return;
   case ast::ExprTypeKind::LetKind:
     if (this->rawPointer) {
@@ -300,7 +300,6 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   expr->methodCallInvert();
 
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
-    expr->callee->accept(this);
     auto var = (ast::Var *)expr->callee.get();
 
     // Tuple Constructor..... need a better way to do this
@@ -376,11 +375,16 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
       out = LLVMBuildLoad(builder, out, "");
       return;
     }
-    out = LLVMGetNamedFunction(module, var->name.c_str());
-    if (!out)
-      out = LLVMAddFunction(
-        module, var->name.c_str(),
-        LLVMFunctionType(LLVMVoidTypeInContext(context), 0, 0, true));
+
+    expr->callee->accept(this);
+
+    if (!out) {
+      out = LLVMGetNamedFunction(module, var->name.c_str());
+      if (!out)
+        out = LLVMAddFunction(
+          module, var->name.c_str(),
+          LLVMFunctionType(LLVMVoidTypeInContext(context), 0, 0, true));
+    }
   } else {
     expr->callee->accept(this);
     if (!out) {
@@ -389,8 +393,11 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   }
   auto llvmVarRef = out;
   auto llvmArgs = new LLVMValueRef[expr->arguments.size()];
-  // std::cerr << "Function " << expr->callee.get() << "\n";
+
+  // std::cerr << "Function " << expr->callee.get() << "--------------------\n";
+  // PrettyPrinter::print(expr->callee.get());
   // std::cerr << LLVMPrintValueToString(llvmVarRef) << "\n";
+
   for(size_t i=0; i<expr->arguments.size(); i++) {
     // std::cerr << "  arg[" << i << "]"<< expr->arguments[i].get() << "\n";
     expr->arguments[i]->accept(this);

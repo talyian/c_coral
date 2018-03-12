@@ -35,7 +35,9 @@ namespace coral {
         std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) : gg(gg) {
         for(auto &pair : expr_terms) {
           inferredType = pair.second;
-          // std::cerr << "writing " << pair.first << " :: " << pair.second << "\n";
+          // std::cerr << COL_LIGHT_BLUE << "writing "
+          //           << ast::ExprNameVisitor::of(pair.first) << " :: "
+          //           << pair.second << "\033[0m\n";
           if (pair.second && pair.first)
             pair.first->accept(this);
         }
@@ -78,14 +80,32 @@ namespace coral {
           m->memberIndex = std::stoi(
             dynamic_cast<typegraph::Type *>(
               inferredType->params[0])->name);
-        else if (inferredType->name == "Term") {
+        else if (inferredType->name == "FuncTerm") {
           // std::cerr << COL_LIGHT_CYAN << "OOOHH TERM " << m->member << " :: " << inferredType << "\n";
           auto func_term = dynamic_cast<typegraph::Type *>(inferredType->params[0])->name;
           auto expr = static_cast<ast::BaseExpr *>(gg->term(func_term)->term->expr);
           m->methodPtr = dynamic_cast<ast::Func *>(expr);
+          // PrettyPrinter::print(m->methodPtr);
+          // std::cerr << m->methodPtr->name << "\033[0m\n";
         }
       }
-      void visit(ast::Call *) { }
+      void visit(ast::Call * call) {
+        if (inferredType->name == "OverloadID") {
+          auto inferred_index =
+            std::stoi(dynamic_cast<typegraph::Type *>(inferredType->params[0])->name);
+          auto var = dynamic_cast<ast::Var *>(call->callee.get());
+          if (var) {
+            auto overload = dynamic_cast<ast::OverloadedFunc*>(var->expr);
+            if (overload) {
+              std::cerr << "setting overload to " << inferred_index << "\n";
+              var->expr = overload->funcs[inferred_index];
+              return;
+            }
+          }
+        }
+        std::cerr << "error calling " << ast::ExprNameVisitor::of(call->callee.get()) << "\n";
+      }
+      void visit(ast::OverloadedFunc *) { }
       void visit(ast::BinOp *) { }
       void visit(ast::IfExpr *) { }
       void visit(ast::TupleLiteral * t) {
