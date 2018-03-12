@@ -17,6 +17,7 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
       return LLVMPointerType(LLVMTypeFromCoral(&t->params[0]), 0);
   }
   if (t->name == "Bool") return LLVMInt1TypeInContext(context);
+  if (t->name == "UInt8") return LLVMInt8TypeInContext(context);
   if (t->name == "Int8") return LLVMInt8TypeInContext(context);
   if (t->name == "Int16") return LLVMInt16TypeInContext(context);
   if (t->name == "Int32") return LLVMInt32TypeInContext(context);
@@ -176,6 +177,13 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
 void coral::codegen::LLVMFunctionCompiler::visit(ast::BinOp * expr) {
   auto lhs = compile(expr->lhs.get());
   auto rhs = compile(expr->rhs.get());
+  if (expr->funcptr) {
+    auto func = (*info)[expr->funcptr];
+    LLVMValueRef args[2] = {lhs, rhs};
+    out = LLVMBuildCall(builder, func, args, 2, expr->op.c_str());
+    return;
+  }
+
   if (LLVMGetTypeKind(LLVMTypeOf(lhs))==LLVMPointerTypeKind) {
     if (expr->op == "+") {
       // LLVMValueRef indices[1] = { rhs };

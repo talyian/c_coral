@@ -10,6 +10,8 @@
 namespace typegraph {
   TypeTerm * TypeGraph::findTerm(ExprType expr) {
     auto t = termByValue.find(expr);
+    if (t == termByValue.end())
+      return 0;
     return t->second;
   }
   TypeTerm * TypeGraph::addTerm(std::string original_name, ExprType expr) {

@@ -1,10 +1,10 @@
-import prelude
+c_extern printf: Func[Ptr, ..., Void]
 
-type Person = {age:Int32, name:Ptr}
-func Person.say():
-  printf("hello my name is \"%s\"\n", self.name)
+func foo(x:Int32): printf("int\n")
+
+func foo(x:Float64): printf("float\n")
+
 func main():
-  let bob = Person(30, "bob")
-  printf("person: [%s] (%d)\n", bob.name, bob.age)
-  bob.say()
+  foo 3
+  foo 3.5
   0

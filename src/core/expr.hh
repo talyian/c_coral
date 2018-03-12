@@ -13,7 +13,7 @@
   F(Block) F(Var) F(Call)                                               \
   F(StringLiteral) F(IntLiteral) F(FloatLiteral)                        \
   F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member)          \
-  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple)
+  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple) F(OverloadedFunc)
 
 #define MAP_ALL_EXPRS(F) F(BaseExpr) MAP_EXPRS(F)
 
@@ -146,6 +146,14 @@ namespace coral {
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
     };
 
+    class OverloadedFunc : public Value {
+      public:
+      std::vector<Func *> funcs;
+      std::string name;
+      OverloadedFunc(std::string name) : name(name) { }
+      virtual void accept(BaseExprVisitor * v) { v->visit(this); }
+      void addOverload(Func * f) { funcs.push_back(f); }
+    };
     class IfExpr : public Value {
     public:
       unique_ptr<BaseExpr> cond, ifbody, elsebody;
@@ -201,6 +209,7 @@ namespace coral {
     public:
       std::unique_ptr<BaseExpr> lhs, rhs;
       std::string op;
+      ast::Func * funcptr;
       BinOp(BaseExpr * lhs, std::string op, BaseExpr * rhs) : lhs(lhs), rhs(rhs), op(op) { }
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
     };

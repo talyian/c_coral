@@ -1,0 +1,13 @@
+import prelude
+
+type Person = {age:Int32, name:Ptr}
+
+func frob (p:Person): "p"
+func frob (n:Int32): "i"
+func frob (n:Ptr): 3
+
+func main():
+  printf("%d\n", frob "three")
+  printf("%s\n", frob (Person(2, "bob")))
+  printf("%s\n", frob 5)
+  0

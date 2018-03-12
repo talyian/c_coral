@@ -35,14 +35,13 @@ coral::type::Type * typeRevConvert(typegraph::Type * ct) {
 
 coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
   m->accept(this);
-  // if (coral::opt::ShowTypeSolution) gg.Show("module");
-  typegraph::showSteps = true;
+  if (coral::opt::ShowTypeSolution) gg.show();
+  typegraph::showSteps = coral::opt::ShowTypeSolution;
   auto solution = gg.solve();
-  // gg.Step();
-  // if (coral::opt::ShowTypeSolution) gg.Show("module");
+  if (coral::opt::ShowTypeSolution) gg.show();
   std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms;
   for(auto &pair: solution.allKnownTypes()) {
-    std::cerr << "|  " << std::setw(40) << pair.first << "\t" << pair.second << "\n";
+    // std::cerr << "|  " << std::setw(40) << pair.first << "\t" << pair.second << "\n";
     expr_terms.push_back(std::make_pair((coral::ast::BaseExpr*)pair.first->expr, pair.second));
   }
   TypeResultWriter::write(&gg, expr_terms);
@@ -130,10 +129,27 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
   else if (!var->expr) {
     if (var->name.substr(0, 10) != "_llvmBuild")
       std::cerr << "Undefined Reference " << var->name << "\n";
-  } else if ((out = gg.findTerm(var->expr)))
-    return;
-  else
-    std::cerr << "Missing Type Term " << var->name << ":" << var->expr << "\n";
+  } else {
+    if ((out = gg.findTerm(var->expr)))
+      return;
+
+    // the expr might not be actually in the Module ifself -- this happens, for example,
+    // if we're adding an OverloadedFunc expression
+    if (ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::OverloadedFuncKind) {
+      auto overloaded_func = dynamic_cast<ast::OverloadedFunc*>(var->expr);
+      out = gg.addTerm(overloaded_func->name, overloaded_func);
+      auto params = std::vector<typegraph::Constraint *>();
+      for(auto &func: overloaded_func->funcs)
+        params.push_back(gg.term(gg.findTerm(func)));
+      gg.constrain(out, gg.type("Or", params));
+      return;
+    }
+    else
+      std::cerr
+        << "\033[31mMissing Type Term " << var->name
+        << ":" << var->expr << "\033[0m\n";
+  }
+  return;
 }
 
 

@@ -1,121 +1,13 @@
 #include "constraints.hh"
-#include "solution.hh"
 #include "typegraph.hh"
+#include "unify.hh"
+#include "instantiate.hh"
+#include "substitution.hh"
+#include "solution.hh"
 
 namespace typegraph {
   // show verbose debugging log
   bool showSteps = true;
-
-  class Unify : public ConstraintVisitorDouble {
-  public:
-    TypeGraph * gg;
-    Solution * solution;
-    Unify(Solution * solution, Constraint * a, Constraint * b)
-      : ConstraintVisitorDouble(a, b), solution(solution), gg(solution->gg) {
-      if (showSteps)
-        std::cerr << "unifying " << a << " :: " << b << "\n";
-      run();
-    };
-    void visit2(Term * a, Type * b) {
-      gg->constrain(a->term, b);
-      solution->unknowns.insert(a->term);
-    }
-    void visit2(Type * a, Term * b) { visit2(b, a); }
-    void visit2(Type * a, Type * b) {
-      if (ConsEquals(a, b).out) return;
-      std::cerr << "\033[31mWarning! Unifying " << a << " and " << b << "\033[0m\n";
-    }
-    void visit2(Term * a, Term * b) {
-      if (a->term == b->term) return;
-      gg->constrain(a->term, b);
-      gg->constrain(b->term, a);
-      solution->unknowns.insert(a->term);
-      solution->unknowns.insert(b->term);
-    }
-  };
-
-  class SubstituteKnowns : public ConstraintVisitor {
-  public:
-    TypeGraph * gg;
-    Constraint * input;
-    Constraint * output;
-    int count = 0;
-    std::unordered_map<TypeTerm *, Type *> * knowns;
-    SubstituteKnowns(std::unordered_map<TypeTerm *, Type *> * knowns,
-                     TypeGraph * gg,
-                     Constraint *c) : knowns(knowns), gg(gg), input(c) {
-      v(input);
-    }
-    Constraint * v(Constraint * c) { output = c; c->accept(this); return output; }
-    void visit(Type * t) {
-      for(auto &param: t->params)
-        param = v(param);
-      output = t;
-    }
-    void visit(Term * term) {
-      if (knowns->find(term->term) != knowns->end()) {
-        output = (*knowns)[term->term];
-        count++;
-      }
-    }
-    void visit(Call * c) {
-      c->callee = v(c->callee);
-      for(auto &param: c->arguments)
-        param = v(param);
-      output = c;
-    }
-  };
-
-  class SubstituteTerm : public ConstraintVisitor {
-  public:
-    TypeGraph * gg;
-    Constraint * in;
-    Constraint * out;
-    SubstituteTerm(TypeGraph * gg, Constraint * cc) : gg(gg), in(cc), out(cc) {
-      cc->accept(this);
-    }
-    void visit(Call * c) {
-      out = c->callee; c->callee->accept(this); c->callee = out;
-      for(auto &p: c->arguments)
-      { out = p; p->accept(this); p = out; }
-      out = c;
-    }
-    void visit(Term * t) {
-      auto cc = gg->relations.equal_range(t->term);
-      for(auto it = cc.first; it != cc.second; it++) {
-        if (dynamic_cast<Type *>(it->second)) {
-          out = it->second;
-          return;
-        }
-      }
-    }
-  };
-
-  class Instantiate : public ConstraintVisitor {
-  public:
-    TypeGraph * gg;
-    Constraint * input;
-    Constraint * out;
-    std::map<int, Term *> terms;
-    Instantiate(TypeGraph * gg, Constraint * c) : gg(gg), input(c) { c->accept(this); }
-    void visit(Term * t) { out = t; }
-    void visit(Call * c) { out = c; }
-    void visit(Type * t) {
-      auto t2 = new Type(t->name, {});
-      for(auto &p: t->params) {
-        p->accept(this);
-        t2->params.push_back(out);
-      }
-      out = t2;
-    }
-    void visit(Free * f) {
-      if (terms.find(f->index) == terms.end()) {
-        auto newterm = gg->addTerm("free" + std::to_string(f->index), 0);
-        out = terms[f->index] = gg->term(newterm);
-      } else
-        out = terms[f->index];
-    }
-  };
 
   Solution::Solution(TypeGraph * gg) : gg(gg) {
     for(auto & pair: gg->relations) {
@@ -127,7 +19,6 @@ namespace typegraph {
         unknowns.insert(term);
     }
 
-    int count = 0;
   START:
     count++;
     for(auto & term: unknowns) {
@@ -137,8 +28,9 @@ namespace typegraph {
       for(auto it = range.first; it != range.second; it++) {
         auto sub = SubstituteKnowns(&knowns, gg, it->second);
         it->second = sub.output;
-        if (sub.count && showSteps) {
+        if (showSteps) {
           std::cerr << "Substituting: " << it->first << " :: " << it->second << "\n";
+          std::cerr << "wtf         : " << sub.output << "\n";
         }
         subcount += sub.count;
       }
@@ -148,55 +40,43 @@ namespace typegraph {
         if (isConcreteType(it->second)) {
           knowns.insert(std::make_pair(it->first, dynamic_cast<Type *>(it->second)));
           unknowns.erase(unknowns.find(term));
-          if (showSteps)
-            std::cerr << "\033[32m adding " << it->first << " :: "
-                      << it->second << "\033[0m\n";
+          // std::cerr
+          //   << "\033[32m adding " << it->first << " :: "
+          //   << it->second << "\033[0m\n";
           goto START;
         }
       }
 
       // if we're a call, we can substitute in even non-concrete types
       // range = gg->relations.equal_range(term);
-      for(auto it = range.first; it != range.second; it++) {
-        if (Call * c = dynamic_cast<Call *>(it->second)) {
-          // std::cerr << it->first << "call!\n";
-          c->callee = SubstituteTerm(gg, c->callee).out;
-          for(auto &p: c->arguments)
-            p = SubstituteTerm(gg, p).out;
-        }
-      }
+      for(auto it = range.first; it != range.second; it++)
+        if (Call * c = dynamic_cast<Call *>(it->second))
+          SubstituteTerm(gg, c);
 
       range = gg->relations.equal_range(term);
       // Apply Calls
       // Warning: The following block of code is pretty sketchy.
       // The intention is that it will be "functional" enough to support coral-alpha
       for(auto it = range.first; it != range.second; it++) {
+/*
+Term term;
+match constraint:
+  Call(Type("Func", params), args):
+     for i in range(params.length - 1):
+        if params[i].name == "...": break
+           Unify(args[i], params[i])
+     Unify(term, params.back())
+  Call(Type("Member", Type(field)), Type("Tuple", tupleargs)):
+  Call(Type("Member", Type(field)), Type(typename)):
+ */
         if (Call * call = dynamic_cast<Call *>(it->second)) {
           if (Type * callee = dynamic_cast<Type *>(call->callee)) {
             if (callee->name == "Func") {
-              Instantiate instantiate(gg, callee);
-              for(auto &pair: instantiate.terms)
-                unknowns.insert(pair.second->term);
-              callee = dynamic_cast<Type *>(instantiate.out);
-              for(size_t i = 0; i < callee->params.size() - 1; i++) {
-                auto param = callee->params[i];
-                if (Type * type_param = dynamic_cast<Type *>(param))
-                  if (type_param->name == "...")
-                    break;
-                if (i >= call->arguments.size())
-                  std::cerr << "\033[31mWarning: size mismstach in call arguments: "
-                            << call << "\033[0m\n";
-                else {
-                  auto arg = call->arguments[i];
-                  Unify(this, param, arg);
-                }
-              }
-              Unify(this, gg->term(term), callee->params.back());
-              if (showSteps)
-                std::cerr << "Deleting: " << it->first << " :: " << it->second << "\n";
+              applyFunction(term, call, callee);
               gg->relations.erase(it);
               goto START;
-            } else if (callee->name == "Member") {
+            }
+            else if (callee->name == "Member") {
               bool skip = false;
               if (dynamic_cast<Type *>(callee->params[0]) &&
                   dynamic_cast<Type *>(call->arguments[0])) {
@@ -278,26 +158,55 @@ namespace typegraph {
                 }
               }
             }
-          }
-        }
-      }
-    }
-
-    if (showSteps) {
-      std::cout << "Changes Count: " << count << "\n";
-      showKnowns();
-      if (unknowns.size()) {
-        std::cout << "Unknowns:\n";
-        for (auto &x: unknowns) {
-          auto range = gg->relations.equal_range(x);
-          for(auto it = range.first; it != range.second; it++) {
-            std::cout << std::setw(20) << it->first << " :: " << it->second << "\n";
+            else if (callee->name == "Or") {
+              std::cerr << "\033[31m Applying OR!!! \033[0m\n";
+            }
           }
         }
       }
     }
   }
 
+  void Solution::applyFunction(TypeTerm * term, Call * call, Type * callee) {
+    Instantiate instantiate(gg, callee);
+    for(auto &pair: instantiate.terms)
+      unknowns.insert(pair.second->term);
+    callee = dynamic_cast<Type *>(instantiate.out);
+
+    for(size_t i = 0; i < callee->params.size() - 1; i++) {
+      auto param = callee->params[i];
+      if (Type * type_param = dynamic_cast<Type *>(param))
+        if (type_param->name == "...")
+          break;
+      if (i >= call->arguments.size())
+        std::cerr << "\033[31mWarning: size mismatch in call arguments: "
+                  << call << "\033[0m\n";
+      else {
+        auto arg = call->arguments[i];
+        std::cerr << "Unifying call argument\n";
+        std::cerr << callee << " at index " << i << "\n";
+        Unify(this, term, param, arg);
+      }
+    }
+    std::cerr << "Unifying call retval\n";
+    Unify(this, term, gg->term(term), callee->params.back());
+    if (showSteps)
+      std::cerr << "Deleting: " << term << " :: " << call << "\n";
+  }
+
+  void Solution::showSummary() {
+    std::cout << "Changes Count: " << count << "\n";
+    showKnowns();
+    if (unknowns.size()) {
+      std::cout << "Unknowns:\n";
+      for (auto &x: unknowns) {
+        auto range = gg->relations.equal_range(x);
+        for(auto it = range.first; it != range.second; it++) {
+          std::cout << std::setw(20) << it->first << " :: " << it->second << "\n";
+        }
+      }
+    }
+  }
   void Solution::showKnowns() {
     if (knowns.size()) {
       std::cout << "Knowns:\n";

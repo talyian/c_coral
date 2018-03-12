@@ -22,7 +22,18 @@ void analyzers::NameResolver::visit(ast::Extern * x) {
   info[x->name].expr = x;
   info[x->name].kind = ast::ExprTypeKind::ExternKind;
 }
-void analyzers::NameResolver::visit(ast::BinOp * m) { m->lhs->accept(this); m->rhs->accept(this); }
+void analyzers::NameResolver::visit(ast::BinOp * m) {
+  m->lhs->accept(this);
+  m->rhs->accept(this);
+  if (info[m->op].expr) {
+    std::cerr << "Found op " << m->op << "\n";
+    m->funcptr = dynamic_cast<ast::Func*>(info[m->op].expr);
+  } else if (info["(" + m->op + ")"].expr) {
+    std::cerr << "Found parenthesized op " << m->op << "\n";
+  } else {
+
+  }
+}
 void analyzers::NameResolver::visit(ast::Return * m) { if (m->val) m->val->accept(this); }
 void analyzers::NameResolver::visit(ast::Call * c) {
   if (c->callee) c->callee->accept(this);
@@ -39,7 +50,11 @@ void analyzers::NameResolver::visit(ast::Var * v) {
 
 void analyzers::NameResolver::visit(ast::Func * f) {
   // add self-param
-  if (f->container.size()) {
+  // TODO: This  is a bit poopy
+  // should we really insert a self-param in name-resolution?
+  // The issue is we want to insert it before resolving names
+  // in the body since they will refer to it.
+  if (!f->container.empty()) {
     ast::Var Klass(f->container.back());
     Klass.accept(this);
     if (Klass.expr) {
@@ -53,16 +68,33 @@ void analyzers::NameResolver::visit(ast::Func * f) {
       } else {
         std::cerr << COL_LIGHT_RED << "unknown type kind " << f->container.back() << "\n";
       }
-    } else {
-      std::cerr << COL_LIGHT_RED << "unknown type " << f->container.back() << "\n";
     }
   }
-  info[f->name].expr = f;
-  info[f->name].kind = ast::ExprTypeKind::FuncKind;
-  for(auto && param : f->params) {
-	info[param->name].expr = param.get();
-	info[param->name].kind = ast::ExprTypeKind::DefKind;
+
+  // if a function is defined multiple times, we add it to
+  // a OverloadedFunc type that will be removed by the typeresolver.
+  if (!info[f->name].expr) {
+    info[f->name].expr = f;
+    info[f->name].kind = ast::ExprTypeKind::FuncKind;
+    for(auto && param : f->params) {
+      info[param->name].expr = param.get();
+      info[param->name].kind = ast::ExprTypeKind::DefKind;
+    }
   }
+  else if (info[f->name].kind == ast::ExprTypeKind::OverloadedFuncKind) {
+    std::cerr << COL_LIGHT_RED << "warning: overloading " << f->name << "\033[0m\n";
+  }
+  else {
+    auto existing_expr = info[f->name].expr;
+    auto overload = new ast::OverloadedFunc(f->name);
+    overload->addOverload(f);
+    overload->addOverload(dynamic_cast<ast::Func *>(existing_expr));
+    info[f->name].expr = overload;
+    info[f->name].kind = ast::ExprTypeKind::OverloadedFuncKind;
+  }
+  // this must happen after we've registered our name in info
+  // in order for recursion to work.
+  // DESIGN: we could require manual
   if (f->body) f->body->accept(this);
 }
 
