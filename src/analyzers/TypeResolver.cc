@@ -282,12 +282,12 @@ void coral::analyzers::TypeResolver::visit(ast::Member * m) {
   m->base->accept(this);
   auto basetype = out;
   auto memberpath = m->member;
-  out = gg.addTerm(basetype->name + "." + memberpath, m);
-  gg.constrain(
-    out,
-    gg.call(
-      gg.type("Member", {gg.type(memberpath)}),
-      {gg.term(basetype)}));
+  auto constraint = gg.call(gg.type("Member", {gg.type(memberpath)}), {gg.term(basetype)});
+  // add this twice to avoid function call unification from bypassing member index calculation
+  for(auto i = 0; i<2; i++) {
+    out = gg.addTerm(basetype->name + "." + memberpath, m);
+    gg.constrain(out, constraint);
+  }
 }
 
 void coral::analyzers::TypeResolver::visit(ast::TupleLiteral * tuple) {
