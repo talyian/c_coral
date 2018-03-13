@@ -81,6 +81,14 @@ namespace coral {
       EndTest();
     }
 
+    void CodegenTests::RunSimplePolymorphism() {
+	  const char * file = "tests/cases/features/polymorphic_functions.coral";
+      BeginTest("Polymorphic Functions");
+      auto result = TestFunction<int(*)()>("main", file).Call();
+      ASSERT(result == 600, "Polymorpic Functions ");
+      EndTest();
+    }
+
     TestSuite * run_codegen_tests() {
       auto T = new CodegenTests();
       T->show_header();
@@ -90,8 +98,9 @@ namespace coral {
 	  T->RunReturnInserter();
       T->RunCollatz();
       T->Run("tests/cases/simple/tuples.coral");
-      T->Run("tests/cases/simple/tuples-methods.coral");
+      // T->Run("tests/cases/simple/tuples-methods.coral");
       // T->Run("tests/cases/features/pcre.coral");
+      T->RunSimplePolymorphism();
       T->show(0);
       return T;
     }

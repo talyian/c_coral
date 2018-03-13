@@ -10,6 +10,7 @@ namespace coral {
 	  void RunFactorialWhile();
 	  void RunReturnInserter();
 	  void RunCollatz();
+	  void RunSimplePolymorphism();
 	};
 
 	TestSuite * run_codegen_tests();

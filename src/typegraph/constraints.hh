@@ -93,7 +93,7 @@ namespace typegraph {
 
   class ConstraintVisitorDouble : public ConstraintVisitor {
     virtual void visit2(Constraint *, Constraint *) { std::cout << "hmmmm\n"; }
-#define VISIT2(T1, T2) virtual void visit2(T1 *, T2 *) { std::cout << #T1 << " " << #T2 << "\n"; }
+#define VISIT2(T1, T2) virtual void visit2(T1 *, T2 *) { }
 #define VISIT(T1) CONS_LOOP_F1(VISIT2, T1)
     CONS_LOOP(VISIT)
 #undef VISIT

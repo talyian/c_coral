@@ -74,8 +74,8 @@ namespace coral {
       void visit(ast::FloatLiteral *) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(inferredType->
       void visit(ast::Member * m) {
-        std::cout << COL_GREEN << std::setw(25) << "member: " << m->member << " :: "
-                  << inferredType << COL_CLEAR << "\n";
+        // std::cout << COL_GREEN << std::setw(25) << "member: " << m->member << " :: "
+        //           << inferredType << COL_CLEAR << "\n";
         if (inferredType->name == "Index")
           m->memberIndex = std::stoi(
             dynamic_cast<typegraph::Type *>(

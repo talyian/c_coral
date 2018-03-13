@@ -15,4 +15,8 @@ func main():
   printf("%d\n", frob "three")
   printf("%s\n", frob (Person(2, "bob")))
   printf("%s\n", frob 5)
-  foo (Person(0, "")) + foo 1 + foo ""
+  let v = foo (Person(0, ""))
+  let v = v + foo 1
+  let v = v + foo ""
+  printf("[[%d]]\n", v)
+  v
