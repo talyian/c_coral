@@ -20,7 +20,11 @@ namespace typegraph {
     }
 
   START:
-    count++;
+    if (count++ > 1000) {
+      std::cerr << "Too many iterations of type checker!\n";
+      return;
+    }
+    if (showSteps) showUnknowns();
     for(auto & term: unknowns) {
       // substitute knowns
       int subcount = 0;
@@ -34,20 +38,24 @@ namespace typegraph {
         subcount += sub.count;
       }
 
+
       // convert unknown to known if we substituted
       for(auto it = range.first; it != range.second; it++) {
         if (isConcreteType(it->second)) {
           knowns.insert(std::make_pair(it->first, dynamic_cast<Type *>(it->second)));
           unknowns.erase(unknowns.find(term));
-          // std::cerr
-          //   << "\033[32m adding " << it->first << " :: "
-          //   << it->second << "\033[0m\n";
+          if (showSteps)
+            std::cerr
+              << "\033[32m adding " << it->first << " :: "
+              << it->second << "\033[0m\n";
           goto START;
         }
       }
 
+      if (subcount) goto START;
+
       // if we're a call, we can substitute in even non-concrete types
-      // range = gg->relations.equal_range(term);
+      range = gg->relations.equal_range(term);
       for(auto it = range.first; it != range.second; it++)
         if (Call * c = dynamic_cast<Call *>(it->second))
           SubstituteTerm(gg, c);
@@ -159,13 +167,14 @@ match constraint:
               }
             }
             else if (callee->name == "Or") {
-              // std::cerr << "\033[31m Applying OR!!! \033[0m\n";
               auto args = call->arguments;
               int option_id = -1;
               for(auto &option:callee->params) {
                 option_id++;
                 Type * func = 0;
                 if ((func = dynamic_cast<Type *>(option)) && func->name == "Func") {
+                  if (showSteps)
+                    std::cerr << "\033[31m Applying "<< callee << " \033[0m\n";
                   bool mismatch = false;
                   for(size_t i = 0; i < call->arguments.size(); i++) {
                     if (!ConsEquals(func->params[i], call->arguments[i]).out)
@@ -235,6 +244,14 @@ match constraint:
           std::cout << std::setw(20) << it->first << " :: " << it->second << "\n";
         }
       }
+    }
+  }
+  void Solution::showUnknowns() {
+    std::cout << "Unknowns ("<< unknowns.size() << "):\n";
+    for (auto &x: unknowns) {
+      auto range = gg->relations.equal_range(x);
+      for(auto it = range.first; it != range.second; it++)
+        std::cout << std::setw(20) << x << " :: " << it->second << "\n";
     }
   }
   void Solution::showKnowns() {

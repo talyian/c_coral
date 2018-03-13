@@ -59,6 +59,10 @@ void coral::analyzers::TypeResolver::visit(ast::Call * call) {
   if (calleevar) {
     out = gg.addTerm("call." + calleevar->name, call);
     gg.constrain(out, gg.call(gg.term(calleevar), args));
+    // HACK: we duplicate this to force one of  them to be kept
+    // even after return type inference removes the other one
+    out = gg.addTerm("call." + calleevar->name, call);
+    gg.constrain(out, gg.call(gg.term(calleevar), args));
   }
 }
 
@@ -137,10 +141,10 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
     // if we're adding an OverloadedFunc expression
     if (ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::OverloadedFuncKind) {
       auto overloaded_func = dynamic_cast<ast::OverloadedFunc*>(var->expr);
-      out = gg.addTerm(overloaded_func->name, overloaded_func);
       auto params = std::vector<typegraph::Constraint *>();
       for(auto &func: overloaded_func->funcs)
         params.push_back(gg.term(gg.findTerm(func)));
+      out = gg.addTerm(overloaded_func->name, overloaded_func);
       gg.constrain(out, gg.type("Or", params));
       return;
     }

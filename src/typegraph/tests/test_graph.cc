@@ -23,7 +23,7 @@ public:
     TypeGraph gg;
     std::string frob = "frobString";
     std::string bob = "bobString";
-    auto f = gg.addTerm("frob", &frob);
+    gg.addTerm("frob", &frob);
     auto b = gg.addTerm("bob", &bob);
     auto b2 = gg.addTerm("bob2", &bob);
     auto b3 = gg.addTerm("bob", &bob);
@@ -90,5 +90,6 @@ int main() {
   BasicTest().summary();
   Factorial().summary();
   TupleTest().summary();
+  // OverloadTest().summary();
   return 0;
 }

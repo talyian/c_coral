@@ -27,6 +27,10 @@ namespace typegraph {
     bool out = true;
     void visit(Term *) { out = false; }
     void visit(Call *) { out = false; }
+    void visit(Type *t) {
+      if (t->name == "Or") out = false;
+      for(auto &p: t->params) p->accept(this);
+    }
   };
   bool isConcreteType(Constraint * c) { return IsConcreteType(c).out; }
 

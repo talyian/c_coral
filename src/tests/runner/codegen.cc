@@ -98,7 +98,7 @@ namespace coral {
 	  T->RunReturnInserter();
       T->RunCollatz();
       T->Run("tests/cases/simple/tuples.coral");
-      // T->Run("tests/cases/simple/tuples-methods.coral");
+      T->Run("tests/cases/simple/tuples-methods.coral");
       // T->Run("tests/cases/features/pcre.coral");
       T->RunSimplePolymorphism();
       T->show(0);

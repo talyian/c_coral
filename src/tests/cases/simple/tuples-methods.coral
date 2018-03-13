@@ -6,7 +6,7 @@ func Person.print():
   printf("Person: %s, %d, %f\n", self.name, self.age, self.height)
 
 func Person.bmi():
-  self.weight / (self.height * self.height)
+  self.height
 
 type Couple = {x:Person, y: Person}
 

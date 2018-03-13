@@ -2,21 +2,9 @@ c_extern printf: Func[Ptr, ..., Void]
 
 type Person = {age:Int32, name:Ptr}
 
-# We can return different types in polymorphic functions
-# ??? Is this REALLY a good idea ???
-func frob (p:Person): "p"
-func frob (n:Int32): "i"
-func frob (n:Ptr): 3
-
 func foo (p:Person): 100
 func foo (n:Int32): 200
-func foo (n:Ptr): 300
+func foo (n:Ptr): 240
+
 func main():
-  printf("%d\n", frob "three")
-  printf("%s\n", frob (Person(2, "bob")))
-  printf("%s\n", frob 5)
-  let v = foo (Person(0, ""))
-  let v = v + foo 1
-  let v = v + foo ""
-  printf("[[%d]]\n", v)
-  v
+  foo (Person(0, "")) + 30 + foo 1 + 30 + foo "" + 0

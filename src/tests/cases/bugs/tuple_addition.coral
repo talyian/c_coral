@@ -1,0 +1,8 @@
+c_extern printf: Func[Ptr, ..., Void]
+
+func foo(x:Int32): 100
+func foo(x:Float64): 200
+func foo(x:Ptr): 300
+
+func main():
+  printf("%d", foo 1 + foo 2.5 + foo "3" + 4)
