@@ -101,6 +101,8 @@ namespace coral {
       T->Run("tests/cases/simple/tuples-methods.coral");
       // T->Run("tests/cases/features/pcre.coral");
       T->RunSimplePolymorphism();
+      T->Run("tests/cases/bugs/tuple_addition.coral");
+      T->Run("tests/cases/bugs/method_name_collision.coral");
       T->show(0);
       return T;
     }

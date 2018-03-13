@@ -24,7 +24,7 @@ namespace typegraph {
       std::cerr << "Too many iterations of type checker!\n";
       return;
     }
-    if (showSteps) showUnknowns();
+    // if (showSteps) showUnknowns();
     for(auto & term: unknowns) {
       // substitute knowns
       int subcount = 0;

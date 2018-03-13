@@ -174,7 +174,10 @@ void coral::analyzers::TypeResolver::visit(ast::Def * d) {
     gg.constrain(out, typeconvert(&gg, d->type.get()));
 }
 void coral::analyzers::TypeResolver::visit(ast::Func * f) {
-  auto func_name = f->tuple ? f->tuple->name + "::" + f->name : f->name;
+  auto name = f->name;
+  for(auto &part : f->container)
+    name = part + "::" + name;
+  auto func_name = name;
   auto term = gg.addTerm(func_name, f);
   auto constraint = gg.type("Func");
   term_map[term] = f;

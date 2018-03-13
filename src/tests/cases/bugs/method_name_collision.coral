@@ -1,0 +1,12 @@
+c_extern printf: Func[Ptr, ..., Void]
+
+type Person = {name:Ptr, age:Int32}
+func Int32.foo(): 1
+func Float64.foo(): 2
+func Person.foo(): 3
+
+func main():
+  printf("%d\n", 100 * 3.foo())
+  printf("%d\n", 100 * 3.5.foo())
+  printf("%d\n", 100 * Person("bob", 3).foo())
+  0

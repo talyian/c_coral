@@ -55,6 +55,7 @@ void analyzers::NameResolver::visit(ast::Func * f) {
   // The issue is we want to insert it before resolving names
   // in the body since they will refer to it.
   if (!f->container.empty()) {
+    auto container_type = type::Type(f->container.back());
     ast::Var Klass(f->container.back());
     Klass.accept(this);
     if (Klass.expr) {
@@ -68,6 +69,11 @@ void analyzers::NameResolver::visit(ast::Func * f) {
       } else {
         std::cerr << COL_LIGHT_RED << "unknown type kind " << f->container.back() << "\n";
       }
+    } else {
+      auto def = new ast::Def("self", new type::Type(container_type), 0);
+      f->params.insert(
+        f->params.begin(),
+        std::unique_ptr<ast::Def>(def));
     }
   }
 

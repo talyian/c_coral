@@ -82,7 +82,6 @@ namespace coral {
     void Call::methodCallInvert() {
       auto member = dynamic_cast<Member *>(callee.get());
       if (member && member->methodPtr) {
-        std::cerr << "inverting method call!\n";
         auto instance = member->base.release();
         auto method = member->methodPtr;
         this->arguments.insert(this->arguments.begin(), std::make_unique(instance));
