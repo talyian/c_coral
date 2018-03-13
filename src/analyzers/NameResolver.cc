@@ -62,10 +62,12 @@ void analyzers::NameResolver::visit(ast::Func * f) {
       ast::Tuple * t = dynamic_cast<ast::Tuple *>(Klass.expr);
       f->tuple = t;
       if (t) {
+        auto def = new ast::Def("self", new Type(t->name), 0);
         f->params.insert(
           f->params.begin(),
-          std::unique_ptr<ast::Def>(
-            new ast::Def("self", new Type(t->name), 0)));
+          std::unique_ptr<ast::Def>(def));
+        info["self"].expr = def;
+        info["self"].kind = ast::ExprTypeKind::DefKind;
       } else {
         std::cerr << COL_LIGHT_RED << "unknown type kind " << f->container.back() << "\n";
       }
@@ -74,7 +76,10 @@ void analyzers::NameResolver::visit(ast::Func * f) {
       f->params.insert(
         f->params.begin(),
         std::unique_ptr<ast::Def>(def));
+      info["self"].expr = def;
+      info["self"].kind = ast::ExprTypeKind::DefKind;
     }
+
   }
 
   // if a function is defined multiple times, we add it to

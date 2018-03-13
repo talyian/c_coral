@@ -27,7 +27,7 @@ func Pattern.matches(subject:Ptr):
   let data = pcre2_match_data_create_8(10, ptr 0)
   RegexRun(self, subject, strlen subject, int64 0, data)
 
-func RegexRun.showrun():
+func RegexRun.show():
   let pat = self.pattern
   let regex = pat.regex
   if pcre2_match_8(regex, self.subject, self.len, self.pos, 0, self.data, ptr 0) > 0:
@@ -36,12 +36,12 @@ func RegexRun.showrun():
     let end = derefi (ov + 8)
     printf("[%.*s]\n", end - start, self.subject + start)
     let next = RegexRun(self.pattern, self.subject, self.len, int64 end, self.data)
-    next.showrun()
+    next.show()
   else:
     printf ""
 
 func main():
   let regex = compile "[a-z]+"
   let dd = regex.matches "a cat in a hat"
-  dd.showrun()
+  dd.show()
   0
