@@ -1,6 +1,7 @@
 #include "core/expr.hh"
-
+#include "utils/ansicolor.hh"
 #include <iostream>
+#include <set>
 
 namespace coral {
   namespace analyzers {
@@ -11,6 +12,33 @@ namespace coral {
 	  ast::ExprTypeKind kind = ast::ExprTypeKind::BaseExprKind;
 	};
 
+    class NameScope {
+    public:
+      NameScope * parent;
+      // variables from the current scope
+	  std::map<std::string, NameInfo> info;
+      // free variables that are pulled from outer scope
+      std::set<std::string> freeVars;
+
+      void insert(std::string name, ast::BaseExpr * expr) {
+        insert(name, expr, ast::ExprTypeVisitor::of(expr));
+      }
+      void insert(
+        std::string name,
+        ast::BaseExpr * expr,
+        ast::ExprTypeKind kind) {
+        info[name].expr = expr;
+        info[name].kind = kind;
+      }
+      NameInfo get(std::string name) {
+        auto it = info.find(name);
+        if (it != info.end()) return it->second;
+        if (parent)
+          return parent->get(name);
+        return NameInfo();
+      }
+    };
+
 	// Populates all ast::Var var nodes with a pointer to
 	// the expression that it is referring to
 	class NameResolver : public ast::ExprVisitor {
@@ -18,7 +46,26 @@ namespace coral {
 	  ast::Module * module = 0;
 	  ast::BaseExpr * target;
 	  std::string name;
-	  std::map<std::string, NameInfo> info;
+
+      NameScope * scope = 0, * root = new NameScope();
+
+      NameScope * pushScope(std::string) {
+        auto n = new NameScope();
+        n->parent = scope;
+        scope = n;
+        return n;
+      }
+
+      NameScope * pop() {
+        auto n = scope;
+        if (scope == root) {
+          std::cerr << COL_LIGHT_RED << "Warning: trying to pop root name scope\n";
+        } else {
+          scope = scope->parent;
+          delete n;
+        }
+        return scope;
+      }
 
 	  NameResolver(ast::Module * m) : module(m) { visit(m); }
 	  virtual std::string visitorName() { return "NameResolver"; }

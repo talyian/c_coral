@@ -15,23 +15,23 @@ void analyzers::NameResolver::visit(ast::IfExpr * m) {
 void analyzers::NameResolver::visit(ast::Let * e) {
   // if we recurse before setting the name, this lets let a = foo a work
   e->value->accept(this);
-  info[e->var->name].expr = e;
-  info[e->var->name].kind = ast::ExprTypeKind::LetKind;
+  scope->insert(e->var->name, e);
 }
 void analyzers::NameResolver::visit(ast::Extern * x) {
-  info[x->name].expr = x;
-  info[x->name].kind = ast::ExprTypeKind::ExternKind;
+  scope->insert(x->name, x);
 }
 void analyzers::NameResolver::visit(ast::BinOp * m) {
   m->lhs->accept(this);
   m->rhs->accept(this);
-  if (info[m->op].expr) {
+
+  if (scope->get(m->op).expr) {
     std::cerr << "Found op " << m->op << "\n";
-    m->funcptr = dynamic_cast<ast::Func*>(info[m->op].expr);
-  } else if (info["(" + m->op + ")"].expr) {
+    m->funcptr = dynamic_cast<ast::Func*>(scope->get(m->op).expr);
+  } else if (scope->get("(" + m->op + ")").expr) {
     std::cerr << "Found parenthesized op " << m->op << "\n";
   } else {
-
+    // we didn't get any custom definitions! we'll use builtin logic
+    // (which honestly is a bit of a hack)
   }
 }
 void analyzers::NameResolver::visit(ast::Return * m) { if (m->val) m->val->accept(this); }
@@ -41,11 +41,8 @@ void analyzers::NameResolver::visit(ast::Call * c) {
 }
 
 void analyzers::NameResolver::visit(ast::Var * v) {
-  auto expr = info[v->name].expr;
-  // std::cerr << "Var! " << v->name
-  // 		  << " ("  << (void *) expr << ") "
-  // 		  << ast::ExprNameVisitor::of(expr) << std::endl;
-  v->expr = info[v->name].expr;
+  // this is the core feature of NameResolver!
+  v->expr = scope->get(v->name).expr;
 }
 
 void analyzers::NameResolver::visit(ast::Func * f) {
@@ -66,8 +63,7 @@ void analyzers::NameResolver::visit(ast::Func * f) {
         f->params.insert(
           f->params.begin(),
           std::unique_ptr<ast::Def>(def));
-        info["self"].expr = def;
-        info["self"].kind = ast::ExprTypeKind::DefKind;
+        scope->insert("self", def);
       } else {
         std::cerr << COL_LIGHT_RED << "unknown type kind " << f->container.back() << "\n";
       }
@@ -76,33 +72,28 @@ void analyzers::NameResolver::visit(ast::Func * f) {
       f->params.insert(
         f->params.begin(),
         std::unique_ptr<ast::Def>(def));
-      info["self"].expr = def;
-      info["self"].kind = ast::ExprTypeKind::DefKind;
+      scope->insert("self", def);
     }
-
   }
 
   // if a function is defined multiple times, we add it to
   // a OverloadedFunc type that will be removed by the typeresolver.
-  if (!info[f->name].expr) {
-    info[f->name].expr = f;
-    info[f->name].kind = ast::ExprTypeKind::FuncKind;
+  if (!scope->get(f->name).expr) {
+    scope->insert(f->name, f);
     for(auto && param : f->params) {
-      info[param->name].expr = param.get();
-      info[param->name].kind = ast::ExprTypeKind::DefKind;
+      scope->insert(param->name, param.get());
     }
   }
-  else if (info[f->name].kind == ast::ExprTypeKind::OverloadedFuncKind) {
-    auto overload = dynamic_cast<ast::OverloadedFunc *>(info[f->name].expr);
+  else if (scope->get(f->name).kind == ast::ExprTypeKind::OverloadedFuncKind) {
+    auto overload = dynamic_cast<ast::OverloadedFunc *>(scope->get(f->name).expr);
     overload->addOverload(f);
   }
   else {
-    auto existing_expr = info[f->name].expr;
+    auto existing_expr = scope->get(f->name).expr;
     auto overload = new ast::OverloadedFunc(f->name);
     overload->addOverload(f);
     overload->addOverload(dynamic_cast<ast::Func *>(existing_expr));
-    info[f->name].expr = overload;
-    info[f->name].kind = ast::ExprTypeKind::OverloadedFuncKind;
+    scope->insert(f->name, overload);
   }
   // this must happen after we've registered our name in info
   // in order for recursion to work.
@@ -119,8 +110,6 @@ void analyzers::NameResolver::visit(ast::FloatLiteral * i) { }
 void analyzers::NameResolver::visit(ast::Set * s) {
   s->var->accept(this);
   s->value->accept(this);
-  // info[s->var->name].expr = s;
-  // info[s->var->name].kind = ast::ExprTypeKind::SetKind;
 }
 
 void analyzers::NameResolver::visit(ast::While * w) {
@@ -133,8 +122,7 @@ void analyzers::NameResolver::visit(ast::Member * w) {
 }
 
 void analyzers::NameResolver::visit(ast::Tuple * w) {
-  info[w->name].expr = w;
-  info[w->name].kind = ast::ExprTypeKind::TupleKind;
+  scope->insert(w->name, w);
 }
 
 void analyzers::NameResolver::visit(ast::TupleLiteral * w) {
