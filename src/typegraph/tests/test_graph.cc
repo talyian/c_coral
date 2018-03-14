@@ -1,6 +1,7 @@
 #include "../typegraph.hh"
 #include "test_tuples.cc"
 #include "test_factorial.cc"
+#include "test_method_call.cc"
 #include "testcase.hh"
 
 using namespace typegraph;
@@ -86,10 +87,10 @@ public:
 
 int main() {
   showSteps = false;
-  std::cout << "Basic Tests\n";
-  BasicTest().summary();
-  Factorial().summary();
-  TupleTest().summary();
+  // BasicTest().summary();
+  // Factorial().summary();
+  // TupleTest().summary();
+  MethodCallTest().summary();
   // OverloadTest().summary();
   return 0;
 }

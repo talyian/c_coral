@@ -61,7 +61,7 @@ namespace typegraph {
   public:
     Free(int index) : index(index) { }
     int index;
-    virtual void print(std::ostream& out) { out << "τ" << index; }
+    virtual void print(std::ostream& out) { out << "\033[38;5;96mτ" << index << "\033[0m"; }
     virtual void accept(ConstraintVisitor * v) { v->visit(this); }
   };
 
@@ -69,7 +69,7 @@ namespace typegraph {
   public:
     Term(TypeTerm * term) : term(term) { }
     TypeTerm * term;
-    virtual void print(std::ostream& out) { out << term; }
+    virtual void print(std::ostream& out) { out << "\033[38;5;45m" << term << "\033[0m"; }
     virtual void accept(ConstraintVisitor * v) { v->visit(this); }
   };
 
@@ -122,7 +122,8 @@ namespace typegraph {
   class ConsEquals : public ConstraintVisitorDouble {
   public:
     bool out = false;
-    ConsEquals(Constraint * a, Constraint * b) : ConstraintVisitorDouble(a, b) { run(); };
+    ConsEquals(Constraint * a, Constraint * b) : ConstraintVisitorDouble(a, b) {
+      if (a && b) run(); };
     void visit2(Free * f, Free * g) { out = f->index == g->index; }
     void visit2(Term * x, Term * y) { out = x->term == y->term; }
     void visit2(Type * t, Type * u) {

@@ -5,7 +5,7 @@
 #include <cxxabi.h>
 #include <unistd.h>
 
-void segvhandler(int sig) {
+void segvhandler(int) {
   void * array[30];
   size_t size = backtrace(array, 30);
   char * funcname = new char[256];

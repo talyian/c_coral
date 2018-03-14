@@ -97,12 +97,21 @@ match constraint:
               gg->relations.erase(it);
               goto START;
             }
+            else if (callee->name == "MethodCall") {
+              // gg->show();
+              if (applyMethod(term, call, callee)) {
+                gg->relations.erase(it);
+                goto START;
+              }
+            }
             else if (callee->name == "Member") {
               bool skip = false;
               if (dynamic_cast<Type *>(callee->params[0]) &&
-                  dynamic_cast<Type *>(call->arguments[0])) {
+                  dynamic_cast<Type *>(call->arguments[0])
+                ) {
                 auto field = dynamic_cast<Type *>(callee->params[0])->name;
                 auto type = dynamic_cast<Type *>(call->arguments[0]);
+                auto instance = dynamic_cast<Term *>(call->arguments[1]);
 
                 if (type->name == "Tuple") {
                   for(size_t i = 0; i < type->params.size(); i++) {
@@ -126,6 +135,7 @@ match constraint:
                     }
                   }
                 }
+                // dereference a field from a tuple
                 else if (gg->termByName[type->name + "::" + field] && gg->termByName[type->name + "::" + field + ".index"])
                 {
                   auto type_term =
@@ -137,7 +147,8 @@ match constraint:
                     auto out_type = type_term->second;
                     auto out_index = std::stoi(dynamic_cast<Type *>(index_term->second)->name);
                     gg->constrain(it->first, out_type);
-                    auto instance_index_term = gg->addTerm("index", it->first->expr);
+                    auto instance_index_term = gg->addTerm(
+                      it->first->name + ".index", it->first->expr);
                     gg->constrain(
                       instance_index_term,
                       gg->type("Index",  {index_term->second}));
@@ -158,9 +169,11 @@ match constraint:
                               << type->name << "::" << field << "\n";
                   }
                 }
+                // methodcall
                 else if (gg->termByName[type->name + "::" + field]) {
-                  auto term = gg->termByName[type->name + "::" + field];
-                  auto constraint = gg->relations.find(term)->second;
+                  auto referred_name = type->name + "::" + field;
+                  auto referred_term = gg->termByName[referred_name];
+                  auto constraint = gg->relations.find(referred_term)->second;
                   if (Type * func = dynamic_cast<Type *>(constraint)) {
                     if (func->name == "Func") {
                       // add a pointer to the referent method
@@ -172,6 +185,34 @@ match constraint:
                           gg->type("FuncTerm", {gg->type(type->name + "::" + field)})));
                       gg->constrain(it->first, func);
                       gg->relations.erase(it);
+                      goto START;
+                    }
+                    if (func->name == "Method") {
+                      std::cerr << "method call " << func
+                                << " on instance " << instance << " "
+                                << call << "\n";
+
+                      auto funcptr = gg->addTerm(it->first->name + ".method", it->first->expr);
+
+                      // the functerm allow typeresultwriter to point to the right method
+                      gg->constrain(
+                        funcptr,
+                        gg->type("FuncTerm", {gg->type(type->name + "::" + field)}));
+                      knowns.insert(
+                        std::make_pair(
+                          funcptr,
+                          gg->type("FuncTerm", {gg->type(type->name + "::" + field)})));
+
+                      gg->relations.erase(it);
+
+                      auto tt = it->first;
+
+                      gg->constrain(
+                        tt,
+                        gg->type("MethodCall", {
+                            gg->term(referred_term),
+                              gg->type("Term", {gg->type(referred_name)}),
+                              gg->type("Term", {gg->type("p")})}));
                       goto START;
                     }
                   }
@@ -213,6 +254,12 @@ match constraint:
                 }
               }
             }
+            else if (callee->name == "MethodInst") {
+
+            }
+            else {
+              std::cerr << "Unknown callee " << call << "\n";
+            }
           }
         }
       }
@@ -244,6 +291,64 @@ match constraint:
     Unify(this, term, gg->term(term), callee->params.back());
     if (showSteps)
       std::cerr << "Deleting: " << term << " :: " << call << "\n";
+  }
+
+  bool Solution::applyMethod(TypeTerm * term, Call * call, Type * callee) {
+    if (!isConcreteType(callee->params[0])) return false;
+    std::cerr << "\033[35mcalling method " << callee << "\033[0m\n";
+
+    auto method_type = dynamic_cast<Type *>(callee->params[0]);
+    auto func_ptr_term = dynamic_cast<Type *>(
+      dynamic_cast<Type *>(callee->params[1])->params[0]);
+    auto self_term = dynamic_cast<Type *>(
+      dynamic_cast<Type *>(callee->params[2])->params[0]);
+
+    // Deliverables:
+    // Call(callee, args)
+    // we should emit a "call.inst.bar.method" => MethodTerm[Type::bar, &inst]
+    // so that the result writer can do the method-call inversion
+    // call(member(a, b), {c}) -> call(A::b, {b, c})
+    auto method_term = gg->addTerm(term->name + ".method", term->expr);
+    gg->constrain(method_term, gg->type("MethodTerm", {func_ptr_term, self_term}));
+    unknowns.insert(method_term);
+    // this if we add the self-param, method-call reduces to a regular function call
+    auto args = call->arguments;
+    args.insert(args.begin(), gg->term(self_term->name));
+    auto newcall = gg->call(method_type, args);
+      std::cerr << "Proposal: " << newcall << "\n";
+    applyFunction(term, newcall, method_type);
+
+
+    // method_type->params.insert(method_type->params.begin(), gg->term(self_term));
+
+    return false;
+
+    Instantiate instantiate(gg, callee);
+    for(auto &pair: instantiate.terms)
+      unknowns.insert(pair.second->term);
+    callee = dynamic_cast<Type *>(instantiate.out);
+
+
+    for(size_t i = 0; i < callee->params.size() - 1; i++) {
+      auto param = callee->params[i];
+      if (Type * type_param = dynamic_cast<Type *>(param))
+        if (type_param->name == "...")
+          break;
+      if (i >= call->arguments.size())
+        std::cerr << "\033[31mWarning: size mismatch in call arguments: "
+                  << call << "\033[0m\n";
+      else {
+        auto arg = call->arguments[i];
+        // std::cerr << "Unifying call argument\n";
+        // std::cerr << callee << " at index " << i << "\n";
+        Unify(this, term, param, arg);
+      }
+    }
+    // std::cerr << "Unifying call retval\n";
+    Unify(this, term, gg->term(term), callee->params.back());
+    if (showSteps)
+      std::cerr << "Deleting: " << term << " :: " << call << "\n";
+    return true;
   }
 
   void Solution::showSummary() {

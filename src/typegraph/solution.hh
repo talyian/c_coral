@@ -8,6 +8,7 @@ namespace typegraph {
   class TypeGraph;
   class Solution {
     void applyFunction(TypeTerm * term, Call * call, Type * callee);
+    bool applyMethod(TypeTerm * term, Call * call, Type * callee);
   public:
     TypeGraph * gg;
     int count = 0;
