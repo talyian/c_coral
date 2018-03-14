@@ -2,9 +2,15 @@
 #include "tests/runner/codegen.hh"
 #include "tests/runner/base.hh"
 #include "utils/opts.hh"
-#include <array>
+#ifdef __linux__
+#include "utils/segvhandler.hh"
+#endif
 
 int main(int argc, const char ** argv) {
+  #ifdef __linux__
+  signal(SIGSEGV, segvhandler);
+  #endif
+
   coral::opt::initOpts();
   coral::tests::TestSuite T;
   if (argc < 2 || std::string("parser") == argv[1])

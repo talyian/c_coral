@@ -47,7 +47,7 @@ namespace coral {
 	  ast::BaseExpr * target;
 	  std::string name;
 
-      NameScope * scope = 0, * root = new NameScope();
+      NameScope * root = new NameScope(), *scope = root;
 
       NameScope * pushScope(std::string) {
         auto n = new NameScope();
