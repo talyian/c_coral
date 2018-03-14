@@ -13,7 +13,7 @@
   F(Block) F(Var) F(Call)                                               \
   F(StringLiteral) F(IntLiteral) F(FloatLiteral)                        \
   F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member)          \
-  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple) F(OverloadedFunc)
+  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple) F(OverloadedFunc) F(Union)
 
 #define MAP_ALL_EXPRS(F) F(BaseExpr) MAP_EXPRS(F)
 
@@ -328,6 +328,15 @@ namespace coral {
       /* Tagged Tuples */
       Tuple(std::string name, std::vector<ast::Def *> fields);
     };
+
+    class Union : public BaseExpr {
+    public:
+      std::string name;
+      std::vector<std::unique_ptr<Def>> cases;
+      virtual void accept(BaseExprVisitor * v) { v->visit(this); }
+      Union(std::string name, ast::Block * block);
+    };
+
     // used for defining tuples
     std::vector<Type> _defsToTypeArg(std::vector<Def *> defs);
   }

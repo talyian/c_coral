@@ -11,7 +11,7 @@
 %}
 
 %token <std::string> OP OP4 OP_ADD OP_SUB OP2 OP1
-%token <std::string> OP_EQ
+%token <std::string> OP_EQ OP_PIPE OP_AMP
 %token <std::string> COMMENT
 %token <std::string> STRING
 %token <std::string> IDENTIFIER
@@ -29,11 +29,11 @@
 
 // TODO split between Statements and Exprs
 %type <coral::ast::BaseExpr *> Expr Atom Expr2 Expr3 Expr4
-%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Argument StructLine
+%type <coral::ast::BaseExpr *> Function ModuleLine ModuleRule ForLoop Argument UnionLine
 %type <coral::ast::IfExpr *> IfStatement
-%type <coral::ast::Block *> StatementBlock StructBlock
+%type <coral::ast::Block *> StatementBlock UnionBlock
 %type <coral::ast::TupleLiteral *> Tuple
-%type <std::vector<coral::ast::BaseExpr *>> BlockLines ArgumentsListInner StructBlockLines
+%type <std::vector<coral::ast::BaseExpr *>> BlockLines ArgumentsListInner UnionLines
 %type <std::vector<std::string>> IdentifierList VarPath
 %type <coral::type::Type *> TypeDef
 %type <std::vector<coral::type::Type>> TypeDefList
@@ -68,6 +68,8 @@ Operator
 | OP4 { $$ = $1; }
 | OP_ADD { $$ = $1; }
 | OP_SUB { $$ = $1; }
+| OP_PIPE { $$ = $1; }
+| OP_AMP { $$ = $1; }
 | OP2 { $$ = $1; }
 | OP1 { $$ = $1; }
 | OP_EQ { $$ = $1; }
@@ -135,7 +137,7 @@ ModuleLine
 | IfStatement { $$ = $1; }
 | WHILE Expr StatementBlock { $$ = new ast::While($2, $3); }
 | RETURN Expr { $$ = new ast::Return($2); }
-| TYPE GeneralIdentifier StructBlock { $$ = new ast::Tuple($2, $3); }
+| TYPE GeneralIdentifier UnionBlock { $$ = new ast::Union($2, $3); }
 | TYPE GeneralIdentifier OP_EQ TypeDef { $$ = new ast::Tuple($2, $4->params); delete $4;} // new ast::TypeDecl($2, $4); }
 | IMPORT VarPath { $$ = new ast::Import($2); }
 
@@ -159,12 +161,12 @@ VarPath
 : GeneralIdentifier { $$.push_back($1); }
 | VarPath '.' GeneralIdentifier { $$ = $1; $$.push_back($3); }
 
-StructBlock : ':' NEWLINE INDENT StructBlockLines DEDENT { $$ = new ast::Block($4); }
-StructBlockLines : { }
-| StructBlockLines StructLine NEWLINE { $$ = $1; $$.push_back($2); }
-| StructBlockLines NEWLINE { $$ = $1; $$.push_back(0); }
-StructLine
-: GeneralIdentifier ':' TypeDef { $$ = new ast::Def($1, $3, 0); }
-| Function { $$ = $1; }
+UnionBlock : ':' NEWLINE INDENT UnionLines DEDENT { $$ = new ast::Block($4); }
+UnionLines : { }
+| UnionLines UnionLine NEWLINE { $$ = $1; $$.push_back($2); }
+| UnionLines NEWLINE { $$ = $1; $$.push_back(0); }
+
+UnionLine
+: OP_PIPE GeneralIdentifier ':' TypeDef { $$ = new ast::Def($2, $4, 0); }
 
 %%

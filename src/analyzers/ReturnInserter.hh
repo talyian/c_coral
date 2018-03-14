@@ -1,3 +1,5 @@
+#include "core/expr.hh"
+
 namespace coral {
   namespace analyzers {
 
@@ -23,6 +25,7 @@ namespace coral {
 	  void visit(ast::Let *) { }
 	  void visit(ast::Extern *) { }
       void visit(ast::Tuple *) { }
+      void visit(ast::Union *) { }
 	};
   }
 }

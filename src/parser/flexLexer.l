@@ -22,6 +22,7 @@ UNICODE {U2}{U}|{U3}{U}{U}|{U4}{U}{U}{U}
 
 %%
 
+##.*                     { /* supercomments -- don't get parsed at all */ }
 #.*                      { STRLVAL; return TOK::COMMENT; }
 \"(\\\"|[^\"])*\"        { STRLVAL; return TOK::STRING; }
 \'(\\\'|[^\'])*\'        { STRLVAL; return TOK::STRING; }
