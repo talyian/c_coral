@@ -1,9 +1,17 @@
 c_extern printf: Func[Ptr, ..., Void]
 
+# This tests regression of a bug where an overloaded function call
+# would get matched by return-type inference
+# and get sent to the "known pile" before the actual "Or[]" disjunction
+# was broken apart. This meant that overload resolution
+# didn't happen and we never wrote out the OverloadID.
+
 func foo(x:Int32): 100
 func foo(x:Float64): 200
 func foo(x:Ptr): 300
 
+func returns_1500():
+  foo 1 + 2 * foo 2.5 + 3 * foo "3" + 100
 func main():
-  printf("%d\n", foo 1 + 2 * foo 2.5 + 3 * foo "3" + 100)
+  printf("%d\n", returns_1500())
   0

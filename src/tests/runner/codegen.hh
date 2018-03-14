@@ -11,6 +11,7 @@ namespace coral {
 	  void RunReturnInserter();
 	  void RunCollatz();
 	  void RunSimplePolymorphism();
+      void RunTupleAddition();
 	};
 
 	TestSuite * run_codegen_tests();

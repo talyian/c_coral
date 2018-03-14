@@ -364,13 +364,18 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
         LLVMConstInt(LLVMInt64TypeInContext(context), val, false),
         LLVMTypeFromCoral(&ptrtype));
       return;
-    } else if (var->name == "derefi") {
+    }
+    else if (var->name == "deref") {
+      expr->arguments[0]->accept(this);
+      out = LLVMBuildLoad(builder, out, var->name.c_str());
+      return;
+    }
+    else if (var->name == "derefi") {
       // TODO typed pointers should eliminate the need for a "deref-as-integer" builtin
       expr->arguments[0]->accept(this);
       auto intval = out;
-      auto ptrval = LLVMBuildIntToPtr(
-        builder, intval,
-        LLVMPointerType(LLVMInt32TypeInContext(context), 0), "ptrcast");
+      auto inttype = LLVMTypeOf(intval);
+      auto ptrval = LLVMBuildIntToPtr(builder, intval, LLVMPointerType(inttype, 0), "ptrcast");
       out = LLVMBuildLoad(builder, ptrval, var->name.c_str());
       return;
     } else if (var->name == "struct") {

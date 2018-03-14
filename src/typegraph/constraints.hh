@@ -35,7 +35,7 @@ namespace typegraph {
     Constraint() { }
     virtual ~Constraint() { }
     virtual void print(std::ostream& out) { out << "constraint"; }
-    virtual void accept(ConstraintVisitor * v) { }
+    virtual void accept(ConstraintVisitor *) { }
   };
   std::ostream& operator <<(std::ostream& out, Constraint * c);
 

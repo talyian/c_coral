@@ -31,7 +31,7 @@ namespace coral {
 		LLVMModuleRef module,
 		LLVMBuilderRef builder,
 		std::map<ast::BaseExpr *, LLVMValueRef> * info,
-		ast::Func * func)
+		ast::Func *)
 		: context(context), module(module), builder(builder), info(info) { }
 
 	  virtual std::string visitorName() { return "FunctionCompiler"; }

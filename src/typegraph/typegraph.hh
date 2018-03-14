@@ -24,7 +24,7 @@ namespace typegraph {
     std::unordered_multimap<TypeTerm *, Constraint *> relations;
 
     friend class Solution;
-    friend class SubstituteTerm;;
+    friend class SubstituteTerm;
     template<class T> T * _constraint(T * ptr) {
       constraints.push_back(std::unique_ptr<Constraint>(ptr));
       return ptr;

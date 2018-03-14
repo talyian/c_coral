@@ -1,16 +1,22 @@
 c_extern printf: Func[Ptr, ..., Void]
 
-# This tests regressiono of a bug where an overloaded function call
-# would get matched by return-type inference
-# and get sent to the "known pile" before the actual "Or[]" disjunction
-# was broken apart. This meant that overload resolution
-# didn't happen and we never wrote out the OverloadID.
+type Person = {Int32, Ptr}
 
-func foo(x:Int32): 100
-func foo(x:Float64): 200
-func foo(x:Ptr): 300
+# Instance methods and type methods are declared the same way.
+func Person.typeMethod():
+  printf "Person Class Method\n"
+
+# Anything that has a "self" in it is inferred to be an instance method.
+func Person.instanceMethod():
+  printf("Person Instance: %s\n", self.Item1)
 
 func main():
-  printf("hi\n")
-  printf("%d\n", 4 + foo 1 + foo 2.5 + foo "3" - 4)
+  let p = Person(10, "bob")
+  printf("(%s)\n", p.Item1)
+  # From an instance you can call type methods or instance methods
+  p.typeMethod()
+  p.instanceMethod()
+  # From a type you can call type methods or instance methods with explicit self parameter
+  # Person.typeMethod()
+  # Person.instanceMethod(p)
   0

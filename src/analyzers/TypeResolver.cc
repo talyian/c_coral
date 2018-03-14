@@ -57,6 +57,10 @@ void coral::analyzers::TypeResolver::visit(ast::Call * call) {
     args.push_back(gg.term(out));
   }
   if (calleevar) {
+    // auto func = dynamic_cast<coral::ast::Func *>((coral::ast::BaseExpr *)calleevar->expr);
+    // if (func && func->params.size() && func->params[0]->name == "self") {
+    //   args.insert(args.begin(),
+    // }
     out = gg.addTerm("call." + calleevar->name, call);
     gg.constrain(out, gg.call(gg.term(calleevar), args));
     // HACK: we duplicate this to force one of  them to be kept
@@ -79,7 +83,7 @@ void coral::analyzers::TypeResolver::visit(ast::Let * l) {
   l->value->accept(this);
   auto valueterm = out;
   out = gg.addTerm(l->var->name, l);
-  if (l->type.name.size())
+  if (l->type.name != "")
     gg.constrain(out, (typeconvert(&gg, &(l->type))));
   gg.constrain(out, gg.term(valueterm));
 }
@@ -117,6 +121,11 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
     out = gg.addTerm(var->name, var);
     auto free = gg.free(101);
     gg.constrain(out, gg.type("Func", {free, gg.type("Ptr", {free})}));
+  }
+  else if (var->name == "deref") {
+    out = gg.addTerm(var->name, var);
+    auto free = gg.free(50);
+    gg.constrain(out, gg.type("Func", {gg.type("Ptr", {free}), free}));
   }
   else if (var->name == "derefi") {
     out = gg.addTerm(var->name, var);
@@ -286,7 +295,8 @@ void coral::analyzers::TypeResolver::visit(ast::Member * m) {
   auto basetype = out;
   auto memberpath = m->member;
   auto constraint = gg.call(gg.type("Member", {gg.type(memberpath)}), {gg.term(basetype)});
-  // add this twice to avoid function call unification from bypassing member index calculation
+  // HACK: add this twice to avoid function call unification
+  // from eagerly stealing a term from member index calculation
   for(auto i = 0; i<2; i++) {
     out = gg.addTerm(basetype->name + "." + memberpath, m);
     gg.constrain(out, constraint);

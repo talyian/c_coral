@@ -24,7 +24,10 @@ namespace typegraph {
       std::cerr << "Too many iterations of type checker!\n";
       return;
     }
-    // if (showSteps) showUnknowns();
+    if (showSteps) {
+      showUnknowns();
+      showKnowns();
+    }
     for(auto & term: unknowns) {
       // substitute knowns
       int subcount = 0;
@@ -38,12 +41,23 @@ namespace typegraph {
         subcount += sub.count;
       }
 
-
       // convert unknown to known if we substituted
       for(auto it = range.first; it != range.second; it++) {
         if (isConcreteType(it->second)) {
           knowns.insert(std::make_pair(it->first, dynamic_cast<Type *>(it->second)));
           unknowns.erase(unknowns.find(term));
+          // If we're going to erase all the constraints of a term,
+          // we should unify each of them against the "solid type"
+          // to avoid losing information. This lets us get around the
+          // [HACK] of generating doubled terms in TypeResolver.cc
+          std::vector<Constraint *> constraints;
+          for(auto other_constraint = range.first;
+              other_constraint != range.second;
+              other_constraint++) {
+            constraints.push_back(other_constraint->second);
+          }
+          for(auto &constraint : constraints)
+            Unify(this, term, it->second, constraint);
           if (showSteps)
             std::cerr
               << "\033[32m adding " << it->first << " :: "
@@ -97,9 +111,10 @@ match constraint:
                       gg->constrain(it->first, tuple_field);
                       auto instance_index_term = gg->addTerm(
                         it->first->name + ".index", it->first->expr);
-                      knowns.insert(std::make_pair(
-                                      instance_index_term,
-                                      gg->type("Index",  {gg->type(std::to_string(i))})));
+                      knowns.insert(
+                        std::make_pair(
+                          instance_index_term,
+                          gg->type("Index",  {gg->type(std::to_string(i))})));
                       gg->constrain(
                         instance_index_term,
                         gg->type("Index",  {gg->type(std::to_string(i))}));
@@ -196,8 +211,6 @@ match constraint:
                     goto START;
                   }
                 }
-                // // applyFunction(term, option, call->arguments[0]);
-                // }
               }
             }
           }

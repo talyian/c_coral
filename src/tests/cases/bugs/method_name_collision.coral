@@ -1,5 +1,7 @@
 c_extern printf: Func[Ptr, ..., Void]
 
+# this tests weird bugs around self-parameters leaking through overloaded methods
+
 type Person = {name:Ptr, age:Int32}
 type Dog = {breed:Ptr}
 func Int32.foo(): 1
