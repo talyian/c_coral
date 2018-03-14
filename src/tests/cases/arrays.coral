@@ -1,0 +1,18 @@
+c_extern printf: Func[Ptr, ..., Void]
+
+type Foo = {x:Int32, y:Int64}
+
+func main():
+  let p = Array[Int8, 2]()
+  p.set(0, 3)
+  p.set(1, 5)
+  printf("%d\n", p[0])
+  printf("%d\n", p[1])
+  let q = Array[Foo, 10]()
+  q.set(0, Foo(1, 0.1))
+  q.set(1, Foo(2, 0.2))
+  printf("%d - %f\n", q[0].x, q[0].y)
+  printf("%d - %f\n", q[1].x, q[1].y)
+  let r = [0.9, 0.8, 0.7]
+  printf("%f, %f, %f\n", r[0], r[1], r[2])
+  0

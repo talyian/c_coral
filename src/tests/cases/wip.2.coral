@@ -1,0 +1,32 @@
+c_extern printf: Func[Ptr, ..., Void]
+# Case names can be re-used with possibly different case types
+# type Correctness:
+#   | wrong: Ptr
+#   | right: Int32
+
+type Union:
+  | left:{Int32, Int32}
+  | right:Float64
+
+# Different Union layout options
+
+# 1. The uniform-size Tag + Pointer strategy
+type Union_body = {tag:Int8, ptr:Ptr}
+func Union.left(val:{Int32, Int32}): Union_body(0, addrof val)
+func Union.right(val:Float64): Union_body(1, addrof val)
+
+# 2. Calculate sizeof for each struct and create an char array that contains everything
+type Union_body = {tag:Int8, data: Array[Int8, size]}
+func Union.left(val:{Int32, Int32}): something
+func Union.right(val:Float32): something
+
+type Array[T, n]:
+  length: Int32
+  size: Int32
+  data: Ptr
+
+func main():
+  let y : Union = left (3, 4)
+  let x : Union = right 3.5
+  printf("%f\n", x.y)
+  0
