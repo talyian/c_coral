@@ -462,6 +462,16 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Member * w) {
   this->rawPointer = 0;
   auto baseinstr = out;
 
+  if (!baseinstr) {
+    std::cerr << "Warning: member base failed to codegen: ";
+    PrettyPrinter::print(w);
+    exit(2);
+  } else {
+    // PrettyPrinter::print(w);
+    // std::cerr << "^ member debugging ";
+    // std::cerr << (void *)baseinstr << " ";
+    // std::cerr << LLVMPrintValueToString(baseinstr) << "\n";
+  }
   if (w->methodPtr) {
     out = (*info)[w->methodPtr];
     return;

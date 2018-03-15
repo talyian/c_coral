@@ -134,7 +134,7 @@ namespace coral {
       std::vector<std::string> container; // a namespace or container type
       std::string name;
       Tuple * tuple = 0;
-
+      bool isInstanceMethod = false;
       std::unique_ptr<coral::Type> type;
       vector<unique_ptr<coral::ast::Def>> params;
       unique_ptr<Block> body;
@@ -142,8 +142,12 @@ namespace coral {
            Type * type,
            vector<coral::ast::Def *> params,
            Block * body);
-
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
+      std::string fullName() {
+        std::string s;
+        for(auto &t : container) s += t + ".";
+        return s + name;
+      }
     };
 
     class OverloadedFunc : public Value {

@@ -61,6 +61,7 @@ namespace coral {
       void visit(ast::BinOp * e) { out = new ast::Return(e); }
       void visit(ast::IntLiteral * e) { out = new ast::Return(e); }
       void visit(ast::StringLiteral * e) { out = new ast::Return(e); }
+      void visit(ast::FloatLiteral * e) { out = new ast::Return(e); }
       void visit(ast::Member * m) { out = new ast::Return(m); }
       void visit(ast::While *) { }
       void visit(ast::ForExpr *) { }

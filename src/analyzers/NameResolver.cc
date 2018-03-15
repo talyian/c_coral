@@ -42,47 +42,17 @@ void analyzers::NameResolver::visit(ast::Call * c) {
 
 void analyzers::NameResolver::visit(ast::Var * v) {
   // this is the core feature of NameResolver!
-  v->expr = scope->get(v->name).expr;
+  if (scope->get(v->name).expr)
+    v->expr = scope->get(v->name).expr;
+  else
+    scope->freeVars.insert(std::make_pair(v->name, v));
 }
 
 void analyzers::NameResolver::visit(ast::Func * f) {
-  // add self-param
-  // TODO: This  is a bit poopy
-  // should we really insert a self-param in name-resolution?
-  // The issue is we want to insert it before resolving names
-  // in the body since they will refer to it.
-  if (!f->container.empty()) {
-    auto container_type = type::Type(f->container.back());
-    ast::Var Klass(f->container.back());
-    Klass.accept(this);
-    if (Klass.expr) {
-      ast::Tuple * t = dynamic_cast<ast::Tuple *>(Klass.expr);
-      f->tuple = t;
-      if (t) {
-        auto def = new ast::Def("self", new Type(t->name), 0);
-        f->params.insert(
-          f->params.begin(),
-          std::unique_ptr<ast::Def>(def));
-        scope->insert("self", def);
-      } else {
-        std::cerr << COL_LIGHT_RED << "unknown type kind " << f->container.back() << "\n";
-      }
-    } else {
-      auto def = new ast::Def("self", new type::Type(container_type), 0);
-      f->params.insert(
-        f->params.begin(),
-        std::unique_ptr<ast::Def>(def));
-      scope->insert("self", def);
-    }
-  }
-
   // if a function is defined multiple times, we add it to
   // a OverloadedFunc type that will be removed by the typeresolver.
   if (!scope->get(f->name).expr) {
     scope->insert(f->name, f);
-    for(auto && param : f->params) {
-      scope->insert(param->name, param.get());
-    }
   }
   else if (scope->get(f->name).kind == ast::ExprTypeKind::OverloadedFuncKind) {
     auto overload = dynamic_cast<ast::OverloadedFunc *>(scope->get(f->name).expr);
@@ -95,10 +65,26 @@ void analyzers::NameResolver::visit(ast::Func * f) {
     overload->addOverload(dynamic_cast<ast::Func *>(existing_expr));
     scope->insert(f->name, overload);
   }
+
+  pushScope(f->name);
+
+  for(auto && param : f->params) {
+    scope->insert(param->name, param.get());
+  }
   // this must happen after we've registered our name in info
   // in order for recursion to work.
   // DESIGN: we could require manual
   if (f->body) f->body->accept(this);
+
+  if (scope->freeVars.find("self") != scope->freeVars.end()) {
+    auto self_def = new coral::ast::Def("self", new Type(f->container.back()), 0);
+    f->params.insert(f->params.begin(), std::unique_ptr<coral::ast::Def>(self_def));
+    auto self_range = scope->freeVars.equal_range("self");
+    for(auto it = self_range.second; it != self_range.second; it++)
+      if (auto var = dynamic_cast<coral::ast::Var *>(it->second))
+        var->expr = self_def;
+  }
+  popScope();
 }
 
 void analyzers::NameResolver::visit(ast::StringLiteral * e) { }

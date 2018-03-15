@@ -21,13 +21,13 @@ namespace typegraph {
 
   START:
     if (count++ > 1000) {
-      std::cerr << "Too many iterations of type checker!\n";
+      std::cerr << "\033[31mToo many iterations of type checker!\033[0m\n";
       return;
     }
-    if (showSteps) {
-      showUnknowns();
-      showKnowns();
-    }
+    // if (showSteps) {
+    //   showUnknowns();
+    //   showKnowns();
+    // }
     for(auto & term: unknowns) {
       // substitute knowns
       int subcount = 0;
@@ -45,7 +45,6 @@ namespace typegraph {
       for(auto it = range.first; it != range.second; it++) {
         if (isConcreteType(it->second)) {
           knowns.insert(std::make_pair(it->first, dynamic_cast<Type *>(it->second)));
-          unknowns.erase(unknowns.find(term));
           // If we're going to erase all the constraints of a term,
           // we should unify each of them against the "solid type"
           // to avoid losing information. This lets us get around the
@@ -62,6 +61,7 @@ namespace typegraph {
             std::cerr
               << "\033[32m adding " << it->first << " :: "
               << it->second << "\033[0m\n";
+          unknowns.erase(unknowns.find(term));
           goto START;
         }
       }
@@ -112,7 +112,14 @@ match constraint:
                 auto field = dynamic_cast<Type *>(callee->params[0])->name;
                 auto type = dynamic_cast<Type *>(call->arguments[0]);
                 auto instance = dynamic_cast<Term *>(call->arguments[1]);
-
+                if (type->name == "Type" && isConcreteType(type)) {
+                  std::cerr << "member on a type\n";
+                  std::cerr << it->first << " :: " << it->second << "\n";
+                  auto constructor = dynamic_cast<Type*>(type->params[0]);
+                  auto type_name = dynamic_cast<Type *>(constructor->params.back());
+                  call->arguments[0] = type_name;
+                  goto START;
+                }
                 if (type->name == "Tuple") {
                   for(size_t i = 0; i < type->params.size(); i++) {
                     if (field == "Item" + std::to_string(i)) {
@@ -199,10 +206,8 @@ match constraint:
                           funcptr,
                           gg->type("FuncTerm", {gg->type(type->name + "::" + field)})));
 
-                      gg->relations.erase(it);
-
                       auto tt = it->first;
-
+                      gg->relations.erase(it);
                       gg->constrain(
                         tt,
                         gg->type("MethodCall", {
@@ -250,11 +255,18 @@ match constraint:
                 }
               }
             }
-            else if (callee->name == "MethodInst") {
-
+            else if (callee->name == "Type") {
+              auto constructor = dynamic_cast<Type*>(callee->params[0]);
+              if (constructor) {
+                applyFunction(term, call, constructor);
+                gg->relations.erase(it);
+                goto START;
+              }
             }
             else {
-              std::cerr << "Unknown callee " << call << "\n";
+              std::cerr << "\033[31mUnknown callee "
+                        << it->first << " :: " << it->second
+                        << "\033[0m\n";
             }
           }
         }

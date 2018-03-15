@@ -42,7 +42,8 @@ coral::analyzers::TypeResolver::TypeResolver(ast::Module * m): module(m) {
   std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms;
   for(auto &pair: solution.allKnownTypes()) {
     // std::cerr << "|  " << std::setw(40) << pair.first << "\t" << pair.second << "\n";
-    expr_terms.push_back(std::make_pair((coral::ast::BaseExpr*)pair.first->expr, pair.second));
+    if (pair.first)
+      expr_terms.push_back(std::make_pair((coral::ast::BaseExpr*)pair.first->expr, pair.second));
   }
   TypeResultWriter::write(&gg, expr_terms);
 }
@@ -140,8 +141,11 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
     gg.constrain(out, gg.type("Func", {gg.type("Int32"), gg.type("Ptr")}));
   }
   else if (!var->expr) {
-    if (var->name.substr(0, 10) != "_llvmBuild")
-      std::cerr << "Undefined Reference " << var->name << "\n";
+    if (var->name.substr(0, 10) != "_llvmBuild") {
+      PrettyPrinter::print(module);
+      std::cerr << "\033[31mUndefined Reference " << var->name << "\033[0m\n";
+      exit(2);
+    }
   } else {
     if ((out = gg.findTerm(var->expr)))
       return;
@@ -188,12 +192,15 @@ void coral::analyzers::TypeResolver::visit(ast::Func * f) {
     name = part + "::" + name;
   auto func_name = name;
   auto term = gg.addTerm(func_name, f);
-  auto constraint = gg.type("Func");
+
+  auto constraint = gg.type(f->isInstanceMethod ? "Method" : "Func");
+
   term_map[term] = f;
   for(auto &p: f->params) {
     p->accept(this);
     constraint->params.push_back(gg.term(out));
   }
+  // return type
   if (f->body) {
     f->body->accept(this);
     constraint->params.push_back(gg.term(out));
@@ -282,10 +289,14 @@ void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
     gg.constrain(field_term_index, gg.type(std::to_string(index)));
     func_args.push_back(typeconvert(&gg, &type));
   }
-  auto type = gg.addTerm(t->name, 0);
+  // auto type = gg.addTerm(t->name, 0);
   func_args.push_back(gg.type(t->name));
-  out = gg.addTerm(t->name + ".new", t);
-  gg.constrain(out, gg.type("Func", func_args));
+
+  auto constructor = gg.addTerm(t->name + ".@constructor", 0);
+  gg.constrain(constructor, gg.type("Func", func_args));
+
+  out = gg.addTerm(t->name, t);
+  gg.constrain(out, gg.type("Type", {gg.term(constructor)}));
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Comment *) { out = 0; }
@@ -294,11 +305,13 @@ void coral::analyzers::TypeResolver::visit(ast::Member * m) {
   m->base->accept(this);
   auto basetype = out;
   auto memberpath = m->member;
-  auto constraint = gg.call(gg.type("Member", {gg.type(memberpath)}), {gg.term(basetype)});
+
+  auto member = gg.type("Member", {gg.type(memberpath)});
   // HACK: add this twice to avoid function call unification
   // from eagerly stealing a term from member index calculation
-  for(auto i = 0; i<2; i++) {
+  for(auto i = 0; i < 2; i++) {
     out = gg.addTerm(basetype->name + "." + memberpath, m);
+    auto constraint = gg.call(member, {gg.term(basetype), gg.term(out)});
     gg.constrain(out, constraint);
   }
 }

@@ -1,3 +1,4 @@
+#include "utils/ansicolor.hh"
 #include "core/expr.hh"
 #include "typegraph/constraints.hh"
 
@@ -49,8 +50,14 @@ namespace coral {
         if (!inferredType) return;
         Type t = convert_Type(inferredType);
         if (t.name == "") return;
+        if (t.name == "Method") {
+          t.name = "Func";
+          // can we rely on nameresolver to insert these?
+          // f->params.insert(
+          //   f->params.begin(), std::unique_ptr<coral::ast::Def>(
+          //     new coral::ast::Def("self", new Type(""), 0)));
+        }
         f->type.reset(new Type(t));
-
         for(size_t i = 0; i < t.params.size() - 1; i++) {
           f->params[i]->type.reset(new Type(t.params[i]));
         }
@@ -64,8 +71,8 @@ namespace coral {
       void visit(ast::Extern *) { }
       void visit(ast::Let * l) {
         if (!inferredType) return;
-        // std::cout << COL_GREEN << std::setw(25) << "let: " << l->var->name << " :: "
-        //           << inferredType << COL_CLEAR << "\n";
+        std::cout << COL_GREEN << std::setw(25) << "let: " << l->var->name << " :: "
+                  << inferredType << COL_CLEAR << "\n";
         auto t = convert_Type(inferredType);
         if (t.name == "") return;
         l->type = t;

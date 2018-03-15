@@ -17,7 +17,6 @@ func Person.getAge(): self.age
 # So in the type system, we represent free functions as "Func[T, R]"
 # and methods as Method[T, R]. Any Call(Method[T, R], t1, t2) node gets resolved
 # by unifying with the self term.
-
 func main():
   let robert = Person(3)
   let a = Person.getType()

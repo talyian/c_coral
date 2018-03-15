@@ -81,14 +81,17 @@ namespace coral {
     // to call(Foo:bar, [foo, a, b])
     void Call::methodCallInvert() {
       auto member = dynamic_cast<Member *>(callee.get());
-      if (member && member->methodPtr) {
-        auto instance = member->base.release();
-        auto method = member->methodPtr;
+      if (!member) return;
+      if (!member->methodPtr) return;
+      auto instance = member->base.release();
+      auto method = member->methodPtr;
+      // std::cerr << method-> name << " " << method->isInstanceMethod << "\n";
+      if (method->isInstanceMethod) {
         this->arguments.insert(this->arguments.begin(), std::make_unique(instance));
-        auto vv = new ast::Var(method->name);
-        vv->expr = method;
-        this->callee.reset(vv);
       }
+      auto vv = new ast::Var(method->name);
+      vv->expr = method;
+      this->callee.reset(vv);
     }
 
     FloatLiteral::FloatLiteral(std::string value) : value(value) {

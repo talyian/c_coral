@@ -18,7 +18,7 @@ namespace coral {
       // variables from the current scope
 	  std::map<std::string, NameInfo> info;
       // free variables that are pulled from outer scope
-      std::set<std::string> freeVars;
+      std::multimap<std::string, ast::BaseExpr *> freeVars;
 
       void insert(std::string name, ast::BaseExpr * expr) {
         insert(name, expr, ast::ExprTypeVisitor::of(expr));
@@ -56,7 +56,7 @@ namespace coral {
         return n;
       }
 
-      NameScope * pop() {
+      NameScope * popScope() {
         auto n = scope;
         if (scope == root) {
           std::cerr << COL_LIGHT_RED << "Warning: trying to pop root name scope\n";
