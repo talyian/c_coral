@@ -87,9 +87,9 @@ public:
 
 int main() {
   showSteps = false;
-  // BasicTest().summary();
-  // Factorial().summary();
-  // TupleTest().summary();
+  BasicTest().summary();
+  Factorial().summary();
+  TupleTest().summary();
   MethodCallTest().summary();
   // OverloadTest().summary();
   return 0;

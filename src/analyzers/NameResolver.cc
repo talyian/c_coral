@@ -80,9 +80,11 @@ void analyzers::NameResolver::visit(ast::Func * f) {
     auto self_def = new coral::ast::Def("self", new Type(f->container.back()), 0);
     f->params.insert(f->params.begin(), std::unique_ptr<coral::ast::Def>(self_def));
     auto self_range = scope->freeVars.equal_range("self");
-    for(auto it = self_range.second; it != self_range.second; it++)
-      if (auto var = dynamic_cast<coral::ast::Var *>(it->second))
+    for(auto it = self_range.first; it != self_range.second; it++) {
+      if (auto var = dynamic_cast<coral::ast::Var *>(it->second)) {
         var->expr = self_def;
+      }
+    };
   }
   popScope();
 }

@@ -78,6 +78,7 @@ namespace coral {
       coralDestroyModule(parser);
     }
 
+
 	ParserTests * run_parser_tests() {
 	  auto T = new ParserTests();
 	  T->parse_and_print("If Statement", "tests/cases/features/ifstatements.coral");
@@ -87,8 +88,9 @@ namespace coral {
 	  T->parse_and_print("Unicode Strings", "tests/cases/simple/unicode-strings.coral");
       T->checkTypeInferenceReturn();
       T->checkTypeInferenceParam();
+      T->checkStructMethodInference();
 	  T->parse_and_print("Structs", "tests/cases/simple/tuples.coral");
-	  return T;
+ 	  return T;
 	}
 
   }

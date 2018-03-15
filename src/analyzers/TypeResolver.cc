@@ -143,7 +143,7 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
   else if (!var->expr) {
     if (var->name.substr(0, 10) != "_llvmBuild") {
       PrettyPrinter::print(module);
-      std::cerr << "\033[31mUndefined Reference " << var->name << "\033[0m\n";
+      std::cerr << "\033[31mType Resolver: Undefined Reference " << var->name << "\033[0m\n";
       exit(2);
     }
   } else {

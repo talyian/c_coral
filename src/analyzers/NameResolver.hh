@@ -1,3 +1,4 @@
+#pragma once
 #include "core/expr.hh"
 #include "utils/ansicolor.hh"
 #include <iostream>
