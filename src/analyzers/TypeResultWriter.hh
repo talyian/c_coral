@@ -1,6 +1,7 @@
 #include "utils/ansicolor.hh"
 #include "core/expr.hh"
 #include "typegraph/constraints.hh"
+#include "typegraph/typegraph.hh"
 
 namespace coral {
   // changes a typegraph type back to a coral type
@@ -22,7 +23,6 @@ namespace coral {
     class TypeResultWriter : public ast::ExprVisitor {
     private:
       typegraph::Type * inferredType;
-      ast::BaseExpr * out = 0;
       typegraph::TypeGraph * gg;
     public:
       std::string visitorName() { return "TypeResultWriter"; }
@@ -51,7 +51,6 @@ namespace coral {
         Type t = convert_Type(inferredType);
         if (t.name == "") return;
         if (t.name == "Method") {
-          t.name = "Func";
           // can we rely on nameresolver to insert these?
           // f->params.insert(
           //   f->params.begin(), std::unique_ptr<coral::ast::Def>(
@@ -88,12 +87,18 @@ namespace coral {
             dynamic_cast<typegraph::Type *>(
               inferredType->params[0])->name);
         else if (inferredType->name == "FuncTerm") {
-          // std::cerr << COL_LIGHT_CYAN << "OOOHH TERM " << m->member << " :: " << inferredType << "\n";
+          std::cerr << COL_LIGHT_CYAN << "funcptr "
+                    << m->member << " :: " << inferredType << "\033[0m\n";
           auto func_term = dynamic_cast<typegraph::Type *>(inferredType->params[0])->name;
           auto expr = static_cast<ast::BaseExpr *>(gg->term(func_term)->term->expr);
           m->methodPtr = dynamic_cast<ast::Func *>(expr);
           // PrettyPrinter::print(m->methodPtr);
           // std::cerr << m->methodPtr->name << "\033[0m\n";
+        } else {
+          std::cerr
+            << COL_LIGHT_CYAN
+            << "typeof  " << m->member
+            << " :: " << inferredType << "\033[0m\n";
         }
       }
       void visit(ast::Call * call) {

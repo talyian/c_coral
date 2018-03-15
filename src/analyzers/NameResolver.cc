@@ -78,6 +78,7 @@ void analyzers::NameResolver::visit(ast::Func * f) {
 
   if (scope->freeVars.find("self") != scope->freeVars.end()) {
     auto self_def = new coral::ast::Def("self", new Type(f->container.back()), 0);
+    f->isInstanceMethod = true;
     f->params.insert(f->params.begin(), std::unique_ptr<coral::ast::Def>(self_def));
     auto self_range = scope->freeVars.equal_range("self");
     for(auto it = self_range.first; it != self_range.second; it++) {

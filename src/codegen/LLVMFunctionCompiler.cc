@@ -26,7 +26,7 @@ LLVMTypeRef coral::codegen::LLVMFunctionCompiler::LLVMTypeFromCoral(coral::type:
   if (t->name == "Float32") return LLVMDoubleTypeInContext(context);
   if (t->name == "Float64") return LLVMDoubleTypeInContext(context);
   if (t->name == "Field") return LLVMTypeFromCoral(&t->params[1]);
-  if (t->name == "Func") {
+  if (t->name == "Func" || t->name == "Method") {
     // std::cout << "LLVMTyping: " << *t << "\n";
     auto ret_type = LLVMTypeFromCoral(&t->params.back());
     auto nparam = t->params.size() - 1;
@@ -77,7 +77,15 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
     LLVMTypeFromCoral(expr->type.get()));
   (*info)[expr] = function;
 
+  if (LLVMCountParams(function) != expr->params.size()) {
+    std::cerr << "Warning: Parameter count mismatch for function " << expr->name << "\n";
+    PrettyPrinter::print(expr);
+    std::cerr << LLVMPrintValueToString(function) << "\n";
+    exit(1);
+  }
+
   for(size_t i=0; i<expr->params.size(); i++) {
+    std::cerr << "param " << i << ": " << expr->params[i].get() << "\n";
     (*info)[expr->params[i].get()] = LLVMGetParam(function, i);
   }
   if (expr->body) {

@@ -193,6 +193,7 @@ void coral::analyzers::TypeResolver::visit(ast::Func * f) {
   auto func_name = name;
   auto term = gg.addTerm(func_name, f);
 
+  std::cerr << "is method ? " << f->name << ": " << f->isInstanceMethod << "\n";
   auto constraint = gg.type(f->isInstanceMethod ? "Method" : "Func");
 
   term_map[term] = f;

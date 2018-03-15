@@ -92,18 +92,24 @@ match constraint:
  */
         if (Call * call = dynamic_cast<Call *>(it->second)) {
           if (Type * callee = dynamic_cast<Type *>(call->callee)) {
-            if (callee->name == "Func") {
+            if (callee->name == "BoundMethod") {
+              // boundmethods are basically functions as far as the type inferrer is concerned
               applyFunction(term, call, callee);
               gg->relations.erase(it);
               goto START;
             }
-            else if (callee->name == "MethodCall") {
-              // gg->show();
-              if (applyMethod(term, call, callee)) {
-                gg->relations.erase(it);
-                goto START;
-              }
+            else if (callee->name == "Func") {
+              applyFunction(term, call, callee);
+              gg->relations.erase(it);
+              goto START;
             }
+            // else if (callee->name == "MethodCall") {
+            //   // gg->show();
+            //   if (applyMethod(term, call, callee)) {
+            //     gg->relations.erase(it);
+            //     goto START;
+            //   }
+            // }
             else if (callee->name == "Member") {
               bool skip = false;
               if (dynamic_cast<Type *>(callee->params[0]) &&
@@ -206,14 +212,25 @@ match constraint:
                           funcptr,
                           gg->type("FuncTerm", {gg->type(type->name + "::" + field)})));
 
-                      auto tt = it->first;
-                      gg->relations.erase(it);
+                      auto member_term = it->first; // fooInst.bar
+                      std::cerr << "\033[36m Method Call " << member_term << "\n";
+                      std::cerr << call << "\n";
+                      std::cerr << "referred:  "<< referred_term << "\n";
                       gg->constrain(
-                        tt,
-                        gg->type("MethodCall", {
-                            gg->term(referred_term),
-                              gg->type("Term", {gg->type(referred_name)}),
-                              gg->type("Term", {gg->type("p")})}));
+                        member_term,
+                        gg->type("BoundMethod", { func->params.back() }));
+                      gg->relations.erase(it);
+                      // gg->constrain(
+                      //   member_term,
+                      //   gg->type("BoundMethod", {
+                      //       gg->type("Term", {
+                      //   }));
+                      // gg->constrain(
+                      //   tt,
+                      //   gg->type("MethodCall", {
+                      //       gg->term(referred_term),
+                      //         gg->type("Term", {gg->type(referred_name)}),
+                      //         gg->type("Term", {gg->type("p")})}));
                       goto START;
                     }
                   }
@@ -327,6 +344,7 @@ match constraint:
     applyFunction(term, newcall, method_type);
     // method_type->params.insert(method_type->params.begin(), gg->term(self_term));
 
+    std::cerr << "\033[35mapplying Method " << term << "\033[0m\n";
     return false;
 
     Instantiate instantiate(gg, callee);
