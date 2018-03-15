@@ -60,10 +60,10 @@ public:
           gg.type("Term", {gg.type("p")})}));
     gg.constrain(b, gg.call(gg.term(p_getAge), {}));
 
-    gg.show();
-    showSteps = true;
+    // gg.show();
+    // showSteps = true;
     auto solution = gg.solve();
-    solution.showSummary();
+    // solution.showSummary();
 
     // Part 1: a comes from callling a typemethod on an instance.
     Assert(
@@ -78,12 +78,12 @@ public:
       "p.getType is a pointer to Person::getType");
     Assert(
       ConsEquals(solution.getType(gg.term("a")->term), gg.type("Ptr")).out,
-      "[a] is a string");
+      "p.a is a string");
 
     // Part 2: b
     Assert(
       ConsEquals(solution.getType(gg.term("b")->term), gg.type("Int32")).out,
-      "[b] is an Int32");
+      "p.b is an Int32");
 
     Assert(
       ConsEquals(
@@ -96,5 +96,37 @@ public:
     // type Person = {age:Int32}
     // func Person.getType() : "Person"
     // let a = Person.getType()
+    TypeGraph gg;
+    auto person_age = gg.addTerm("Person::age", 0);
+    auto person_age_index = gg.addTerm("Person::age.index", 0);
+    gg.constrain(person_age, gg.type("Int32"));
+    gg.constrain(person_age_index, gg.type("0"));
+    auto person = gg.addTerm("Person", 0);
+    gg.constrain(person, gg.type("Func", {gg.type("Int32"), gg.type("Person")}));
+
+    auto getType = gg.addTerm("Person::getType", 0);
+    gg.constrain(getType, gg.type("Func", {gg.type("Ptr")}));
+
+    auto a = gg.addTerm("a", 0);
+    auto person_gettype = gg.addTerm("Person.getType", 0);
+    gg.constrain(
+      person_gettype, gg.call(
+        gg.type("Member", {gg.type("getType")}),
+        {gg.type("Person")}));
+    gg.constrain(a, gg.call(gg.term(person_gettype), {}));
+
+    // gg.show();
+    auto solution = gg.solve();
+    // solution.showSummary();
+    Assert(
+      ConsEquals(
+        solution.getType(a),
+        gg.type("Ptr")).out,
+      "Person.getType is a string");
+    Assert(
+      ConsEquals(
+        solution.getType(gg.term(person_gettype->name + ".func")->term),
+        gg.type("FuncTerm", {gg.type("Person::getType")})).out,
+      "Person.getType points to Person::getType");
   }
 };

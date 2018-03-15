@@ -188,10 +188,6 @@ match constraint:
                       goto START;
                     }
                     if (func->name == "Method") {
-                      std::cerr << "method call " << func
-                                << " on instance " << instance << " "
-                                << call << "\n";
-
                       auto funcptr = gg->addTerm(it->first->name + ".method", it->first->expr);
 
                       // the functerm allow typeresultwriter to point to the right method
@@ -295,7 +291,8 @@ match constraint:
 
   bool Solution::applyMethod(TypeTerm * term, Call * call, Type * callee) {
     if (!isConcreteType(callee->params[0])) return false;
-    std::cerr << "\033[35mcalling method " << callee << "\033[0m\n";
+    if (showSteps)
+      std::cerr << "\033[35mcalling method " << callee << "\033[0m\n";
 
     auto method_type = dynamic_cast<Type *>(callee->params[0]);
     auto func_ptr_term = dynamic_cast<Type *>(
@@ -315,10 +312,7 @@ match constraint:
     auto args = call->arguments;
     args.insert(args.begin(), gg->term(self_term->name));
     auto newcall = gg->call(method_type, args);
-      std::cerr << "Proposal: " << newcall << "\n";
     applyFunction(term, newcall, method_type);
-
-
     // method_type->params.insert(method_type->params.begin(), gg->term(self_term));
 
     return false;
