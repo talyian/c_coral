@@ -24,6 +24,7 @@ namespace coral {
 	parser =  coralParseModule(path);
 	module = (ast::Module *)_coralModule(parser);
 	analyzers::ImportResolver iresolver(module);
+	analyzers::InitFuncPass initfunc(module);
 	analyzers::NameResolver nresolver(module);
 	analyzers::TypeResolver tresolver(module);
 	analyzers::ReturnInserter returner(module);

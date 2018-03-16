@@ -1,16 +1,14 @@
-c_extern printf: Func[Ptr, ..., Void]
+import prelude
+
+type Day:
+  | Weekday : Int32
+  | Saturday : Void
+  | Sunday : Void
+
+let day = Day.Weekday
 
 type Person = {age:Int32}
-func Person.getType(): "Person"
-func Person.getAge(): self.age
 
-func main():
-  let robert = Person(3)
-  # calling a member of type Func[Ptr]
-  let f = robert.getType()
-  # calling a member of type BoundMethod[Int32]
-  let g = robert.getAge()
-  # calling a class member of Person
-  let h = Person.getType()
-  printf("%s - %s - %d\n", f, h, g)
-  0
+let person = Person(30)
+
+printf ("Hello, World! %d\n", person.age)

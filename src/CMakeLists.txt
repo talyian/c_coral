@@ -51,6 +51,7 @@ add_library(parser OBJECT
 add_library(analyzers OBJECT
   analyzers/TypeResolver.cc analyzers/NameResolver.cc analyzers/ReturnInserter.cc
   analyzers/ImportResolver.cc
+  analyzers/InitFuncPass.cc
   typegraph/typegraph.cc typegraph/constraints.cc typegraph/solution.cc
 )
 add_library(codegen OBJECT

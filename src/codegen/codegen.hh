@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "analyzers/ImportResolver.hh"
+#include "analyzers/InitFuncPass.hh"
 #include "analyzers/NameResolver.hh"
 #include "analyzers/TypeResolver.hh"
 #include "analyzers/ReturnInserter.hh"

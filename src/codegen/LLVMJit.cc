@@ -10,6 +10,7 @@
 //   printf("fake pcre stub\n\n");
 // }
 
+
 extern "C" void hello_world() {
   printf("HEllo World|\n");
 }
@@ -37,7 +38,12 @@ namespace coral {
 	}
 
 	void JIT::runMain() {
-	  GetFunctionPointer<int (*)()>("main")();
+      if (LLVMGetFunctionAddress(engine, "..init")) {
+        GetFunctionPointer<int (*)()>("..init")();
+      }
+      if (LLVMGetFunctionAddress(engine, "main")) {
+        GetFunctionPointer<int (*)()>("main")();
+      }
 	}
 
 	JIT::~JIT() {
