@@ -70,8 +70,8 @@ namespace coral {
       void visit(ast::Extern *) { }
       void visit(ast::Let * l) {
         if (!inferredType) return;
-        std::cout << COL_GREEN << std::setw(25) << "let: " << l->var->name << " :: "
-                  << inferredType << COL_CLEAR << "\n";
+        // std::cout << COL_GREEN << std::setw(25) << "let: " << l->var->name << " :: "
+        //           << inferredType << COL_CLEAR << "\n";
         auto t = convert_Type(inferredType);
         if (t.name == "") return;
         l->type = t;
@@ -87,18 +87,18 @@ namespace coral {
             dynamic_cast<typegraph::Type *>(
               inferredType->params[0])->name);
         else if (inferredType->name == "FuncTerm") {
-          std::cerr << COL_LIGHT_CYAN << "funcptr "
-                    << m->member << " :: " << inferredType << "\033[0m\n";
+          // std::cerr << COL_LIGHT_CYAN << "funcptr "
+          //           << m->member << " :: " << inferredType << "\033[0m\n";
           auto func_term = dynamic_cast<typegraph::Type *>(inferredType->params[0])->name;
           auto expr = static_cast<ast::BaseExpr *>(gg->term(func_term)->term->expr);
           m->methodPtr = dynamic_cast<ast::Func *>(expr);
           // PrettyPrinter::print(m->methodPtr);
           // std::cerr << m->methodPtr->name << "\033[0m\n";
         } else {
-          std::cerr
-            << COL_LIGHT_CYAN
-            << "typeof  " << m->member
-            << " :: " << inferredType << "\033[0m\n";
+          // std::cerr
+          //   << COL_LIGHT_CYAN
+          //   << "typeof  " << m->member
+          //   << " :: " << inferredType << "\033[0m\n";
         }
       }
       void visit(ast::Call * call) {

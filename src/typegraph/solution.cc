@@ -213,9 +213,9 @@ match constraint:
                           gg->type("FuncTerm", {gg->type(type->name + "::" + field)})));
 
                       auto member_term = it->first; // fooInst.bar
-                      std::cerr << "\033[36m Method Call " << member_term << "\n";
-                      std::cerr << call << "\n";
-                      std::cerr << "referred:  "<< referred_term << "\n";
+                      // std::cerr << "\033[36m Method Call " << member_term << "\n";
+                      // std::cerr << call << "\n";
+                      // std::cerr << "referred:  "<< referred_term << "\n";
                       gg->constrain(
                         member_term,
                         gg->type("BoundMethod", { func->params.back() }));

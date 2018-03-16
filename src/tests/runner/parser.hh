@@ -37,8 +37,8 @@ namespace coral {
         analyzers::NameResolver { module };
         analyzers::TypeResolver tr { module };
         // tr.gg.show();
-        PrettyPrinter::print(module);
-        std::cerr << module << "\n";
+        // PrettyPrinter::print(module);
+        // std::cerr << module << "\n";
       }
 	};
 	ParserTests * run_parser_tests();
