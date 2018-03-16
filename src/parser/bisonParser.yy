@@ -33,6 +33,11 @@
 %type <coral::ast::IfExpr *> IfStatement
 %type <coral::ast::Block *> StatementBlock UnionBlock
 %type <coral::ast::TupleLiteral *> Tuple
+
+%type <coral::ast::Match *> MatchExpr
+%type <coral::ast::MatchCase *> MatchLine
+%type <std::vector<coral::ast::MatchCase *>> MatchBlock
+
 %type <std::vector<coral::ast::BaseExpr *>> BlockLines ArgumentsListInner UnionLines
 %type <std::vector<std::string>> IdentifierList VarPath
 %type <coral::type::Type *> TypeDef
@@ -98,6 +103,7 @@ Expr : Expr4 { $$ = $1; }
 | Expr4 OP4 Expr4  { $$ = new ast::BinOp($1, $2, $3); }
 | Expr4 OP_EQ Expr4  { $$ = new ast::BinOp($1, $2, $3); }
 | Expr4 OP Expr4 { $$ = new ast::BinOp($1, $2, $3); }
+| MatchExpr { $$ = $1; }
 
 ArgumentsListInner : Argument { $$.push_back($1); }
 | ArgumentsListInner ',' Argument { $$ = $1; $$.push_back($3); }
@@ -153,6 +159,19 @@ IfStatement
 : IF Expr StatementBlock { $$ = new ast::IfExpr($2, $3, 0); }
 | IF Expr StatementBlock ELSE StatementBlock %prec ELSE { $$ = new ast::IfExpr($2, $3, $5); }
 | IF Expr StatementBlock ELSE IfStatement %prec ELSE { $$ = new ast::IfExpr($2, $3, new ast::Block({ $5 })); }
+
+// Match Expression
+MatchExpr
+: MATCH Expr ':' NEWLINE INDENT MatchBlock NEWLINE DEDENT {
+    $$ = new ast::Match($2, $6);
+}
+MatchBlock
+: MatchLine { $$.push_back($1); }
+| MatchBlock NEWLINE MatchLine { $$ = $1; $$.push_back($3); }
+MatchLine
+: OP_PIPE VarPath ParamsListOuter StatementBlock {
+  $$ = new ast::MatchCase($2, $3, $4);
+}
 
 IdentifierList : GeneralIdentifier { $$.push_back($1); }
 | IdentifierList ',' GeneralIdentifier { $$ = $1; $$.push_back($3); }

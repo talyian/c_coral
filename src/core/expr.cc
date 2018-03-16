@@ -123,10 +123,15 @@ namespace coral {
       for(auto &f: fields) this->fields.emplace_back(f);
     }
 
-    Union::Union(std::string name, ast::Block * block) {
+    Union::Union(std::string name, ast::Block * block) : name(name) {
       for(auto &line: block->lines)
         if (ast::Def * def = dynamic_cast<ast::Def *>(line.get()))
           this->cases.emplace_back(def);
+    }
+
+    Match::Match(BaseExpr * condition, vector<MatchCase *> cases) : condition(condition) {
+      for(auto &line: cases)
+        this->cases.emplace_back(line);
     }
 
     std::vector<Type> _defsToTypeArg(std::vector<Def *> defs) {

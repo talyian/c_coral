@@ -23,6 +23,11 @@ namespace coral {
 	fclose(f);
 	parser =  coralParseModule(path);
 	module = (ast::Module *)_coralModule(parser);
+
+    if (coral::opt::ShowFinalParseTree)
+      ;
+      PrettyPrinter::print(module);
+      cout.flush();
 	analyzers::ImportResolver iresolver(module);
 	analyzers::InitFuncPass initfunc(module);
 	analyzers::NameResolver nresolver(module);

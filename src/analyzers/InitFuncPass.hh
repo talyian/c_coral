@@ -1,4 +1,5 @@
 #include "core/expr.hh"
+#include <string>
 
 namespace coral {
   namespace analyzers {
@@ -10,6 +11,7 @@ namespace coral {
       ast::Func * func = 0;
       ast::Module * module = 0;
     public:
+      std::string visitorName() { return "InitFunc"; }
       InitFuncPass(ast::Module * m);
       ast::Func * getInitFunc();
       // Noop for regular module-level statements
@@ -17,6 +19,8 @@ namespace coral {
       void visit(ast::Import *) { }
       void visit(ast::Comment *) { }
       void visit(ast::Extern *) { }
+      void visit(ast::Tuple *) { }
+      void visit(ast::Union *) { }
 
       void visit(ast::Call * call);
       void visit(ast::Let * let);

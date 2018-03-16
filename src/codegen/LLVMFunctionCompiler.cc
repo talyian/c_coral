@@ -85,7 +85,7 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
   }
 
   for(size_t i=0; i<expr->params.size(); i++) {
-    std::cerr << "param " << i << ": " << expr->params[i].get() << "\n";
+    // std::cerr << "param " << i << ": " << expr->params[i].get() << "\n";
     (*info)[expr->params[i].get()] = LLVMGetParam(function, i);
   }
   if (expr->body) {
@@ -311,11 +311,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Call * expr) {
   expr->methodCallInvert();
 
   if (ast::ExprTypeVisitor::of(expr->callee.get()) == ast::ExprTypeKind::VarKind) {
-    auto var = (ast::Var *)expr->callee.get();
-
+    auto var = dynamic_cast<ast::Var*>(expr->callee.get());
     // Tuple Constructor..... need a better way to do this
     // std::cerr << "var " << var->name << " kind: " << ast::ExprNameVisitor::of(var->expr) << "\n";
-    if (ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::TupleKind) {
+    if (var->expr && ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::TupleKind) {
       auto tuple_type = LLVMGetTypeByName(module, var->name.c_str());
       auto tupleval = LLVMBuildAlloca(builder, tuple_type, var->name.c_str());
       for(size_t i = 0; i < expr->arguments.size(); i++) {

@@ -20,7 +20,7 @@ namespace coral {
   }
 
   void PrettyPrinter::visit(ast::Func * e) {
-    cout << IND() << COL_KEYWORD << "func ";
+    cout << IND() << COL_KEYWORD << "func " << COL_NORMAL;
     for(auto &part: e->container) {
       cout << COL_TYPE << part << COL_NORMAL << ".";
     }
@@ -217,6 +217,20 @@ namespace coral {
     cout << "}" << END();
   }
 
+  void PrettyPrinter::visit(ast::Union * u) {
+    cout << IND() << COL_KEYWORD << "type " << COL_TYPE;
+    cout << u->name << COL_NORMAL;
+    cout << " = {";
+    for(auto &field: u->cases) {
+      if (field->name.size())
+        cout << field->name << ":";
+      cout << COL_TYPE << *(field->type) << COL_NORMAL;
+      if (&field != &u->cases.back())
+        cout << " | ";
+    }
+    cout << "}" << END();
+  }
+
   void PrettyPrinter::visit(ast::Import * m) {
     cout << IND() << COL_KEYWORD << "import " << COL_NORMAL;
     for(auto &part: m->path) {
@@ -225,6 +239,29 @@ namespace coral {
     }
     cout << END();;
   }
+
+  void PrettyPrinter::visit(ast::Match * m) {
+    cout << IND() << COL_KEYWORD << "match " << COL_NORMAL;
+    withline(m->condition);
+    cout << ":" << END();
+    indent++;
+    for(auto &c : m->cases) {
+      cout << IND() << c->label[0];
+      cout << " (";
+      if (c->parameter.size())
+        for(auto &p: c->parameter) {
+          if (&p != &c->parameter.front()) cout << ", ";
+          p->accept(this);
+        }
+      cout << "):";
+      cout << END();
+      indent++;
+      c->body->accept(this);
+      indent--;
+    }
+    indent--;
+  }
+
   PrettyPrinter::PrettyPrinter() {
     indent = 0;
   }

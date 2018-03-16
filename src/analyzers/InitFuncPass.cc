@@ -14,7 +14,7 @@ namespace coral {
       auto block = new ast::Block({});
       func = new ast::Func(
         {"..init"},
-        new type::Type(""),
+        new type::Type("Void"),
         {}, block);
       module->body->lines.emplace_back(func);
       return func;
@@ -33,15 +33,7 @@ namespace coral {
           it++;
       }
     }
-
-    void InitFuncPass::visit(ast::Call * call) {
-      remove = true;
-      std::cerr << "Call\n";
-    }
-
-    void InitFuncPass::visit(ast::Let * let) {
-      remove = true;
-      std::cerr << "Let\n";
-    }
+    void InitFuncPass::visit(ast::Call * call) { remove = true; }
+    void InitFuncPass::visit(ast::Let * let) { remove = true; }
   }
 }

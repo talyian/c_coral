@@ -1,14 +1,42 @@
 import prelude
 
+## Day :: Type
 type Day:
   | Weekday : Int32
   | Saturday : Void
   | Sunday : Void
-
-let day = Day.Weekday
-
+# type Day:::body = struct { _case: Int32,  data: [i8 * 4] }
+# match day:
+#   Weekday ():
+#     "foo"
+#   Saturday:
+#     "bar"
+#   Sunday:
+#     "baz"
+# Day :: Type
+func Day.Weekday.constructor (n):
+  let body = struct{ _case: 0, data = [] }
+  body.data = n
+  body
+func Day.Saturday.constructor ():
+  struct{ _case: 1, data = bitcast }
+func Day.Sunday.constructor ():
+  struct{ _case: 1, data = [] }
+# Day::Weekday.@constructor :: Func[Int32, Day]
+# Day::Saturday.@constructor :: Func[Day]
+# Day::Sunday.@constructor :: Func[Day]
+let wed = Day.Weekday 3
+let sat = Day.Saturday()
+let sun = Day.Sunday()
+match web:
+  | Day.Weekday(n:Int32): 0
+  | Saturday(): 1
+  | Sunday(): 2
+printf ("c: %d\n", c)
+## Person :: Type[Func[Int32, Person]]
+## Person.@constructor :: Func[Int32, Person]
+## Person::age::Int32
 type Person = {age:Int32}
-
 let person = Person(30)
 
 printf ("Hello, World! %d\n", person.age)

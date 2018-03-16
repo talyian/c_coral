@@ -13,7 +13,8 @@
   F(Block) F(Var) F(Call)                                               \
   F(StringLiteral) F(IntLiteral) F(FloatLiteral)                        \
   F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member)          \
-  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple) F(OverloadedFunc) F(Union)
+  F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple)        \
+  F(OverloadedFunc) F(Union) F(Match)
 
 #define MAP_ALL_EXPRS(F) F(BaseExpr) MAP_EXPRS(F)
 
@@ -181,7 +182,7 @@ namespace coral {
       std::string name;
       // the declaring expression -- the node that created the name in question
       // in the current scope
-      ast::BaseExpr * expr;
+      ast::BaseExpr * expr = 0;
 
       Var(std::vector<std::string> names) {
         name = names.size() ? names[0] : "undefined";
@@ -341,6 +342,26 @@ namespace coral {
       Union(std::string name, ast::Block * block);
     };
 
+    class MatchCase : public BaseExpr {
+    public:
+      vector<std::string> label;
+      vector<unique_ptr<Def>> parameter;
+      unique_ptr<Block> body = 0;
+      virtual void accept(BaseExprVisitor * v) { v->visit(this); }
+      MatchCase(vector<std::string> label, vector<Def *> def, Block * body)
+        : label(label), body(body) {
+        for(auto d: def)
+          parameter.emplace_back(d);
+      }
+    };
+
+    class Match : public BaseExpr {
+    public:
+      unique_ptr<ast::BaseExpr> condition;
+      vector<unique_ptr<ast::MatchCase>> cases;
+      virtual void accept(BaseExprVisitor * v) { v->visit(this); }
+      Match(BaseExpr * condition, vector<MatchCase *> cases);
+    };
     // used for defining tuples
     std::vector<Type> _defsToTypeArg(std::vector<Def *> defs);
   }
