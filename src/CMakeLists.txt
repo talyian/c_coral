@@ -1,6 +1,7 @@
 cmake_minimum_required (VERSION 3.5)
 project (coral)
 add_subdirectory(typegraph)
+add_subdirectory(coral_zero)
 
 include_directories(.)
 # LLVM settings
