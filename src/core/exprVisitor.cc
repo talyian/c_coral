@@ -41,7 +41,14 @@ namespace coral {
     }
     void ActiveExprVisitor::visit(ast::Import * ) { }
     void ActiveExprVisitor::visit(ast::OverloadedFunc *) { }
-    void ActiveExprVisitor::visit(ast::Match *) { }
+    void ActiveExprVisitor::visit(ast::Match * m) {
+      m->condition->accept(this);
+      for(auto &c: m->cases) c->accept(this);
+    }
+    void ActiveExprVisitor::visit(ast::MatchCase * c) {
+      c->def->accept(this);
+      c->body->accept(this);
+    }
     void ActiveExprVisitor::visit(ast::Union * u) {
       for(auto & c: u->cases)
         c->accept(this);

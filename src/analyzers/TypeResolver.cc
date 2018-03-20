@@ -335,3 +335,14 @@ void coral::analyzers::TypeResolver::visit(ast::TupleLiteral * tuple) {
   out = gg.addTerm("tuple", tuple);
   gg.constrain(out, gg.type("Tuple", terms));
 }
+
+void coral::analyzers::TypeResolver::visit(ast::Match * match) {
+  for(auto &match_case : match->cases) {
+    auto case_term = gg.addTerm(
+      "match." + match_case->label->name + "." + match_case->def->name,
+      match_case->def.get());
+    gg.constrain(case_term, typeconvert(&gg, match_case->def->type.get()));
+    match_case->body->accept(this);
+  }
+  out = 0;
+}

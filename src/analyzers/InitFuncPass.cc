@@ -36,5 +36,8 @@ namespace coral {
     }
     void InitFuncPass::visit(ast::Call *) { remove = true; }
     void InitFuncPass::visit(ast::Let *) { remove = true; }
+    void InitFuncPass::visit(ast::Match *) { remove = true; }
+    void InitFuncPass::visit(ast::IfExpr *) { remove = true; }
+    void InitFuncPass::visit(ast::While *) { remove = true; }
   }
 }

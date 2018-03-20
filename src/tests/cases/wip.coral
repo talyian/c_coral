@@ -5,9 +5,12 @@ c_extern printf: Func[Ptr, ..., Void]
 # Foo::y  -> (Ptr, Index 1)
 # Foo::@constructor -> Func[Int32, Ptr, Foo]
 # Foo -> Struct
-type Bar = Union[x: Int32, y:Ptr, z:Int64]
-let b0 = Bar.x 3
-let b1 = Bar.y "bar"
+type Bar = Union[x: Tuple[Int32, Int32], y:Int64]
+let b0 = Bar.y (int64 123456)
+let b0 = Bar.x ((1, 2))
+match b0:
+  | x(foo:Tuple[Int32, Int32]): printf("%x,%x \n", foo.Item0, foo.Item1)
+  | y(bar:Int64): printf("one %ld\n", bar)
 printf "hi\n"
 # let b1 = Bar.y "bar"
 # printf("v: (%d, %s)\n", v0, v1)

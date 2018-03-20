@@ -240,24 +240,27 @@ namespace coral {
     cout << END();;
   }
 
+  void PrettyPrinter::visit(ast::MatchCase * c) {
+    cout << IND();
+    withline(c->label);
+    if (c->def) {
+      cout << "(";
+      c->def->accept(this);
+      cout << ")";
+    }
+    cout << ":" << END();
+    indent++;
+    c->body->accept(this);
+    indent--;
+  }
+
   void PrettyPrinter::visit(ast::Match * m) {
     cout << IND() << COL_KEYWORD << "match " << COL_NORMAL;
     withline(m->condition);
     cout << ":" << END();
     indent++;
     for(auto &c : m->cases) {
-      cout << IND() << c->label[0];
-      cout << " (";
-      if (c->parameter.size())
-        for(auto &p: c->parameter) {
-          if (&p != &c->parameter.front()) cout << ", ";
-          p->accept(this);
-        }
-      cout << "):";
-      cout << END();
-      indent++;
-      c->body->accept(this);
-      indent--;
+      c->accept(this);
     }
     indent--;
   }

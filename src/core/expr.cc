@@ -93,12 +93,12 @@ namespace coral {
         vv->expr = method;
         this->callee.reset(vv);
       } else  {
-        std::cerr << "methodinverting " << member->member << "\n";
-        std::cerr << member->memberIndex << "\n";
+        // std::cerr << "methodinverting " << member->member << "\n";
+        // std::cerr << member->memberIndex << "\n";
         auto var = dynamic_cast<Var *>(member->base.get());
         if (var) {
           if (Union *union_def = dynamic_cast<Union *>(var->expr)) {
-            std::cerr << "Union: " << member->base.get() << "\n";
+            // std::cerr << "Union: " << member->base.get() << "\n";
           } else {
             std::cerr << "???" << __LINE__ << "\n";
           }

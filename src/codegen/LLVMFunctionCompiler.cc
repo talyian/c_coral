@@ -46,6 +46,63 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::Func * expr) {
   }
 }
 
+void coral::codegen::LLVMFunctionCompiler::visit(ast::Match * match) {
+  this->rawPointer = 1;
+  match->condition->accept(this);
+  this->rawPointer = 0;
+  auto input_value = out;
+  LLVMValueRef indices[2] = {
+    LLVMConstInt(LLVMInt32TypeInContext(context), 0, false),
+    LLVMConstInt(LLVMInt32TypeInContext(context), 0, false), };
+  out = LLVMBuildGEP(builder, input_value, indices, 2, "cond");
+  auto llvm_cond = out;
+  auto else_block = LLVMAppendBasicBlock(function, "else");
+  auto after_block = LLVMAppendBasicBlock(function, "after_match");
+  auto llvm_switch = LLVMBuildSwitch(
+    builder,
+    LLVMBuildLoad(builder, llvm_cond, ""),
+    // LLVMConstInt(LLVMInt16TypeInContext(context), 0, false),
+    else_block,
+    match->cases.size());
+
+  for(size_t i = 0; i < match->cases.size(); i++) {
+    auto case1 = LLVMAppendBasicBlock(function, ("case" + std::to_string(i)).c_str());
+    LLVMAddCase(
+      llvm_switch,
+      LLVMConstInt(LLVMInt16TypeInContext(context), i, false),
+      case1);
+    LLVMPositionBuilderAtEnd(builder, case1);
+    indices[1] = LLVMConstInt(LLVMInt32TypeInContext(context), 1, false);
+    auto data_ptr =  LLVMBuildGEP(builder, input_value, indices, 2, "");
+    auto typed_ptr = LLVMBuildBitCast(
+      builder, data_ptr,
+      LLVMPointerType(LLVMTypeFromCoral(match->cases[i]->def->type.get()), 0), "");
+
+    (*info)[match->cases[i]->def.get()] =
+      LLVMBuildLoad(builder, typed_ptr, match->cases[i]->def->name.c_str());
+    match->cases[i]->body->accept(this);
+    LLVMBuildBr(builder, after_block);
+  }
+  LLVMPositionBuilderAtEnd(builder, else_block);
+  // LLVMValueRef arg1[1] = { LLVMBuildGlobalString(builder, "no match\n", "fmt") };
+  // LLVMBuildCall(
+  //   builder,
+  //   LLVMGetNamedFunction(module, "printf"),
+  //   arg1, 1, "print");
+  LLVMBuildBr(builder, after_block);
+
+  LLVMPositionBuilderAtEnd(builder, after_block);
+  // LLVMValueRef args[3] = {
+  //   LLVMBuildGlobalString(builder, "Printf (%hd)\n", "fmt"),
+  //   LLVMBuildLoad(builder, llvm_cond, ""),
+  // };
+  // LLVMBuildCall(
+  //   builder,
+  //   LLVMGetNamedFunction(module, "printf"),
+  //   args, 2, "print");
+  out = 0;
+}
+
 void coral::codegen::LLVMFunctionCompiler::visit(ast::IfExpr * expr) {
   auto thenblock = LLVMAppendBasicBlock(function, "then");
   auto elseblock = LLVMAppendBasicBlock(function, "else");
@@ -98,7 +155,10 @@ void coral::codegen::LLVMFunctionCompiler::visit(ast::StringLiteral * expr) {
 void coral::codegen::LLVMFunctionCompiler::visit(ast::Var * var) {
   out = 0;
   if (info->find(var->expr) == info->end()) {
-    // std::cerr << "Not Found: " << var->name << "\n";
+    std::cerr << var->expr << "\t";
+    std::cerr << ast::ExprNameVisitor::of(var->expr) << "\t";
+    std::cerr << ((ast::Def *)(var->expr))->name << "\n";
+    std::cerr << COL_LIGHT_RED << "Not Found: " << var->name << "\033[0m\n";
     return;
   }
   switch (ast::ExprTypeVisitor::of(var->expr)) {

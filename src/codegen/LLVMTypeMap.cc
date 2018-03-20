@@ -112,7 +112,7 @@ namespace coral {
         for(auto &p: t->params) size = std::max(size, SizeOfType(&p));
         return size;
       }
-      if (t->name == "Struct") {
+      if (t->name == "Tuple") {
         size_t size = 0;
         for(auto &p: t->params) size += SizeOfType(&p);
         return size;

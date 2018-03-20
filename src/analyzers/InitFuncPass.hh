@@ -24,6 +24,9 @@ namespace coral {
 
       void visit(ast::Call * call);
       void visit(ast::Let * let);
+      void visit(ast::Match *);
+      void visit(ast::IfExpr *);
+      void visit(ast::While *);
     };
   }
 }

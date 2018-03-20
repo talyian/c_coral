@@ -89,7 +89,7 @@ void coral::codegen::LLVMModuleCompiler::visit(ast::Union * unionDef) {
       LLVMConstInt(LLVMInt16TypeInContext(llvmContext), field_index, false),
       LLVMBuildGEP(llvmBuilder, new_inst, indices, 2, ""));
 
-    indices[0] = LLVMConstInt(LLVMInt32TypeInContext(llvmContext), 0, false);
+    indices[1] = LLVMConstInt(LLVMInt32TypeInContext(llvmContext), 1, false);
     auto value = LLVMGetParam(func, 0);
     auto addr = LLVMBuildGEP(llvmBuilder, new_inst, indices, 2, "");
     auto typed_addr = LLVMBuildBitCast(

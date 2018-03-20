@@ -74,7 +74,9 @@ namespace coral {
 	  void visit(ast::Module * m);
 	  void visit(ast::Block * m);
 	  void visit(ast::Comment * m);
-	  void visit(ast::IfExpr * m);
+	  void visit(ast::IfExpr *);
+	  void visit(ast::Match *);
+	  void visit(ast::MatchCase *);
 	  void visit(ast::Let * e);
 	  void visit(ast::BinOp * m);
 	  void visit(ast::Return * m);

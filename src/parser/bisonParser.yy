@@ -172,15 +172,14 @@ IfStatement
 
 // Match Expression
 MatchExpr
-: MATCH Expr ':' NEWLINE INDENT MatchBlock NEWLINE DEDENT {
-    $$ = new ast::Match($2, $6);
-}
+: MATCH Expr ':' NEWLINE INDENT MatchBlock NEWLINE DEDENT
+  { $$ = new ast::Match($2, $6); }
 MatchBlock
 : MatchLine { $$.push_back($1); }
 | MatchBlock NEWLINE MatchLine { $$ = $1; $$.push_back($3); }
 MatchLine
-: OP_PIPE VarPath ParamsListOuter StatementBlock {
-  $$ = new ast::MatchCase($2, $3, $4);
+: OP_PIPE VarPath '(' Param ')' StatementBlock {
+  $$ = new ast::MatchCase(new ast::Var($2), $4, $6);
 }
 
 IdentifierList : GeneralIdentifier { $$.push_back($1); }

@@ -14,7 +14,7 @@
   F(StringLiteral) F(IntLiteral) F(FloatLiteral)                        \
   F(Return) F(Comment) F(IfExpr) F(ForExpr) F(BinOp) F(Member)          \
   F(ListLiteral) F(TupleLiteral) F(Def) F(While) F(Set) F(Tuple)        \
-  F(OverloadedFunc) F(Union) F(Match)
+  F(OverloadedFunc) F(Union) F(Match) F(MatchCase)
 
 #define MAP_ALL_EXPRS(F) F(BaseExpr) MAP_EXPRS(F)
 
@@ -185,7 +185,7 @@ namespace coral {
       ast::BaseExpr * expr = 0;
 
       Var(std::vector<std::string> names) {
-        name = names.size() ? names[0] : "undefined";
+        name = names.size() ? names.back() : "undefined";
       }
       Var(std::string name) : name(name) { }
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
@@ -347,14 +347,13 @@ namespace coral {
 
     class MatchCase : public BaseExpr {
     public:
-      vector<std::string> label;
+      ast::Var * label;
+      unique_ptr<ast::Def> def;
       vector<unique_ptr<Def>> parameter;
       unique_ptr<Block> body = 0;
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
-      MatchCase(vector<std::string> label, vector<Def *> def, Block * body)
-        : label(label), body(body) {
-        for(auto d: def)
-          parameter.emplace_back(d);
+      MatchCase(ast::Var * label, Def * def, Block * body)
+        : label(label), def(def), body(body) {
       }
     };
 

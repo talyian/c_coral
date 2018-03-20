@@ -39,6 +39,7 @@ namespace coral {
 
       void visit(ast::Func * expr);
 	  void visit(ast::IfExpr * expr);
+	  void visit(ast::Match * expr);
 	  void visit(ast::Call * expr);
 	  void visit(ast::IntLiteral * expr);
 	  void visit(ast::FloatLiteral * expr);
@@ -50,7 +51,7 @@ namespace coral {
 	  void visit(ast::Let * expr);
 	  void visit(ast::While * expr);
 	  void visit(ast::Set * expr);
-	  void visit(ast::Member * expr);
+      void visit(ast::Member * expr);
 	  void visit(ast::Comment * w);
 	  void visit(ast::TupleLiteral * w);
 	};

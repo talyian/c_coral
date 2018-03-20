@@ -36,12 +36,12 @@ namespace coral {
         std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) : gg(gg) {
         for(auto &pair : expr_terms) {
           inferredType = pair.second;
-          std::cerr
-            << COL_LIGHT_BLUE << "writing "
-            << ast::ExprNameVisitor::of(pair.first) ;
-          if (ast::Var * var = dynamic_cast<ast::Var *>(pair.first))
-            std::cerr << " (" << var->name << ")" ;
-          std::cerr << " :: " << pair.second << "\033[0m\n";
+          // std::cerr
+          //   << COL_LIGHT_BLUE << "writing "
+          //   << ast::ExprNameVisitor::of(pair.first) ;
+          // if (ast::Var * var = dynamic_cast<ast::Var *>(pair.first))
+          //   std::cerr << " (" << var->name << ")" ;
+          // std::cerr << " :: " << pair.second << "\033[0m\n";
           if (pair.second && pair.first)
             pair.first->accept(this);
         }
@@ -83,8 +83,8 @@ namespace coral {
       void visit(ast::FloatLiteral *) { }
       // void visit(ast::Def * def) { def->type.reset(new coral::type::Type(inferredType->
       void visit(ast::Member * m) {
-        // std::cout << COL_GREEN << std::setw(25) << "member: " << m->member << " :: "
-        //           << inferredType << COL_CLEAR << "\n";
+        std::cout << COL_GREEN << std::setw(25) << "member: " << m->member << " :: "
+                  << inferredType << COL_CLEAR << "\n";
         if (inferredType->name == "Index")
           m->memberIndex = std::stoi(
             dynamic_cast<typegraph::Type *>(

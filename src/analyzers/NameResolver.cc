@@ -12,11 +12,25 @@ void analyzers::NameResolver::visit(ast::IfExpr * m) {
   m->cond->accept(this);
   m->ifbody->accept(this);
   if (m->elsebody) m->elsebody->accept(this); }
+
+void analyzers::NameResolver::visit(ast::MatchCase * c) {
+  this->pushScope("case");
+  scope->insert(c->def->name, c->def.get());
+  c->body->accept(this);
+  this->popScope();
+}
+void analyzers::NameResolver::visit(ast::Match * m) {
+  m->condition->accept(this);
+  for(auto &m_case: m->cases) {
+    m_case->accept(this);
+  }
+}
 void analyzers::NameResolver::visit(ast::Let * e) {
   // if we recurse before setting the name, this lets let a = foo a work
   e->value->accept(this);
   scope->insert(e->var->name, e);
 }
+
 void analyzers::NameResolver::visit(ast::Extern * x) {
   scope->insert(x->name, x);
 }
@@ -42,9 +56,9 @@ void analyzers::NameResolver::visit(ast::Call * c) {
 
 void analyzers::NameResolver::visit(ast::Var * v) {
   // this is the core feature of NameResolver!
-  if (scope->get(v->name).expr)
+  if (scope->get(v->name).expr) {
     v->expr = scope->get(v->name).expr;
-  else
+  } else
     scope->freeVars.insert(std::make_pair(v->name, v));
 }
 
