@@ -89,6 +89,7 @@ namespace coral {
 	  void visit(ast::Member * w);
 	  void visit(ast::Extern * w);
 	  void visit(ast::Tuple * w);
+	  void visit(ast::Union * w);
 	  void visit(ast::TupleLiteral * w);
 	};
   }

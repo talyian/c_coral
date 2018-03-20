@@ -2,6 +2,7 @@
 #include "utils/ansicolor.hh"
 #include "utils/opts.hh"
 #include "core/prettyprinter.hh"
+#include "core/jsonprinter.hh"
 #include "analyzers/ReturnInserter.hh"
 #include "analyzers/ImportResolver.hh"
 #include "analyzers/NameResolver.hh"
@@ -21,7 +22,8 @@ void showFile(const char * filename) {
       coral::analyzers::NameResolver nri(module);
       coral::analyzers::TypeResolver tri(module);
       coral::analyzers::ReturnInserter ri(module);
-      coral::PrettyPrinter::print(module);
+      // coral::PrettyPrinter::print(module);
+      coral::JsonPrinter::print(std::cout, module);
     }
     coralDestroyModule(parser);
   } else { printf("%sNot found: %s%s\n", COL_LIGHT_RED, filename, COL_CLEAR); }

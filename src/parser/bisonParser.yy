@@ -116,6 +116,7 @@ Param : IDENTIFIER { $$ = new ast::Def($1, 0, 0); }
 TypeDef
 : IDENTIFIER { $$ = new coral::type::Type($1); }
 | IDENTIFIER '[' TypeDefList ']' { $$ = new coral::type::Type($1, $3); }
+| IDENTIFIER '[' NamedTypeDefList ']' { $$ = new coral::type::Type($1, ast::_defsToTypeArg($3)); }
 | ELLIPSIS { $$ = new coral::type::Type("..."); }
 | '{' TypeDefList '}' { $$ = new type::Type("Tuple", $2); }
 | '{' NamedTypeDefList '}' { $$ = new type::Type("Tuple", ast::_defsToTypeArg($2)); }
@@ -124,7 +125,8 @@ NamedTypeDefList
 : NamedTypeDef { $$.push_back($1); }
 | NamedTypeDefList ',' NamedTypeDef { $$ = $1; $$.push_back($3); }
 TypeDefList : TypeDef { $$.push_back(*$1); delete $1; }
-| TypeDefList ',' TypeDef {  $$ = $1; $$.push_back(*$3); delete $3; }
+| TypeDefList ',' TypeDef { $$ = $1; $$.push_back(*$3); delete $3; }
+| TypeDefList ',' INTEGER { $$ = $1; $$.push_back(coral::type::Type($3)); }
 ParamsListInner : Param { $$.push_back($1); }
 | ParamsListInner ',' Param { $$ = $1; $$.push_back($3); }
 ParamsListOuter : '(' ')' { }
@@ -144,7 +146,15 @@ ModuleLine
 | WHILE Expr StatementBlock { $$ = new ast::While($2, $3); }
 | RETURN Expr { $$ = new ast::Return($2); }
 | TYPE GeneralIdentifier UnionBlock { $$ = new ast::Union($2, $3); }
-| TYPE GeneralIdentifier OP_EQ TypeDef { $$ = new ast::Tuple($2, $4->params); delete $4;} // new ast::TypeDecl($2, $4); }
+| TYPE GeneralIdentifier OP_EQ TypeDef {
+  // TODO: make a general feature for newtype
+  if ($4->name == "Tuple")
+    { $$ = new ast::Tuple($2, $4->params); /* delete $4 */ } // new ast::TypeDecl($2, $4);
+  else if ($4->name == "Union")
+    { $$ = new ast::Union($2, $4->params); /* delete $4 */ }
+  else
+    { $$ = 0; printf("\033[031mwat[%s - %s]\033[0m\n", $2.c_str(), $4->name.c_str()); }
+}
 | IMPORT VarPath { $$ = new ast::Import($2); }
 
 Function

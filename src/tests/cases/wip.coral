@@ -1,42 +1,13 @@
-import prelude
+c_extern printf: Func[Ptr, ..., Void]
 
-## Day :: Type
-type Day:
-  | Weekday : Int32
-  | Saturday : Void
-  | Sunday : Void
-# type Day:::body = struct { _case: Int32,  data: [i8 * 4] }
-# match day:
-#   Weekday ():
-#     "foo"
-#   Saturday:
-#     "bar"
-#   Sunday:
-#     "baz"
-# Day :: Type
-func Day.Weekday.constructor (n):
-  let body = struct{ _case: 0, data = [] }
-  body.data = n
-  body
-func Day.Saturday.constructor ():
-  struct{ _case: 1, data = bitcast }
-func Day.Sunday.constructor ():
-  struct{ _case: 1, data = [] }
-# Day::Weekday.@constructor :: Func[Int32, Day]
-# Day::Saturday.@constructor :: Func[Day]
-# Day::Sunday.@constructor :: Func[Day]
-let wed = Day.Weekday 3
-let sat = Day.Saturday()
-let sun = Day.Sunday()
-match web:
-  | Day.Weekday(n:Int32): 0
-  | Saturday(): 1
-  | Sunday(): 2
-printf ("c: %d\n", c)
-## Person :: Type[Func[Int32, Person]]
-## Person.@constructor :: Func[Int32, Person]
-## Person::age::Int32
-type Person = {age:Int32}
-let person = Person(30)
-
-printf ("Hello, World! %d\n", person.age)
+# type Foo = {x:Int32, y: Ptr}
+# Foo::x  -> (Int32, Index 0)
+# Foo::y  -> (Ptr, Index 1)
+# Foo::@constructor -> Func[Int32, Ptr, Foo]
+# Foo -> Struct
+type Bar = Union[x: Int32, y:Ptr, z:Int64]
+let b0 = Bar.x 3
+let b1 = Bar.y "bar"
+printf "hi\n"
+# let b1 = Bar.y "bar"
+# printf("v: (%d, %s)\n", v0, v1)

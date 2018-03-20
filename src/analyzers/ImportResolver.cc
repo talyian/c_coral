@@ -16,6 +16,8 @@ namespace coral {
         if (dynamic_cast<ast::Import *>(it.get()))
           it.release();
     }
+
+
     void ImportResolver::visit(ast::Import * m) {
       std::string path;
       for(auto &part : m->path) {
@@ -26,19 +28,26 @@ namespace coral {
 
       std::string moo = module->path;
       moo = moo.substr(0, moo.rfind('/') + 1);
-      moo += path + ".coral";
-      FILE * f = fopen(moo.c_str(), "r");
-      if (!f) {
-        std::cerr << moo << "  " << f << "\n\n";
-      } else {
-        auto _parser = coralParseModule(moo.c_str());
-        auto imported_module = (ast::Module *)_coralModule(_parser);
-        for(auto &newline: imported_module->body->lines) {
-          ast::BaseExpr * rawptr = newline.release();
-          if (rawptr)
-            imported_lines.push_back(rawptr);
+
+      std::vector<std::string> search_paths {
+          moo,
+          "/home/jimmy/coral/src/libs/",
+      };
+      for(auto &search_dir: search_paths) {
+        moo = search_dir + path + ".coral";
+        FILE * f = fopen(moo.c_str(), "r");
+        if (f) {
+          auto _parser = coralParseModule(moo.c_str());
+          auto imported_module = (ast::Module *)_coralModule(_parser);
+          for(auto &newline: imported_module->body->lines) {
+            ast::BaseExpr * rawptr = newline.release();
+            if (rawptr)
+              imported_lines.push_back(rawptr);
+          }
+          return;
         }
       }
+      std::cerr << "Failed import: " << path << "\n";
     }
   }
 }

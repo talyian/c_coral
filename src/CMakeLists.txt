@@ -60,6 +60,7 @@ add_library(codegen OBJECT
   codegen/LLVMFunctionCompiler.cc
   codegen/LLVMModuleCompiler.cc
   codegen/LLVMJit.cc
+  codegen/LLVMTypeMap.cc
 )
 
 add_executable (coral-parse
@@ -92,4 +93,8 @@ add_custom_target(run-test ${CMAKE_BINARY_DIR}/bin/coral-test
 
 add_custom_target(wip ${CMAKE_BINARY_DIR}/bin/coral-jit tests/cases/wip.coral
   DEPENDS coral-jit
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+add_custom_target(json ${CMAKE_BINARY_DIR}/bin/coral-parse tests/cases/wip.coral
+  DEPENDS coral-parse
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})

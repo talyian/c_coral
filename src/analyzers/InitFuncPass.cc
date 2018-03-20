@@ -32,8 +32,9 @@ namespace coral {
         } else
           it++;
       }
+      init_func->body->lines.emplace_back(new ast::Return());
     }
-    void InitFuncPass::visit(ast::Call * call) { remove = true; }
-    void InitFuncPass::visit(ast::Let * let) { remove = true; }
+    void InitFuncPass::visit(ast::Call *) { remove = true; }
+    void InitFuncPass::visit(ast::Let *) { remove = true; }
   }
 }

@@ -9,6 +9,7 @@ namespace coral {
 	class Type {
 	public:
 	  std::string name;
+      std::vector<std::string> _namespace;
 	  std::vector<Type> params;
 	  Type(std::string name) : name(name) { }
 	  Type(std::string name, std::vector<Type> params) : name(name), params(params) { }
@@ -17,5 +18,6 @@ namespace coral {
 	  Type returnType();
 	};
 	std::ostream & operator << (std::ostream &os, Type & tt);
+	std::ostream & operator << (std::ostream &os, Type * tt);
   }
 }

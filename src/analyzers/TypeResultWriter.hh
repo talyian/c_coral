@@ -36,9 +36,12 @@ namespace coral {
         std::vector<std::pair<coral::ast::BaseExpr *, typegraph::Type *>> expr_terms) : gg(gg) {
         for(auto &pair : expr_terms) {
           inferredType = pair.second;
-          // std::cerr << COL_LIGHT_BLUE << "writing "
-          //           << ast::ExprNameVisitor::of(pair.first) << " :: "
-          //           << pair.second << "\033[0m\n";
+          std::cerr
+            << COL_LIGHT_BLUE << "writing "
+            << ast::ExprNameVisitor::of(pair.first) ;
+          if (ast::Var * var = dynamic_cast<ast::Var *>(pair.first))
+            std::cerr << " (" << var->name << ")" ;
+          std::cerr << " :: " << pair.second << "\033[0m\n";
           if (pair.second && pair.first)
             pair.first->accept(this);
         }

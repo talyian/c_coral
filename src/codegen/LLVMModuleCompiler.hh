@@ -45,6 +45,7 @@ namespace coral {
 	  void visit(ast::Func * f);
       void visit(ast::Extern *e);
       void visit(ast::Tuple *e);
+      void visit(ast::Union *e);
 	};
 
   }

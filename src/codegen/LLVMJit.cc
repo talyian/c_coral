@@ -38,10 +38,12 @@ namespace coral {
 	}
 
 	void JIT::runMain() {
-      if (LLVMGetFunctionAddress(engine, "..init")) {
-        GetFunctionPointer<int (*)()>("..init")();
+      LLVMValueRef fn;
+      if (0 == LLVMFindFunction(engine, "..init", &fn)) {
+        std::cerr << "Running Init\n";
+        GetFunctionPointer<void (*)()>("..init")();
       }
-      if (LLVMGetFunctionAddress(engine, "main")) {
+      if (0 == LLVMFindFunction(engine, "main", &fn)) {
         GetFunctionPointer<int (*)()>("main")();
       }
 	}

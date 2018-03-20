@@ -9,10 +9,12 @@ void segvhandler(int) {
   void * array[30];
   size_t size = backtrace(array, 30);
   char * funcname = new char[256];
-  size_t funcsize = 256;
+  size_t funcsize = 250;
   char ** symbollist = backtrace_symbols(array, size);
   for(size_t i =0; i<size; i++) {
     auto mangled = symbollist[i];
+    printf("%s\n", mangled);
+    continue;
     // char * begin_name = 0, *end = 0, *lbracket = 0, *rbracket = 0;
     // for(char * p = mangled; *p; p++) {
     //   if (*p == '(') begin_name = p;

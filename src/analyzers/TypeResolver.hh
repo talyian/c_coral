@@ -35,6 +35,7 @@ namespace coral {
       void visit(ast::Set * s);
       void visit(ast::Extern * e);
       void visit(ast::Tuple * t);
+      void visit(ast::Union * t);
       void visit(ast::IntLiteral * op);
       void visit(ast::FloatLiteral * op);
       void visit(ast::StringLiteral * s);

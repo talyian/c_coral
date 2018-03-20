@@ -338,8 +338,11 @@ namespace coral {
     public:
       std::string name;
       std::vector<std::unique_ptr<Def>> cases;
+
+      std::vector<std::unique_ptr<Func>> constructors;
       virtual void accept(BaseExprVisitor * v) { v->visit(this); }
       Union(std::string name, ast::Block * block);
+      Union(std::string name, vector<Type> cases);
     };
 
     class MatchCase : public BaseExpr {
@@ -364,5 +367,8 @@ namespace coral {
     };
     // used for defining tuples
     std::vector<Type> _defsToTypeArg(std::vector<Def *> defs);
+    std::vector<Def *> _typeArgsToDef(std::vector<Type> defs);
+    Def * _typeToDef(Type t);
+    Type _defToType(Def * def);
   }
 }

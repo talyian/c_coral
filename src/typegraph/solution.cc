@@ -24,10 +24,10 @@ namespace typegraph {
       std::cerr << "\033[31mToo many iterations of type checker!\033[0m\n";
       return;
     }
-    // if (showSteps) {
-    //   showUnknowns();
-    //   showKnowns();
-    // }
+    if (showSteps) {
+      showUnknowns();
+      showKnowns();
+    }
     for(auto & term: unknowns) {
       // substitute knowns
       int subcount = 0;
@@ -112,12 +112,27 @@ match constraint:
             // }
             else if (callee->name == "Member") {
               bool skip = false;
+              // For union types
+              if (Type * union_decl = dynamic_cast<Type *>(call->arguments[0])) {
+                if (union_decl->name == "@Union") {
+                  auto member_name = dynamic_cast<Type *>(callee->params[0])->name;
+                  auto union_name = dynamic_cast<Type *>(union_decl->params[0])->name;
+                  auto type_term = gg->termByName[union_name + "::" + member_name];
+                  auto type_term_type = gg->relations.find(type_term)->second;
+                  if (showSteps)
+                    std::cerr << "substituting " << type_term << " :: " << type_term_type << "\n";
+                  it->second = type_term_type;
+                  goto START;
+                }
+              }
+
               if (dynamic_cast<Type *>(callee->params[0]) &&
                   dynamic_cast<Type *>(call->arguments[0])
                 ) {
                 auto field = dynamic_cast<Type *>(callee->params[0])->name;
                 auto type = dynamic_cast<Type *>(call->arguments[0]);
                 auto instance = dynamic_cast<Term *>(call->arguments[1]);
+
                 if (type->name == "Type" && isConcreteType(type)) {
                   std::cerr << "member on a type\n";
                   std::cerr << it->first << " :: " << it->second << "\n";
@@ -141,7 +156,7 @@ match constraint:
                         instance_index_term,
                         gg->type("Index",  {gg->type(std::to_string(i))}));
                       if (showSteps) {
-                        std::cerr << "Deleting: " << it->first << " :: " << it->second << "\n";
+                        std::cerr << "\033[31mDeleting: " << it->first << " :: " << it->second << "\033[0m\n";
                       }
                       gg->relations.erase(it);
                       goto START;
@@ -170,7 +185,7 @@ match constraint:
                     if (showSteps) {
                       std::cerr << "Member " << instance_index_term
                                 << " :: " << gg->type("Index",  {index_term->second}) << "\n";
-                      std::cerr << "Deleting: " << it->first << " :: " << it->second << "\n";
+                      std::cerr << "\033[31mDeleting: " << it->first << " :: " << it->second << "\033[0m\n";
                     }
                     gg->relations.erase(it);
                     goto START;
@@ -315,7 +330,7 @@ match constraint:
     // std::cerr << "Unifying call retval\n";
     Unify(this, term, gg->term(term), callee->params.back());
     if (showSteps)
-      std::cerr << "Deleting: " << term << " :: " << call << "\n";
+      std::cerr << "\033[31mDeleting: " << term << " :: " << call << "\033[0m\n";
   }
 
   bool Solution::applyMethod(TypeTerm * term, Call * call, Type * callee) {
@@ -371,7 +386,7 @@ match constraint:
     // std::cerr << "Unifying call retval\n";
     Unify(this, term, gg->term(term), callee->params.back());
     if (showSteps)
-      std::cerr << "Deleting: " << term << " :: " << call << "\n";
+      std::cerr << "\033[31mDeleting: " << term << " :: " << call << "\033[0m\n";
     return true;
   }
 

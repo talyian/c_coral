@@ -72,7 +72,7 @@ void coral::analyzers::TypeResolver::visit(ast::Call * call) {
 }
 
 void coral::analyzers::TypeResolver::visit(ast::Return * r) {
-  r->val->accept(this);
+  if (r->val) r->val->accept(this);
 }
 
 void coral::analyzers::TypeResolver::visit(ast::StringLiteral * s) {
@@ -147,9 +147,10 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
       exit(2);
     }
   } else {
-    if ((out = gg.findTerm(var->expr)))
+    if ((out = gg.findTerm(var->expr))) {
+      std::cerr << COL_LIGHT_YELLOW << "resolving term " << var->name << " as reference\033[0m\n";
       return;
-
+    }
     // the expr might not be actually in the Module ifself -- this happens, for example,
     // if we're adding an OverloadedFunc expression
     if (ast::ExprTypeVisitor::of(var->expr) == ast::ExprTypeKind::OverloadedFuncKind) {
@@ -187,6 +188,7 @@ void coral::analyzers::TypeResolver::visit(ast::Def * d) {
     gg.constrain(out, typeconvert(&gg, d->type.get()));
 }
 void coral::analyzers::TypeResolver::visit(ast::Func * f) {
+  out = 0;
   auto name = f->name;
   for(auto &part : f->container)
     name = part + "::" + name;
@@ -261,6 +263,22 @@ void coral::analyzers::TypeResolver::visit(ast::FloatLiteral * op) {
   gg.constrain(out, gg.type("Float64"));
 }
 
+void coral::analyzers::TypeResolver::visit(ast::Union * u) {
+  auto union_term = gg.addTerm(u->name, u);
+  int i = 0;
+  auto union_name = union_term->name;
+  for(auto &c : u->cases) {
+    out = gg.addTerm(union_name + "::" + c->name, 0);
+    auto case_type = typeconvert(&gg, c->type.get());
+    auto constructor_type = gg.type("Func", {case_type, gg.type(union_term->name)});
+    gg.constrain(out, constructor_type);
+    auto indexer = gg.addTerm(union_name + "::" + c->name + ".index", 0);
+    gg.constrain(indexer, gg.type(std::to_string(i++)));
+  }
+  gg.constrain(union_term, gg.type("@Union", { gg.type(union_name) }));
+  out = union_term;
+}
+
 void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
   // TODO: the name corresponds to both the tuple
   // and the constructor? We probably need to generate different AST
@@ -270,17 +288,9 @@ void coral::analyzers::TypeResolver::visit(ast::Tuple * t) {
   int index = -1;
   for(auto &field: t->fields) {
     index++;
-    auto field_info = field->type.get();
-
-    std::string name;
-    Type type("");
-    if (field_info->name == "Field") {
-      type = field_info->params[1];
-      name = field_info->params[0].name;
-    }else {
-      type = *field_info;
-      name = "Item" + std::to_string(index);
-    }
+    // std::cerr << COL_LIGHT_BLUE << field->name << "(" << field->name.empty() << ")\033[0m\n";
+    Type type = *(field->type);
+    std::string name = field->name.empty() ? "Item" + std::to_string(index) : field->name;
 
     auto field_term = gg.addTerm(t->name + "::" + name, 0);
     gg.constrain(field_term, typeconvert(&gg, &type));

@@ -114,6 +114,10 @@ void analyzers::NameResolver::visit(ast::Tuple * w) {
   scope->insert(w->name, w);
 }
 
+void analyzers::NameResolver::visit(ast::Union * w) {
+  scope->insert(w->name, w);
+}
+
 void analyzers::NameResolver::visit(ast::TupleLiteral * w) {
   for(auto &item:w->items)
     item->accept(this);
