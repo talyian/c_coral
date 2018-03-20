@@ -148,7 +148,8 @@ void coral::analyzers::TypeResolver::visit(ast::Var * var) {
     }
   } else {
     if ((out = gg.findTerm(var->expr))) {
-      std::cerr << COL_LIGHT_YELLOW << "resolving term " << var->name << " as reference\033[0m\n";
+      // std::cerr << COL_LIGHT_YELLOW << "resolving term "
+      // << var->name << " as reference\033[0m\n";
       return;
     }
     // the expr might not be actually in the Module ifself -- this happens, for example,
